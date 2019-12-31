@@ -7,7 +7,7 @@
 
 @interface NSURL (Hash)
 
-- (NSString *)md5HashOfFile;
+//- (NSString *)md5HashOfFile;
 - (NSString *)sha1HashOfFile;
 - (NSString *)sha512HashOfFile;
 
