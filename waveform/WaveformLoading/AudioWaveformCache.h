@@ -8,37 +8,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class AudioPlayer;
-
-@protocol AudioWaveformLoaderDelegate;
-@class AudioTrack;
-
-#pragma mark - Waveform Loader
-
-@interface AudioWaveformLoader : NSObject
-
-@property (nullable, weak) id <AudioWaveformLoaderDelegate> delegate;
-
-- (instancetype)initWithDelegate:(id <AudioWaveformLoaderDelegate>)delegate;
-
-@property (atomic) BOOL isFinished;
-@property (atomic) BOOL isCancelled;
-
-- (BOOL)cancel;
-- (AudioWaveform *)load:(NSString *)filename;
-- (AudioWaveformCacheChunk)getChunkForAudioBuffer:(float *)buffer length:(NSUInteger)length numChannels:(NSUInteger)channels;
-
-@end
-
-@protocol AudioWaveformLoaderDelegate <NSObject>
-@optional
-
-- (void)audioWaveformLoader:(AudioWaveformLoader*)loader waveform:(AudioWaveform *)waveform didLoadData:(float)percentLoaded;
-
-@end
-
 #pragma mark - Waveform Cache
 
+@class AudioTrack;
 @protocol AudioWaveformCacheDelegate;
 
 @interface AudioWaveformCache : NSObject
