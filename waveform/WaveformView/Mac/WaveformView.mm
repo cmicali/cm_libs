@@ -12,6 +12,7 @@
 #import "NSURL+Hash.h"
 #import "DetailedAudioWaveformRenderer.h"
 #import "VibeDefaultWaveformRenderer.h"
+#import "BasicAudioWaveformRenderer.h"
 
 
 @interface AudioWaveformView () <AudioWaveformCacheDelegate>
@@ -52,6 +53,8 @@
 
 - (void)setup  {
 
+    self.wantsLayer = YES;
+
     _didClickInside = NO;
 
     _waveformCache = [[AudioWaveformCache alloc] init];
@@ -60,6 +63,7 @@
 
     [self addWaveformRenderer:[[VibeDefaultWaveformRenderer alloc] init]];
     [self addWaveformRenderer:[[DetailedAudioWaveformRenderer alloc] init]];
+    [self addWaveformRenderer:[[BasicAudioWaveformRenderer alloc] init]];
 
 //    NSTrackingArea* trackingArea = [[NSTrackingArea alloc] initWithRect:[self bounds] options:NSTrackingMouseEnteredAndExited | NSTrackingMouseMoved | NSTrackingActiveAlways owner:self userInfo:nil];
 //    [self addTrackingArea:trackingArea];
