@@ -41,7 +41,7 @@
     return self;
 }
 
-- (void)updateProgress:(CGFloat)progress waveform:(AudioWaveformOld*)waveform {
+- (void)updateProgress:(CGFloat)progress waveform:(AudioWaveform*)waveform {
     size_t count = self.layers.count;
     for (NSUInteger i = 0; i < count; i++) {
         BOOL played = ((CGFloat)i/(CGFloat)count <= progress);
@@ -49,7 +49,7 @@
     }
 }
 
-- (void)updateWaveform:(NSRect)bounds progress:(CGFloat)progress waveform:(AudioWaveformOld*)waveform {
+- (void)updateWaveform:(NSRect)bounds progress:(CGFloat)progress waveform:(AudioWaveform*)waveform {
 
     _overlayGradient.frame = bounds;
 
@@ -63,9 +63,9 @@
     CGFloat barWidth = width / self.layers.count;
 
     for (NSUInteger i = 0; i < count; i++) {
-        AudioWaveformCacheChunk m = [waveform chunkAtIndex:i forSize:count];
-        CGFloat top = round(midY - m.min * vscale);
-        CGFloat bottom = round(midY - m.max * vscale);
+        AudioWaveformCacheChunk m = waveform->getChunkAtIndex(i, count);
+        CGFloat top = round(midY - m.getMin() * vscale);
+        CGFloat bottom = round(midY - m.getMax() * vscale);
         CGFloat height = MAX(top - bottom, 1);
         CGFloat x = ((CGFloat)width / (CGFloat)count) * (CGFloat)i;
         CGRect frame = CGRectMake(x, bottom, barWidth, height);
