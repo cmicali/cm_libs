@@ -15,28 +15,33 @@
     return @"Basic";
 }
 
-- (instancetype)initWithLayer:(CALayer *)parentLayer bounds:(CGRect)bounds{
-    self = [super initWithLayer:parentLayer bounds:bounds];
+- (instancetype)initWithLayer:(CALayer *)parentLayer bounds:(CGRect)bounds isDark:(BOOL)isDark {
+    self = [super initWithLayer:parentLayer bounds:bounds isDark:isDark];
     if (self) {
-
         NSUInteger numBars = 128;
-
-        _playedColor = [[NSColor whiteColor] colorWithAlphaComponent:0.95];
-        _unPlayedColor = [[NSColor whiteColor] colorWithAlphaComponent:0.5];
-
+        _overlayGradient = [self createGradientLayer:@"CISourceInCompositing"];
+        [self updateColors:isDark];
         [self addLayers:numBars backgroundColor:_unPlayedColor.CGColor];
-
-        NSArray *colors = @[
-            [[NSColor whiteColor] colorWithAlphaComponent:0.1],
-            [[NSColor whiteColor] colorWithAlphaComponent:0.65],
-            [[NSColor whiteColor] colorWithAlphaComponent:1],
-            [[NSColor whiteColor] colorWithAlphaComponent:1],
-        ];
-        _overlayGradient = [self createGradientLayer:colors filter:@"CISourceInCompositing"];
         [self addOtherLayer:_overlayGradient];
         [self updateWaveform:bounds progress:0 waveform:nil];
     }
     return self;
+}
+
+- (void)updateColors:(BOOL)isDark {
+    [super updateColors:isDark];
+    NSColor *waveformColor = isDark ? [NSColor blackColor] : [NSColor whiteColor];
+    NSColor *gradientColor = isDark ? [NSColor whiteColor] : [NSColor blackColor];
+    _playedColor = [waveformColor colorWithAlphaComponent:0.95];
+    _unPlayedColor = [waveformColor colorWithAlphaComponent:0.5];
+    NSArray *colors = @[
+            [gradientColor colorWithAlphaComponent:0.1],
+            [gradientColor colorWithAlphaComponent:0.65],
+            [gradientColor colorWithAlphaComponent:1],
+            [gradientColor colorWithAlphaComponent:1],
+    ];
+    if (!isDark) colors = [[colors reverseObjectEnumerator] allObjects];
+    [self setGradientLayerColors:_overlayGradient colors:colors];
 }
 
 - (void)updateProgress:(CGFloat)progress waveform:(AudioWaveform*)waveform {
