@@ -49,19 +49,9 @@ NS_ASSUME_NONNULL_BEGIN
 // and the empty and loading states reset it.
 @property (nonatomic) double convertSweepFraction;
 
-// An indeterminate shimmer across the waveform area while a slow file open is
-// pending, as when a cloud placeholder is downloading.
-- (void)showLoadingIndicator;
-- (void)hideLoadingIndicator;
-// Determinate download progress while the loading indicator shows: the
-// midline fills to fraction beneath the shimmer. Negative reverts to
-// indeterminate. No-op unless the loading indicator is up.
-- (void)setLoadingProgress:(float)fraction;
-
-// The no-track empty state: a static full-width line on the waveform midline.
-// prepareForWaveformLoad and showLoadingIndicator clear it when a track
-// arrives.
-- (void)showEmptyPlaceholder;
+// What the strip shows when there is no waveform — the loading indicator and
+// the empty-state line — is AudioWaveformView+Loading.h, declared where it is
+// implemented.
 
 - (void)updateAppearance;
 @end
