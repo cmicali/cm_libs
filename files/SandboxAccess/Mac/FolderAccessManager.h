@@ -90,13 +90,10 @@ typedef NS_ENUM(NSInteger, VibeGrantedFolderState) {
 // Main thread.
 - (void)removeFoldersAtIndexes:(NSIndexSet *)indexes;
 
-// The grant a playlist file needs for the folder its entries live in: opening
-// the .m3u grants the .m3u alone. Runs the folder picker and bookmarks what
-// the user picks, exactly like the pane's Add Folder, and answers whether
-// they granted anything. Call from a background queue — it blocks the caller
-// on the panel — and never from the main thread. NSURLUtil reaches it through
-// the handler AppDelegate installs, rather than importing this.
-- (BOOL)requestAccessForPlaylistFolder:(NSURL *)playlistURL;
+// The grant a playlist file needs for the folder its entries live in — opening
+// the .m3u grants the .m3u alone — is the one thing here that ASKS rather than
+// stores, so it lives in FolderAccessManager+GrantPanel.h. NSURLUtil reaches
+// it through the handler AppDelegate installs, rather than importing either.
 
 // Whether path is one of grantedPaths, sits under one, or is under ~/Music,
 // which the entitlement covers standing. Compares alias-free spellings, so /tmp
