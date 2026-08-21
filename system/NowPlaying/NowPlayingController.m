@@ -16,31 +16,30 @@
 // publish and the card visibly fills in after the window has. This is the side
 // the system actually draws — Control Center, the lock screen, the mini player
 // — with room to spare.
-static const CGFloat kPublishedArtworkMaxSide = 512;
 
 // TRAP: this must run on the main thread, and its result must be the ONLY
 // thing the request handler hands back. The handler is invoked on the media
 // daemon's threads, and `artwork` is the live NSImage the header, the dock
 // tile and the playlist cells are drawing from — NSImage is not safe to draw
-// concurrently from two threads, so scaling inside the handler races the UI.
-// Scaling once, here, also costs one redraw per track rather than one per
+// concurrently from two threads, so drawing inside the handler races the UI.
+// Rasterizing once, here, also costs one redraw per track rather than one per
 // surface the system asks about.
-static VibeImage *VibeArtworkForPublishing(VibeImage *artwork) {
+static VibeImage *_Nullable VibeArtworkForPublishing(VibeImage *artwork) {
 #if TARGET_OS_OSX
+    NSCAssert(NSThread.isMainThread, @"Now Playing artwork must be rasterized on main");
+    static const CGFloat kPublishedArtworkMaxSide = 512;
     CGSize source = artwork.size;
     if (source.width <= 0 || source.height <= 0) {
-        return artwork;
+        // resizedImage: clamps these dimensions to one pixel. Drawing may
+        // still recover a representation whose logical NSImage size is bad.
+        return [artwork resizedImage:NSMakeSize(1, 1)];
     }
-    CGFloat scale = MIN(kPublishedArtworkMaxSide / source.width,
-                        kPublishedArtworkMaxSide / source.height);
-    // Already small enough — the 128px thumbnail stand-in takes this path.
-    if (scale >= 1.0) {
-        return artwork;
-    }
-    // Aspect preserved, so a non-square cover is not stretched. A failed
-    // redraw falls back to the original: oversized beats artwork-less.
+    CGFloat scale = MIN(1.0, MIN(kPublishedArtworkMaxSide / source.width,
+                                kPublishedArtworkMaxSide / source.height));
+    // Even an already-small thumbnail is redrawn. The different NSImage and
+    // bitmap rep are the ownership boundary between AppKit UI and MediaPlayer.
     return [artwork resizedImage:NSMakeSize(round(source.width * scale),
-                                            round(source.height * scale))] ?: artwork;
+                                            round(source.height * scale))];
 #else
     return artwork;
 #endif
@@ -271,30 +270,32 @@ static VibeImage *VibeArtworkForPublishing(VibeImage *artwork) {
             return;
         }
         center.nowPlayingInfo = nil;
+#if TARGET_OS_OSX
+        // playbackState is macOS-only; iOS derives it from the audio session
+        // and the published rate.
         center.playbackState = MPNowPlayingPlaybackStateStopped;
+#endif
         _publishedURL = nil;
         _publishedArtworkImage = nil;
         _publishedArtworkWrapper = nil;
         return;
     }
 
-    // The same string the in-app header shows for an untagged file: the
-    // cleaned-up filename, not the raw title with its extension.
-    NSString *title = track.singleLineTitle ?: @"";
-    NSString *artist = track.artist.length > 0 ? track.artist : nil;
+    // Use the same tagged-title-or-filename rule as every in-app track label.
+    NSString *title = track.displayTitle ?: @"";
+    NSString *artist = track.displayArtist;
     // cachedArt is the already-decoded image, or nil, and never blocks: it does
     // no file read and no decode. While it is still nil the caller refreshes
     // once the art resolves, so the card fills in a moment later rather than
     // stalling here.
     //
-    // The 128px thumbnail stands in for that gap. It is decoded on the metadata
-    // worker before the track publishes — a whole background round trip ahead
-    // of the full-resolution art, which re-reads the audio file — and reading
-    // it here never blocks either, since it decodes only from bytes already in
-    // memory. Without it the card shows the app icon while the window shows a
-    // cover, which reads as Now Playing lagging the app when both are in fact
-    // published in the same pass. The identity check below promotes the full
-    // art the moment it lands.
+    // The 128px thumbnail stands in for that gap. A fresh parse decodes it on
+    // its metadata worker; after shared-cache eviction this read returns nil
+    // and queues a bounded off-main decode instead. Without the thumbnail the
+    // card shows the app icon while the window shows a cover, which reads as
+    // Now Playing lagging the app when both are in fact published in the same
+    // pass. The identity check below promotes either recovered thumbnail or
+    // full art when the next publish sees it.
     VibeImage *artwork = track.cachedArt ?: track.cachedThumbnail;
 
     // The elapsed time is never republished at 3 Hz, because the system
@@ -337,24 +338,32 @@ static VibeImage *VibeArtworkForPublishing(VibeImage *artwork) {
 
     if (artwork) {
         if (artwork != _publishedArtworkImage || _publishedArtworkWrapper == nil) {
-            // Scaled once, here on the main thread, and captured. The handler
+            // Rasterized once, here on the main thread, and captured. The handler
             // itself must do no drawing — see VibeArtworkForPublishing — so it
             // returns the same image whatever size the system asks for, which
             // MediaPlayer scales on its side. boundsSize advertises what that
             // image actually is, so nothing asks for more than exists.
             VibeImage *published = VibeArtworkForPublishing(artwork);
-            _publishedArtworkWrapper =
-                [[MPMediaItemArtwork alloc] initWithBoundsSize:published.size
-                                                requestHandler:^VibeImage *(CGSize size) {
-                                                    return published;
-                                                }];
+            if (published) {
+                _publishedArtworkWrapper =
+                    [[MPMediaItemArtwork alloc] initWithBoundsSize:published.size
+                                                    requestHandler:^VibeImage *(CGSize size) {
+                                                        return published;
+                                                    }];
+            }
+            else {
+                _publishedArtworkWrapper = nil;
+            }
         }
-        info[MPMediaItemPropertyArtwork] = _publishedArtworkWrapper;
+        if (_publishedArtworkWrapper) {
+            info[MPMediaItemPropertyArtwork] = _publishedArtworkWrapper;
+        }
     }
     else {
         _publishedArtworkWrapper = nil;
     }
-    _publishedArtworkImage = artwork;
+    // A failed rasterization is retryable on the next publish pass.
+    _publishedArtworkImage = _publishedArtworkWrapper ? artwork : nil;
 
     center.nowPlayingInfo = info;
     _hasPublished = YES;
@@ -366,6 +375,7 @@ static VibeImage *VibeArtworkForPublishing(VibeImage *artwork) {
     _publishedDuration = duration;
     _publishedPosition = position;
     _publishedAt = CFAbsoluteTimeGetCurrent();
+#if TARGET_OS_OSX
     switch (state) {
         case NowPlayingPlaybackStatePlaying:
             center.playbackState = MPNowPlayingPlaybackStatePlaying;
@@ -377,6 +387,7 @@ static VibeImage *VibeArtworkForPublishing(VibeImage *artwork) {
             center.playbackState = MPNowPlayingPlaybackStateStopped;
             break;
     }
+#endif
 }
 
 @end

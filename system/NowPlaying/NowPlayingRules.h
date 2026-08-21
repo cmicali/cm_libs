@@ -2,12 +2,30 @@
 //  NowPlayingRules.h
 //  Vibe
 //
-//  The republish position rule, kept apart from NowPlayingController so that
-//  it is a function of the numbers alone — no info center, no clock of its
-//  own.
+//  What to publish, and when — kept apart from NowPlayingController so that
+//  both are functions of the numbers alone: no info center, no player, no
+//  clock of their own.
 //
 
 #import <Foundation/Foundation.h>
+#import "NowPlayingController.h"     // NowPlayingPlaybackState
+
+// The player's two state questions, mapped to what the system distinguishes.
+// They are mutually exclusive by construction — during Loading it is the
+// pending start intent that decides which answers YES, not the state alone
+// (see AudioPlayer's isPlaying/isPaused) — so this is total and the branch
+// order carries no meaning. An ordinary load therefore reads Playing, a parked
+// one Paused, which is what the enum's own doc describes.
+static inline NowPlayingPlaybackState VibeNowPlayingStateForPlayer(BOOL isPlaying,
+                                                                   BOOL isPaused) {
+    if (isPlaying) {
+        return NowPlayingPlaybackStatePlaying;
+    }
+    if (isPaused) {
+        return NowPlayingPlaybackStatePaused;
+    }
+    return NowPlayingPlaybackStateStopped;
+}
 
 // A published position further than this from what the system's own
 // extrapolation predicts is a jump, from a seek or a pitch rescale, and must
