@@ -5,12 +5,12 @@
 
 #import "AudioWaveformViewInternal.h"
 #import "AudioWaveformView+Loading.h"
-#import "DetailedAudioWaveformRenderer.h"
-#import "SonicCirrusWaveformRenderer.h"
-#import "BasicAudioWaveformRenderer.h"
-#import "OversamplingDetailedAudioWaveformRenderer.h"
+#import "WaveformRendererRegistry.h"
 #import "NSView+DarkMode.h"
 #import "AppSettings.h"
+
+// A press that travels further than this is a drag, not a click.
+static const CGFloat kWaveformDragHysteresis = 4;
 
 @implementation AudioWaveformView {
     CGFloat                     _progress;
@@ -18,10 +18,13 @@
     // The convert sweep's front: bars left of it have already been dipped.
     double                      _convertSweepFraction;
     BOOL                        _didClickInside;
-    // The renderer classes, keyed by styleIdentifier and instantiated on
-    // selection.
-    NSMutableDictionary<NSString *, Class>* _waveformRenderers;
     NSTrackingArea*             _hoverTrackingArea;
+    // The gesture's state, valid while _didClickInside: the mode is stashed at
+    // mouse-down so a settings write cannot change it mid-drag.
+    NSString*                   _dragBehavior;
+    NSPoint                     _mouseDownPoint;
+    NSPoint                     _windowOriginAtMouseDown;
+    BOOL                        _isDragSeeking;
 }
 
 - (instancetype)initWithFrame:(NSRect)frameRect {
@@ -51,29 +54,6 @@
     _progress = 0;
     _progressTracker = 0;
     _didClickInside = NO;
-
-    _waveformRenderers = [NSMutableDictionary new];
-
-    [self addWaveformRenderer:BasicAudioWaveformRenderer.class];
-    [self addWaveformRenderer:SonicCirrusWaveformRenderer.class];
-    [self addWaveformRenderer:DetailedAudioWaveformRenderer.class];
-    [self addWaveformRenderer:x2OversamplingDetailedAudioWaveformRenderer.class];
-    [self addWaveformRenderer:x4OversamplingDetailedAudioWaveformRenderer.class];
-    [self addWaveformRenderer:x8OversamplingDetailedAudioWaveformRenderer.class];
-
-}
-
-- (void)addWaveformRenderer:(Class)renderer {
-    // A nil key raises, so the registry never takes one: the base class
-    // asserts on the missing override, and this keeps a Release build with an
-    // unoverridden subclass down to one missing style.
-    NSString *identifier = [renderer styleIdentifier];
-    if (identifier.length == 0) {
-        LogError(@"Waveform renderer %@ has no style identifier; not registering it",
-                 NSStringFromClass(renderer));
-        return;
-    }
-    _waveformRenderers[identifier] = renderer;
 }
 
 - (NSString *)currentWaveformStyle {
@@ -81,22 +61,48 @@
 }
 
 - (void)setWaveformStyle:(NSString*)identifier {
-    Class renderer = identifier.length ? _waveformRenderers[identifier] : nil;
+    Class renderer = [WaveformRendererRegistry rendererClassForIdentifier:identifier];
     if (!renderer) {
         // Unknown identifier (hand-edited default, or a style dropped in a
         // later version): fall back rather than leaving a blank waveform.
-        renderer = _waveformRenderers[SETTINGS_VALUE_WAVEFORM_STYLE_DEFAULT];
+        renderer = [WaveformRendererRegistry rendererClassForIdentifier:SETTINGS_VALUE_WAVEFORM_STYLE_DEFAULT];
         if (!renderer) {
             return;
         }
     }
     _currentWaveformRenderer = [[renderer alloc] initWithLayer:self.layer bounds:self.bounds isDark:self.isDark];
+    [self applyResolvedTheme];
     [self drawWaveform];
     [self updateRendererProgress];
 }
 
+// The one resolution site on this view: settings + appearance +
+// artworkThemeColor into the renderer's palette.
+- (void)applyResolvedTheme {
+    if (!_currentWaveformRenderer) {
+        return;
+    }
+    AppSettings *settings = AppSettings.sharedInstance;
+    BOOL isDark = self.isDark;
+    _currentWaveformRenderer.theme = [WaveformTheme themeForIdentifier:settings.waveformTheme
+                                                                isDark:isDark
+                                                          artworkColor:self.artworkThemeColor
+                                                          customPlayed:[settings waveformCustomPlayedColorForDark:isDark]
+                                                        customUnplayed:[settings waveformCustomUnplayedColorForDark:isDark]];
+    [_currentWaveformRenderer updateColors:isDark];
+}
+
+- (void)refreshThemeColors {
+    if (!_currentWaveformRenderer) {
+        return;
+    }
+    [self applyResolvedTheme];
+    // updateColors: left the -1 boundary sentinel; this repaints everything.
+    [self updateRendererProgress];
+}
+
 - (NSString *)displayNameForStyle:(NSString *)identifier {
-    return [_waveformRenderers[identifier] displayName] ?: identifier;
+    return [WaveformRendererRegistry displayNameForIdentifier:identifier];
 }
 
 - (void)drawWaveform {
@@ -111,27 +117,95 @@
 }
 
 - (NSArray<NSString*>*)availableWaveformStyles {
-    return _waveformRenderers.allKeys;
+    return [WaveformRendererRegistry availableIdentifiers];
 }
 
 - (void)mouseDown:(NSEvent *)event {
+    _didClickInside = NO;
+    _isDragSeeking = NO;
+    if (!_waveform || !_currentWaveformRenderer || self.bounds.size.width <= 0) {
+        // Nothing to scrub — empty, loading, parked — so the whole surface
+        // drags the window, as it always did.
+        [self.window performWindowDragWithEvent:event];
+        return;
+    }
     NSPoint e = [event locationInWindow];
     NSPoint mouseLoc = [self convertPoint:e fromView:nil];
     if ([self mouse:mouseLoc inRect:self.bounds]) {
         NSRect band = [_currentWaveformRenderer seekHitBandForBounds:self.bounds];
         if (mouseLoc.y >= NSMinY(band) && mouseLoc.y <= NSMaxY(band)) {
             _didClickInside = YES;
+            _dragBehavior = AppSettings.sharedInstance.waveformDragBehavior;
+            _mouseDownPoint = mouseLoc;
+            _windowOriginAtMouseDown = self.window.frame.origin;
+            return;
         }
     }
+    // Outside the seek band the drag is the window's in every mode.
+    [self.window performWindowDragWithEvent:event];
+}
+
+// Seek-on-drag tracks the cursor with the hover highlight; the audio is
+// seeked once, on release. In drag_window mode the hysteresis decides:
+// past it the rest of the gesture is handed to the window's own drag, and
+// only a click that never crossed it seeks from mouseUp:.
+- (void)mouseDragged:(NSEvent *)event {
+    if (!_didClickInside) {
+        return;
+    }
+    NSPoint p = [self convertPoint:event.locationInWindow fromView:nil];
+    if (!_isDragSeeking &&
+        hypot(p.x - _mouseDownPoint.x, p.y - _mouseDownPoint.y) <= kWaveformDragHysteresis) {
+        return;
+    }
+    if (![_dragBehavior isEqualToString:SETTINGS_VALUE_WAVEFORM_DRAG_SEEK]) {
+        // Disarm before the handoff: after it the remaining events belong to
+        // the window's drag, and a mouseUp that does arrive must not seek.
+        _didClickInside = NO;
+        [self.window performWindowDragWithEvent:event];
+        return;
+    }
+    // Once past the hysteresis the drag tracks even outside the band or the
+    // view; the clamp decides the column, like every system slider.
+    _isDragSeeking = YES;
+    [_currentWaveformRenderer setHoverHighlightX:[self clampedSeekX:p.x]];
 }
 
 - (void)mouseUp:(NSEvent *)event {
+    BOOL wasDragSeeking = _isDragSeeking;
+    _isDragSeeking = NO;
     if (!_didClickInside) {
         return;
     }
     _didClickInside = NO;
+    if (!_waveform || !_currentWaveformRenderer || self.bounds.size.width <= 0) {
+        return;
+    }
     NSPoint e = [event locationInWindow];
     NSPoint mouseLoc = [self convertPoint:e fromView:nil];
+    if (wasDragSeeking) {
+        // The drag may legitimately end outside the view, so the containment
+        // test below does not apply; the clamped column is the target.
+        [self.delegate audioWaveformView:self
+                                 didSeek:(float) ([self clampedSeekX:mouseLoc.x] / self.bounds.size.width)];
+        if (!NSPointInRect(mouseLoc, self.bounds)) {
+            [self hideHoverIndicator];
+        }
+        return;
+    }
+    if ([_dragBehavior isEqualToString:SETTINGS_VALUE_WAVEFORM_DRAG_WINDOW]) {
+        // A moved mouse must never seek. The window-origin check catches the
+        // server-side background drag, where the view-local point barely moves
+        // because the window traveled with the cursor; the local-point check
+        // covers delivery where it doesn't.
+        NSPoint origin = self.window.frame.origin;
+        if (hypot(origin.x - _windowOriginAtMouseDown.x,
+                  origin.y - _windowOriginAtMouseDown.y) > kWaveformDragHysteresis ||
+            hypot(mouseLoc.x - _mouseDownPoint.x,
+                  mouseLoc.y - _mouseDownPoint.y) > kWaveformDragHysteresis) {
+            return;
+        }
+    }
     if ([self mouse:mouseLoc inRect:[self bounds]]) {
         CGFloat x = mouseLoc.x - self.bounds.origin.x;
         float p = (float) (x / self.bounds.size.width);
@@ -139,7 +213,22 @@
     }
 }
 
+- (CGFloat)clampedSeekX:(CGFloat)x {
+    return MAX((CGFloat) 0, MIN(x, self.bounds.size.width));
+}
+
 - (BOOL)isOpaque {
+    return NO;
+}
+
+// TRAP: a constant NO on purpose. AppKit caches this answer in the window's
+// movable-background region when the view joins the window, so a value
+// derived from the drag setting or the loaded state goes stale the moment
+// either changes — the seek mode then scrubbed while the server-side drag
+// moved the window with it. The view owns every drag that starts on it, and
+// the modes that move the window hand their gesture to
+// performWindowDragWithEvent:, a per-gesture decision nothing caches.
+- (BOOL)mouseDownCanMoveWindow {
     return NO;
 }
 
@@ -240,6 +329,9 @@
 // must not survive, and redraw, themselves.
 - (void)resetWaveformContentState {
     [self hideHoverIndicator];
+    _didClickInside = NO;
+    // A track change mid-drag makes the release a no-op.
+    _isDragSeeking = NO;
     _convertSweepFraction = 0;
     _waveform = nil;
     self.progress = 0;
@@ -250,18 +342,10 @@
     [self hideEmptyPlaceholder];
     [self resetWaveformContentState];
     if (!_currentWaveformRenderer) {
-        // Prefer the persisted style, then the app default. allKeys[0] is a
-        // last resort only, because NSMutableDictionary key order is
-        // unspecified and it would otherwise pick an arbitrary renderer from
-        // one run to the next.
-        NSString *style = [[AppSettings sharedInstance] waveformStyle];
-        if (!style.length || !_waveformRenderers[style]) {
-            style = SETTINGS_VALUE_WAVEFORM_STYLE_DEFAULT;
-        }
-        if (!_waveformRenderers[style]) {
-            style = _waveformRenderers.allKeys.firstObject;
-        }
-        [self setWaveformStyle:style];
+        // Prefer the persisted style, then the app default; the registry owns
+        // the chain.
+        [self setWaveformStyle:[WaveformRendererRegistry
+                resolveStyleIdentifier:[[AppSettings sharedInstance] waveformStyle]]];
     }
     [self drawWaveform];
 }
@@ -280,21 +364,12 @@
         // rest of the collapse.
         [self drawWaveform];
     }
-    if (sizeChanged && _loadingLayer) {
+    if (sizeChanged && _loadingIndicator) {
         // Keep the shimmer centered, spanning the new width, mid-load.
         [self layoutLoadingLayer];
     }
     if (sizeChanged && _placeholderLayer) {
         [self layoutPlaceholderLayer];
-    }
-}
-
-static void applyContentsScale(CALayer *layer, CGFloat scale) {
-    if (!layer) return;
-    layer.contentsScale = scale;
-    applyContentsScale(layer.mask, scale);
-    for (CALayer *sublayer in layer.sublayers) {
-        applyContentsScale(sublayer, scale);
     }
 }
 
@@ -304,7 +379,8 @@ static void applyContentsScale(CALayer *layer, CGFloat scale) {
 - (void)viewDidChangeBackingProperties {
     [super viewDidChangeBackingProperties];
     CGFloat scale = VibeBackingScaleForWindow(self.window);
-    applyContentsScale(self.layer, scale);
+    VibeApplyContentsScale(self.layer, scale);
+    [_loadingIndicator updateContentsScale:scale];
     // Settled geometry is snapped to the old display's pixel grid, and the
     // same-size draw path skips the rebuild; ask for it explicitly. Must run
     // after the scale re-stamp above, which the rebuild reads.
@@ -323,7 +399,10 @@ static void applyContentsScale(CALayer *layer, CGFloat scale) {
     if (_currentWaveformRenderer) {
         BOOL isDark = self.isDark;
         if (_currentWaveformRenderer.isDark != isDark) {
-            [_currentWaveformRenderer updateColors:isDark];
+            // The theme is resolved per appearance, so a flip re-resolves it
+            // rather than merely recoloring: white's base and the album-art
+            // legibility clamp both depend on isDark.
+            [self applyResolvedTheme];
             [self updateRendererProgress];
         }
     }
