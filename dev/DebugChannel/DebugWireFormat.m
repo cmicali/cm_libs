@@ -3,7 +3,7 @@
 // Copyright (c) 2026 Christopher Micali. All rights reserved.
 //
 
-#import "DebugShared.h"
+#import "DebugWireFormat.h"
 
 #if DEBUG
 
@@ -49,6 +49,26 @@ NSString *VibeErrorJSON(NSString *format, ...) {
 BOOL VibeParseDouble(NSString *token, double *out) {
     NSScanner *scanner = [NSScanner scannerWithString:token];
     return [scanner scanDouble:out] && scanner.isAtEnd;
+}
+
+BOOL VibeParseNonnegativeInteger(NSString *token, NSUInteger *out) {
+    if (!token.length) {
+        return NO;
+    }
+    NSUInteger parsed = 0;
+    for (NSUInteger index = 0; index < token.length; index++) {
+        unichar character = [token characterAtIndex:index];
+        if (character < '0' || character > '9') {
+            return NO;
+        }
+        NSUInteger digit = character - '0';
+        if (parsed > (NSUIntegerMax - digit) / 10) {
+            return NO;
+        }
+        parsed = parsed * 10 + digit;
+    }
+    *out = parsed;
+    return YES;
 }
 
 #endif

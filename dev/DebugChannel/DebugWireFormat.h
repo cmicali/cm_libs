@@ -7,10 +7,15 @@
 
 #if DEBUG
 
-// Shared between the app side of the debug command channel (DebugUtil.m) and
-// the CLI client (DebugClient.m): the transport's notification name, the
-// per-command file paths, and the JSON reply serialization. Same C-linkage
-// guard rationale as DebugUtil.h.
+// The debug command channel's wire format: the transport's notification name,
+// the per-command file paths, and the JSON reply serialization. Every end of
+// the channel agrees here — both apps' command tables, the shared verbs and
+// dispatch, and the mac CLI client — which is why it is neither app's to own.
+// Same C-linkage guard rationale as Mac/DebugUtil.h.
+//
+// Named for what it holds, not for who shares it: "shared" already means
+// mac-and-iOS everywhere else in this tree (see the root CLAUDE.md on the
+// directory being the platform boundary), and this file predates that meaning.
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,6 +32,7 @@ NSString *VibeJSONString(NSDictionary *dict);
 NSString *VibeErrorJSON(NSString *format, ...) NS_FORMAT_FUNCTION(1, 2);
 
 BOOL VibeParseDouble(NSString *token, double *out);
+BOOL VibeParseNonnegativeInteger(NSString *token, NSUInteger *out);
 
 // The command table's per-verb spec — {usage, clientTimeout, handler} —
 // defined in DebugUtil.m. The client reads clientTimeout from it, so its
