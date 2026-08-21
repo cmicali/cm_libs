@@ -10,6 +10,7 @@
 #if DEBUG
 
 #import "AudioPlayer.h"
+#import "AudioLevelMath.h"
 
 @interface AudioPlayer (Debug)
 
@@ -19,7 +20,7 @@
 // lock-free.
 - (BOOL)manualRenderingActive;
 
-// {attachedNodes, retiredFades} for dump_health and check_invariants. A track
+// {attachedNodes, retiredFades} for dump_health and check_consistency. A track
 // change that failed to retire its node pair leaks them, which nothing else
 // observes — and since a soak run is thousands of track changes, unbounded
 // growth is the signal. The two are reported together because they fail apart:
@@ -32,6 +33,16 @@
 // channel runs on the main thread and would otherwise never see the player
 // wedged.
 - (NSDictionary<NSString *, NSNumber *> *)debugEngineCounts;
+
+// Mode selection is session-only. A valid change synchronously replaces an
+// active tap, so the next state snapshot describes the replacement analyzer.
+- (void)debugSetEqualizerNormalizationMode:(VibeAudioLevelNormalizationMode)normalizationMode;
+
+// Demand, installation, actual output liveness, audio callback/window/
+// publication counts, newest lifetime sequence and delivered format. Counters
+// are atomics incremented by the tap; creating this dictionary happens only on
+// the command thread, never on the audio render thread.
+- (NSDictionary<NSString *, id> *)debugEqualizerState;
 
 @end
 
