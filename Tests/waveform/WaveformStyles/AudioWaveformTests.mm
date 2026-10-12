@@ -3,36 +3,19 @@
 #import "AudioWaveform.h"
 #import "WaveformMorphEngine.h"
 #import "WaveformRendererRegistry.h"
-#import "DetailedAudioWaveformRenderer.h"
+#import "DetailedWaveformRenderer.h"
 #import "AppSettings.h"
 #import "VibeStrings.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <numeric>
 #include <vector>
 
 @interface AudioWaveformTests : XCTestCase
 @end
 
-@implementation AudioWaveformTests {
-    // 64 chunks, chunk i = (min -i, max +i): the index is recoverable from
-    // either extreme, so a combined column reports which source chunks it
-    // actually covered.
-    std::vector<AudioWaveformCacheChunk> _source;
-}
-
-- (void)setUp {
-    _source.assign(64, AudioWaveformCacheChunk());
-    for (NSUInteger i = 0; i < 64; i++) {
-        _source[i].set(-(float)i, (float)i);
-    }
-}
-
-- (AudioWaveform *)waveform {
-    return new AudioWaveform(_source.size(), _source.data());
-}
+@implementation AudioWaveformTests
 
 // Normalize's reference as a fill reads it: off the energy columns it drew.
 static float VibeTestFullScaleRMS(AudioWaveform *waveform, BOOL normalize, NSUInteger columns) {
@@ -41,7 +24,7 @@ static float VibeTestFullScaleRMS(AudioWaveform *waveform, BOOL normalize, NSUIn
     return VibeWaveformFullScaleRMSForColumns(waveform, normalize, meanSquares.data(), columns);
 }
 
-- (AudioWaveformRenderer *)rendererForStyle:(NSString *)identifier {
+- (WaveformRenderer *)rendererForStyle:(NSString *)identifier {
     CALayer *host = [CALayer layer];
     host.bounds = CGRectMake(0, 0, 512, 80);
     return [WaveformRendererRegistry rendererForResolvedIdentifier:identifier
@@ -168,7 +151,7 @@ static float VibeTestFullScaleRMS(AudioWaveform *waveform, BOOL normalize, NSUIn
     for (NSString *style in @[@"detailed", @"oversampling_detailed_x4", @"basic", @"cupertino"]) {
         CGRect boxes[2];
         for (BOOL centered : {YES, NO}) {
-            AudioWaveformRenderer *renderer = [self rendererForStyle:style];
+            WaveformRenderer *renderer = [self rendererForStyle:style];
             renderer.centered = centered;
             CALayer *host = renderer.parentLayer;
             [renderer updateWaveform:host.bounds progress:0.5 waveform:&waveform];
@@ -205,7 +188,7 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
 - (void)testGroundedRampKeepsTheMidlinesBrightnessAtTheBaseline {
     CGFloat baseline = VibeBarBaseline(1);
     for (NSString *style in @[@"detailed", @"basic", @"three_band"]) {
-        AudioWaveformRenderer *renderer = [self rendererForStyle:style];
+        WaveformRenderer *renderer = [self rendererForStyle:style];
         CAGradientLayer *ramp = VibeFirstGradient(renderer.parentLayer);
         XCTAssertNotNil(ramp, @"%@", style);
         CGFloat (^at)(CGFloat) = ^CGFloat(CGFloat y) {
@@ -223,8 +206,8 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
 // rather than the fade mirrored about the midline.
 - (void)testGroundedCupertinoTakesBasicsRamp {
     VibeColor *color = [VibeColor colorWithWhite:1 alpha:0.8];
-    DetailedAudioWaveformRenderer *cupertino = (DetailedAudioWaveformRenderer *)[self rendererForStyle:@"cupertino"];
-    DetailedAudioWaveformRenderer *basic = (DetailedAudioWaveformRenderer *)[self rendererForStyle:@"basic"];
+    DetailedWaveformRenderer *cupertino = (DetailedWaveformRenderer *)[self rendererForStyle:@"cupertino"];
+    DetailedWaveformRenderer *basic = (DetailedWaveformRenderer *)[self rendererForStyle:@"basic"];
     NSArray *mirrored = [cupertino gradientColorsForColor:color isDark:YES];
     cupertino.centered = NO;
     XCTAssertEqualObjects([cupertino gradientColorsForColor:color isDark:YES],
@@ -245,7 +228,7 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
 }
 
 - (void)testPillWidthScalesHeightAndHoverWithinSeekBand {
-    AudioWaveformRenderer *renderer = [self rendererForStyle:@"cupertino_basic"];
+    WaveformRenderer *renderer = [self rendererForStyle:@"cupertino_basic"];
     CALayer *host = renderer.parentLayer;
     CALayer *pill = host.sublayers.firstObject;
     CALayer *fill = pill.sublayers.firstObject;
@@ -279,11 +262,11 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
     chunk.set(-0.5f, 0.5f, 0.25f, 1);
     AudioWaveform waveform(1, &chunk);
     for (NSString *style in @[@"basic", @"cupertino", @"sonic_cirrus", @"wiggle_centered"]) {
-        AudioWaveformRenderer *renderer = [self rendererForStyle:style];
+        WaveformRenderer *renderer = [self rendererForStyle:style];
         CALayer *host = renderer.parentLayer;
         BOOL sonic = [style isEqualToString:@"sonic_cirrus"];
         BOOL wiggle = [style hasPrefix:@"wiggle"];
-        DetailedAudioWaveformRenderer *detailed = sonic ? nil : (DetailedAudioWaveformRenderer *)renderer;
+        DetailedWaveformRenderer *detailed = sonic ? nil : (DetailedWaveformRenderer *)renderer;
         for (CGFloat density : {0.5, 1.0, 2.0}) {
             renderer.barDensity = density;
             renderer.barWidthScale = 1;
@@ -343,8 +326,8 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
         // 3-Band draws three levels a bar, which its own tests cover.
         if ([identifier isEqualToString:@"sonic_cirrus"] || [identifier isEqualToString:@"cupertino_basic"] ||
             [identifier isEqualToString:@"three_band"]) continue;
-        DetailedAudioWaveformRenderer *renderer = (DetailedAudioWaveformRenderer *)[self rendererForStyle:identifier];
-        XCTAssertTrue([renderer isKindOfClass:DetailedAudioWaveformRenderer.class], @"%@", identifier);
+        DetailedWaveformRenderer *renderer = (DetailedWaveformRenderer *)[self rendererForStyle:identifier];
+        XCTAssertTrue([renderer isKindOfClass:DetailedWaveformRenderer.class], @"%@", identifier);
         for (CGFloat width : {257.0, 512.0, 773.0}) {
             NSUInteger count = [renderer numBarsForWidth:width];
             std::vector<float> plain(count * 2), normalized(count * 2);
@@ -374,7 +357,7 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
     for (auto &chunk : chunks) chunk.set(-0.01f, 0.01f, 0.0001f, 1);
     chunks[816].set(-0.5f, 0.5f, 0.25f, 1);
     AudioWaveform waveform(chunks.size(), chunks.data());
-    DetailedAudioWaveformRenderer *renderer = (DetailedAudioWaveformRenderer *)[self rendererForStyle:@"detailed"];
+    DetailedWaveformRenderer *renderer = (DetailedWaveformRenderer *)[self rendererForStyle:@"detailed"];
     for (CGFloat width : {930.0, 931.0, 1200.0}) {
         NSUInteger count = [renderer numBarsForWidth:width];
         XCTAssertGreaterThan(count, kVibeWaveformEnergyColumns);
@@ -396,7 +379,7 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
     std::vector<AudioWaveformCacheChunk> steady = chunks;
     chunks[816].set(-0.9f, 0.9f, 0.81f, 1);
     AudioWaveform waveform(chunks.size(), chunks.data()), background(steady.size(), steady.data());
-    DetailedAudioWaveformRenderer *renderer = (DetailedAudioWaveformRenderer *)[self rendererForStyle:@"detailed"];
+    DetailedWaveformRenderer *renderer = (DetailedWaveformRenderer *)[self rendererForStyle:@"detailed"];
     for (CGFloat width : {930.0, 931.0, 1200.0}) {
         NSUInteger count = [renderer numBarsForWidth:width];
         std::vector<float> envelope(count * 2), plain(count * 2);
@@ -419,7 +402,7 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
     chunks[511].set(-0.8f, 0.8f, 0.64f, 1);
     AudioWaveform waveform(chunks.size(), chunks.data());
     for (NSString *identifier in @[@"sonic_cirrus", @"cupertino_basic"]) {
-        AudioWaveformRenderer *renderer = [self rendererForStyle:identifier];
+        WaveformRenderer *renderer = [self rendererForStyle:identifier];
         CALayer *host = renderer.parentLayer;
         for (CGFloat width : {257.0, 512.0, 773.0}) {
             host.bounds = CGRectMake(0, 0, width, 80);
@@ -451,7 +434,7 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
 }
 
 // Wiggle MC is Wiggle with Centered off: its identifier is gone, and only the
-// migrations read it (AppThemeTests).
+// migrations read it (AppThemeStoreTests).
 - (void)testWaveformRegistryBuildsDistinctStylesThatShareAClass {
     NSArray *identifiers = [WaveformRendererRegistry availableIdentifiers];
     XCTAssertFalse([identifiers containsObject:SETTINGS_VALUE_WAVEFORM_STYLE_LEGACY_WIGGLE_MC]);
@@ -460,9 +443,9 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
     XCTAssertEqualObjects([WaveformRendererRegistry resolveStyleIdentifier:@"missing-style"], SETTINGS_VALUE_WAVEFORM_STYLE_DEFAULT);
     XCTAssertEqualObjects([WaveformRendererRegistry resolveStyleIdentifier:nil], SETTINGS_VALUE_WAVEFORM_STYLE_DEFAULT);
     for (NSString *identifier in @[@"detailed", @"wiggle_centered"]) {
-        DetailedAudioWaveformRenderer *renderer = (DetailedAudioWaveformRenderer *)[self rendererForStyle:identifier];
+        DetailedWaveformRenderer *renderer = (DetailedWaveformRenderer *)[self rendererForStyle:identifier];
         BOOL wiggle = ![identifier isEqualToString:@"detailed"];
-        XCTAssertEqual(renderer.class, DetailedAudioWaveformRenderer.class);
+        XCTAssertEqual(renderer.class, DetailedWaveformRenderer.class);
         XCTAssertEqual([renderer numBarsForWidth:512], wiggle ? 64u : 1024u);
         renderer.samplingWidth = 512;
         XCTAssertEqual([renderer numBarsForWidth:2048], wiggle ? 64u : 4096u,
@@ -473,7 +456,7 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
 }
 
 - (void)testWiggleHighlightsWholeLoopsWithoutQuantizingThePlayedFill {
-    DetailedAudioWaveformRenderer *renderer = (DetailedAudioWaveformRenderer *)[self rendererForStyle:@"wiggle_centered"];
+    DetailedWaveformRenderer *renderer = (DetailedWaveformRenderer *)[self rendererForStyle:@"wiggle_centered"];
     CALayer *host = renderer.parentLayer;
     CGRect leftStem = [renderer hoverColumnRectForX:2 bounds:host.bounds scale:2];
     CGRect crest = [renderer hoverColumnRectForX:4 bounds:host.bounds scale:2];
@@ -490,7 +473,7 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
     quiet.set(-0.014f, 0.014f, 0.000196f, 1);
     AudioWaveform waveform(1, &quiet);
     for (BOOL centered : {YES, NO}) {
-        AudioWaveformRenderer *renderer = [self rendererForStyle:@"wiggle_centered"];
+        WaveformRenderer *renderer = [self rendererForStyle:@"wiggle_centered"];
         renderer.centered = centered;
         CALayer *host = renderer.parentLayer;
         [renderer updateWaveform:host.bounds progress:0 waveform:&waveform];
@@ -601,22 +584,6 @@ static CAGradientLayer *VibeFirstGradient(CALayer *layer) {
     XCTAssertTrue(archived.isComplete());
 }
 
-// The edge is the first chunk with no frames, and a complete waveform is whole
-// even where its decode ended a chunk short.
-- (void)testDecodedFractionIsTheFirstUnfilledChunk {
-    AudioWaveform loading;
-    NSUInteger count = loading.getNumChunks();
-    XCTAssertEqual(loading.getDecodedFraction(), 0);
-    AudioWaveformCacheChunk silent;
-    silent.set(0, 0, 0, 4);
-    for (NSUInteger i = 0; i < count / 4; i++) {
-        loading.setChunkAtIndex(silent, i);
-    }
-    XCTAssertEqual(loading.getDecodedFraction(), 0.25);
-    loading.markComplete();
-    XCTAssertEqual(loading.getDecodedFraction(), 1);
-}
-
 #pragma mark - 3-Band
 
 // The painter's layers, in order: low, mid, high, low+mid, low+high, mid+high,
@@ -646,11 +613,11 @@ static uint32_t VibeRGBAt(CGImageRef image, size_t row, size_t column) {
 }
 
 // The band layers' host, which the sides' mask covers.
-static CALayer *VibeThreeBandHost(AudioWaveformRenderer *renderer) {
+static CALayer *VibeThreeBandHost(WaveformRenderer *renderer) {
     return renderer.parentLayer.sublayers.firstObject.sublayers.firstObject;
 }
 
-static NSArray<CAShapeLayer *> *VibeThreeBandLayers(AudioWaveformRenderer *renderer) {
+static NSArray<CAShapeLayer *> *VibeThreeBandLayers(WaveformRenderer *renderer) {
     return (NSArray<CAShapeLayer *> *)VibeThreeBandHost(renderer).sublayers;
 }
 
@@ -672,7 +639,7 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
                                             normalize:(BOOL)normalize
                                              waveform:(BOOL)hasWaveform {
     AudioWaveform waveform = VibeThreeBandTestWaveform(bands);
-    AudioWaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
+    WaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
     renderer.normalizesLevels = normalize;
     CALayer *host = renderer.parentLayer;
     [renderer updateWaveform:host.bounds progress:0.5 waveform:hasWaveform ? &waveform : nullptr];
@@ -710,7 +677,7 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
     AudioWaveform waveform = VibeThreeBandTestWaveform({1, 0.01f, 0.0001f});
     std::vector<CGRect> boxes[2];
     for (BOOL centered : {YES, NO}) {
-        AudioWaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
+        WaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
         renderer.centered = centered;
         [renderer updateWaveform:renderer.parentLayer.bounds progress:0.5 waveform:&waveform];
         [renderer settleMorphImmediately];
@@ -777,7 +744,7 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
 
 // The bars' levels, low to high, as 3-Band draws them across this width.
 - (std::vector<float>)threeBandLevelsForWaveform:(AudioWaveform *)waveform width:(CGFloat)width {
-    AudioWaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
+    WaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
     CGRect bounds = renderer.parentLayer.bounds;
     renderer.parentLayer.bounds = CGRectMake(0, 0, width, bounds.size.height);
     NSData *samples = [renderer envelopeSamplesForWaveform:waveform];
@@ -823,7 +790,7 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
 // Each layer is one outline through the bars, never a shape per bar.
 - (void)testThreeBandDrawsOneOutlinePerLayer {
     AudioWaveform waveform = VibeThreeBandTestWaveform({1, 0.01f, 0.0001f});
-    AudioWaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
+    WaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
     [renderer updateWaveform:renderer.parentLayer.bounds progress:0.5 waveform:&waveform];
     [renderer settleMorphImmediately];
     for (CAShapeLayer *layer in VibeThreeBandLayers(renderer)) {
@@ -836,7 +803,7 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
 - (void)testThreeBandPaintsEachRingInTheThemesBandColor {
     std::array<float, 3> levels = {1, 0.01f, 0.0001f};
     AudioWaveform waveform = VibeThreeBandTestWaveform(levels);
-    AudioWaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
+    WaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
     WaveformTheme *theme = [WaveformTheme monochromeThemeIsDark:YES];
     theme.flatFill = YES;
     NSMutableArray<VibeColor *> *bands = [NSMutableArray array];
@@ -873,7 +840,7 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
 // top, dimmer toward the bottom. A flat theme drops it.
 - (void)testThreeBandRampsLikeDetailedUnlessTheThemeIsFlat {
     AudioWaveform waveform = VibeThreeBandTestWaveform({1, 0.01f, 0.0001f});
-    AudioWaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
+    WaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
     CGSize size = renderer.parentLayer.bounds.size;
     // Inside the bands, the same distance above and below the midline; row 0
     // is the image's top.
@@ -909,7 +876,7 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
 
 // The playhead splits the mask over one set of band layers.
 - (void)testThreeBandProgressSplitsTheSides {
-    AudioWaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
+    WaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
     CGFloat width = renderer.parentLayer.bounds.size.width;
     [renderer updateProgress:0.25 waveform:nullptr];
     NSArray<CALayer *> *sides = VibeThreeBandHost(renderer).mask.sublayers;
@@ -923,7 +890,7 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
 - (void)testThreeBandBuildsItsHoverOutlineOnlyWhileShown {
     std::array<float, 3> bands = {1, 0.01f, 0.0001f};
     AudioWaveform waveform = VibeThreeBandTestWaveform(bands);
-    AudioWaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
+    WaveformRenderer *renderer = [self rendererForStyle:@"three_band"];
     CALayer *host = renderer.parentLayer;
     [renderer updateWaveform:host.bounds progress:0.5 waveform:&waveform];
     [renderer settleMorphImmediately];
@@ -946,356 +913,6 @@ static NSUInteger VibeSubpathCount(CGPathRef path) {
     }
     XCTAssertFalse([WaveformRendererRegistry readsBandsForIdentifier:nil]);
     XCTAssertFalse([WaveformRendererRegistry readsBandsForIdentifier:@"missing-style"]);
-}
-
-#pragma mark - getBarMeanSquares
-
-// Chunk i carries mean square i, and bands i, 2i and 3i, over one frame.
-static AudioWaveform VibeRampWaveform(NSUInteger count) {
-    std::vector<AudioWaveformCacheChunk> chunks(count);
-    std::vector<float> bands;
-    for (NSUInteger i = 0; i < count; i++) {
-        chunks[i].set(0, 0, (float)i, 1);
-        bands.insert(bands.end(), {(float)i, (float)i * 2, (float)i * 3});
-    }
-    return AudioWaveform(chunks.size(), chunks.data(), bands.data());
-}
-
-// Without reach a bar's window is the bar, so a ramp reads its own value at
-// the bar's center, in the mix and in every band; with or without, it never
-// runs backwards.
-- (void)testBarMeanSquaresReadARampAtEachBarsCenter {
-    AudioWaveform w = VibeRampWaveform(64);
-    for (NSUInteger size : {(NSUInteger)64, (NSUInteger)32, (NSUInteger)8}) {
-        std::vector<float> mix(size), bands(size * kAudioWaveformBandCount);
-        w.getBarMeanSquares(size, 0, mix.data(), bands.data());
-        for (NSUInteger i = 0; i < size; i++) {
-            float center = ((float)i + 0.5f) * 64 / (float)size - 0.5f;
-            XCTAssertEqualWithAccuracy(mix[i], center, 1e-4, @"size %lu bar %lu", size, i);
-            for (NSUInteger b = 0; b < kAudioWaveformBandCount; b++) {
-                XCTAssertEqualWithAccuracy(bands[i * kAudioWaveformBandCount + b], center * (b + 1), 1e-3,
-                                           @"size %lu bar %lu band %lu", size, i, b);
-            }
-        }
-    }
-    for (float reach : {0.0f, 0.5f, 1.0f}) {
-        for (NSUInteger size = 1; size <= 200; size++) {
-            std::vector<float> mix(size);
-            w.getBarMeanSquares(size, reach, mix.data(), nullptr);
-            for (NSUInteger i = 0; i < size; i++) {
-                XCTAssertTrue(mix[i] >= 0 && mix[i] <= 63 + 1e-3f, @"reach %g size %lu bar %lu", reach, size, i);
-                if (i > 0) {
-                    XCTAssertGreaterThanOrEqual(mix[i], mix[i - 1] - 1e-4f, @"reach %g size %lu bar %lu", reach, size, i);
-                }
-            }
-        }
-    }
-}
-
-// The frames are windowed as the sums are, so a steady level reads as itself
-// at every width and reach, the bars whose windows slide off the track
-// included, and a load still streaming is the mean of the frames it has: its
-// front bar is not dragged toward the silence past it.
-- (void)testBarMeanSquaresAreTheMeanOfTheFramesTheWindowCovers {
-    std::vector<AudioWaveformCacheChunk> chunks(64);
-    for (NSUInteger i = 0; i < 32; i++) chunks[i].set(-0.5f, 0.5f, 0.25f * 4, 4);
-    AudioWaveform half(chunks.size(), chunks.data());
-    for (NSUInteger i = 32; i < 64; i++) chunks[i].set(-0.5f, 0.5f, 0.25f * 4, 4);
-    AudioWaveform whole(chunks.size(), chunks.data());
-    for (float reach : {0.0f, 1.0f}) {
-        for (NSUInteger size = 1; size <= 200; size++) {
-            std::vector<float> loaded(size), level(size), bands(size * kAudioWaveformBandCount, 1);
-            whole.getBarMeanSquares(size, reach, level.data(), bands.data());
-            half.getBarMeanSquares(size, reach, loaded.data(), nullptr);
-            for (NSUInteger i = 0; i < size; i++) {
-                XCTAssertEqualWithAccuracy(level[i], 0.25f, 1e-5, @"size %lu bar %lu", size, i);
-                XCTAssertTrue(loaded[i] == 0 || fabsf(loaded[i] - 0.25f) < 1e-5f, @"size %lu bar %lu", size, i);
-                XCTAssertEqual(bands[i * kAudioWaveformBandCount], 0, @"no bands read as silence");
-            }
-            XCTAssertEqualWithAccuracy(loaded[0], 0.25f, 1e-5, @"size %lu", size);
-            if (size >= 4) XCTAssertEqual(loaded[size - 1], 0, @"size %lu", size);
-        }
-    }
-    AudioWaveform empty(0, nullptr);
-    float untouched = 7;
-    empty.getBarMeanSquares(1, 1, &untouched, nullptr);
-    XCTAssertEqual(untouched, 0);
-}
-
-// What the reach is for. A kick in two chunks of every ten, drawn at about a
-// thousand bars: a bar is 0.8 of a beat, so a bar with hard edges holds a
-// whole kick, part of one or two parts, and the bars beat against the kicks
-// in a pattern that runs along the waveform as a resize moves the edges. With
-// reach every bar finds a window holding one kick whole, at its full height.
-- (void)testReachHoldsBarsStillAgainstABeatAboutABarLong {
-    std::vector<AudioWaveformCacheChunk> chunks(8192);
-    for (NSUInteger i = 0; i < chunks.size(); i++) {
-        chunks[i].set(-1, 1, i % 10 < 2 ? 1.0f : 0.01f, 1);
-    }
-    AudioWaveform w(chunks.size(), chunks.data());
-    auto spread = [](const std::vector<float> &bars) {
-        auto [low, high] = std::minmax_element(bars.begin() + 1, bars.end() - 1);
-        float mean = std::accumulate(bars.begin() + 1, bars.end() - 1, 0.0f) / (float)(bars.size() - 2);
-        return (*high - *low) / mean;
-    };
-    for (NSUInteger size : {(NSUInteger)1000, (NSUInteger)1001, (NSUInteger)1010}) {
-        std::vector<float> still(size), hard(size);
-        w.getBarMeanSquares(size, 1, still.data(), nullptr);
-        w.getBarMeanSquares(size, 0, hard.data(), nullptr);
-        XCTAssertGreaterThan(spread(hard), 1.0f, @"size %lu", size);
-        XCTAssertLessThan(spread(still), 0.05f, @"size %lu", size);
-        float oneKick = (2 + ((float)chunks.size() / size - 2) * 0.01f) / ((float)chunks.size() / size);
-        XCTAssertEqualWithAccuracy(still[size / 2], oneKick, oneKick * 0.01f, @"size %lu", size);
-    }
-}
-
-// The reach fades out as the bars get short: full up to the given count,
-// none from twice that.
-- (void)testWindowReachFadesOutAsBarsGetShort {
-    XCTAssertEqual(VibeWaveformWindowReach(2, 512), 1);
-    XCTAssertEqual(VibeWaveformWindowReach(512, 512), 1);
-    XCTAssertEqual(VibeWaveformWindowReach(768, 512), 0.5f);
-    XCTAssertEqual(VibeWaveformWindowReach(1024, 512), 0);
-    XCTAssertEqual(VibeWaveformWindowReach(8192, 512), 0);
-}
-
-#pragma mark - getChunkAtIndex
-
-- (void)testRequestingTheNativeChunkCountReturnsChunksVerbatim {
-    AudioWaveform *w = [self waveform];
-    for (NSUInteger i = 0; i < 64; i++) {
-        AudioWaveformCacheChunk c = w->getChunkAtIndex(i, 64);
-        XCTAssertEqual(c.getMin(), -(float)i);
-        XCTAssertEqual(c.getMax(), (float)i);
-    }
-    delete w;
-}
-
-- (void)testColumnsCombineTheirWholeRange {
-    // Even columns of 8 and 16 chunks, and uneven ones of 12.8 and 21.3,
-    // against an independent scalar reduction.
-    AudioWaveform *w = [self waveform];
-    for (NSUInteger size : {(NSUInteger)8, (NSUInteger)4, (NSUInteger)5, (NSUInteger)3}) {
-        for (NSUInteger i = 0; i < size; i++) {
-            NSUInteger end = 64 * (i + 1) / size;
-            AudioWaveformCacheChunk c = w->getChunkAtIndex(i, size);
-            XCTAssertEqual(c.getMin(), -(float)(end - 1), @"size %lu column %lu", size, i);
-            XCTAssertEqual(c.getMax(), (float)(end - 1));
-        }
-    }
-    delete w;
-}
-
-- (void)testBandMeanSquaresReadEachChunk {
-    AudioWaveform w = VibeRampWaveform(64);
-    float meanSquares[kAudioWaveformBandCount];
-    for (NSUInteger i = 0; i < 64; i++) {
-        w.getBandMeanSquares(i, meanSquares);
-        for (NSUInteger b = 0; b < kAudioWaveformBandCount; b++) {
-            XCTAssertEqual(meanSquares[b], (float)(i * (b + 1)), @"chunk %lu band %lu", i, b);
-        }
-    }
-    AudioWaveform copy(w);
-    copy.getBandMeanSquares(63, meanSquares);
-    XCTAssertEqual(meanSquares[2], 189, @"a copy carries the bands");
-
-    // Without bands every read is silence and every write a no-op.
-    AudioWaveform plain(_source.size(), _source.data());
-    XCTAssertFalse(plain.hasBands());
-    const float sums[kAudioWaveformBandCount] = {1, 2, 3};
-    plain.setBandSumSquaresAtIndex(sums, 0);
-    plain.copyChunk(0, 1);
-    plain.getBandMeanSquares(0, meanSquares);
-    XCTAssertEqual(meanSquares[0] + meanSquares[1] + meanSquares[2], 0);
-    XCTAssertFalse(AudioWaveform(plain).hasBands());
-}
-
-- (void)testColumnsTileTheSourceWithoutSkippingChunks {
-    // Why columns are [start(i), start(i+1)) rather than a floored fixed width:
-    // at a fractional ratio the latter skips source chunks, and a transient
-    // there vanishes at that view width.
-    for (NSUInteger size = 1; size <= 64; size++) {
-        for (NSUInteger spikeAt : {(NSUInteger)0, (NSUInteger)37, (NSUInteger)63}) {
-            std::vector<AudioWaveformCacheChunk> chunks(64, AudioWaveformCacheChunk());
-            chunks[spikeAt].set(-1.0f, 1.0f);
-            AudioWaveform *w = new AudioWaveform(chunks.size(), chunks.data());
-
-            float widest = 0;
-            for (NSUInteger i = 0; i < size; i++) {
-                widest = std::max(widest, w->getChunkAtIndex(i, size).getMax());
-            }
-            XCTAssertEqual(widest, 1.0f,
-                           @"spike at chunk %lu lost at width %lu", spikeAt, size);
-            delete w;
-        }
-    }
-}
-
-- (void)testOversamplingBeyondTheSourceRepeatsRatherThanReadingGarbage {
-    // The x2/x4/x8 styles deliberately ask for more columns than there are
-    // chunks; every column must still land inside the buffer.
-    AudioWaveform *w = [self waveform];
-    for (NSUInteger i = 0; i < 256; i++) {
-        AudioWaveformCacheChunk c = w->getChunkAtIndex(i, 256);
-        XCTAssertTrue(std::isfinite(c.getMin()) && std::isfinite(c.getMax()));
-        XCTAssertLessThanOrEqual(c.getMax(), 63.0f);
-        XCTAssertGreaterThanOrEqual(c.getMin(), -63.0f);
-    }
-    delete w;
-}
-
-- (void)testOutOfRangeIndexReturnsAnEmptyChunk {
-    AudioWaveform *w = [self waveform];
-    AudioWaveformCacheChunk c = w->getChunkAtIndex(8, 8);
-    XCTAssertEqual(c.getMin(), 0.0f);
-    XCTAssertEqual(c.getMax(), 0.0f);
-    delete w;
-}
-
-- (void)testWaveformBuiltFromNullChunksReadsAsEmpty {
-    // The failed-alloc / null-source guard.
-    AudioWaveform *w = new AudioWaveform(64, nullptr);
-    XCTAssertEqual(w->getNumChunks(), (NSUInteger)0);
-    AudioWaveformCacheChunk c = w->getChunkAtIndex(0, 8);
-    XCTAssertEqual(c.getMin(), 0.0f);
-    XCTAssertEqual(c.getMax(), 0.0f);
-    delete w;
-}
-
-- (void)testDefaultWaveformIsZeroedAtFullChunkCount {
-    AudioWaveform *w = new AudioWaveform();
-    XCTAssertGreaterThan(w->getNumChunks(), (NSUInteger)0);
-    XCTAssertEqual(w->getNumBytes(), w->getNumChunks() * sizeof(AudioWaveformCacheChunk));
-    XCTAssertFalse(w->hasBands(), @"only a decode asked for the bands holds them");
-    XCTAssertEqual(w->getNumBandBytes(), 0u);
-    XCTAssertEqual(w->getChunkAtIndex(0, w->getNumChunks()).getMax(), 0.0f);
-    delete w;
-}
-
-#pragma mark - Copying
-
-- (void)testCopyConstructorDeepCopies {
-    // Rule of three: a shallow copy of the chunks pointer would double-free.
-    AudioWaveform *original = [self waveform];
-    AudioWaveform *copy = new AudioWaveform(*original);
-
-    AudioWaveformCacheChunk replaced;
-    replaced.set(-99.0f, 99.0f);
-    original->setChunkAtIndex(replaced, 0);
-
-    XCTAssertEqual(original->getChunkAtIndex(0, 64).getMax(), 99.0f);
-    XCTAssertEqual(copy->getChunkAtIndex(0, 64).getMax(), 0.0f,
-                   @"the copy must not see writes to the original");
-    delete original;
-    delete copy;
-}
-
-#pragma mark - AudioWaveformCacheChunk
-
-- (void)testAColumnWidensToTheExtremesOfItsChunks {
-    AudioWaveformCacheChunk chunks[2];
-    chunks[0].set(-1.0f, 2.0f);
-    chunks[1].set(-3.0f, 1.0f);
-    AudioWaveformCacheChunk widened = AudioWaveform(2, chunks).getChunkAtIndex(0, 1);
-    XCTAssertEqual(widened.getMin(), -3.0f);
-    XCTAssertEqual(widened.getMax(), 2.0f);
-
-    chunks[0].set(-5.0f, 5.0f);
-    chunks[1].set(-1.0f, 1.0f);
-    AudioWaveformCacheChunk unmoved = AudioWaveform(2, chunks).getChunkAtIndex(0, 1);
-    XCTAssertEqual(unmoved.getMin(), -5.0f);
-    XCTAssertEqual(unmoved.getMax(), 5.0f);
-}
-
-- (void)testChunkFromMonoBufferTakesTheExtremes {
-    // Chunks start at (0,0) and only ever widen, so a wholly positive buffer
-    // keeps min 0 — the waveform is drawn symmetrically about the midline.
-    const float samples[] = {0.25f, 0.75f, 0.5f};
-    AudioWaveformCacheChunk c(samples, 3);
-    XCTAssertEqual(c.getMin(), 0.0f);
-    XCTAssertEqual(c.getMax(), 0.75f);
-    XCTAssertEqualWithAccuracy(c.getMeanSquare(), (0.0625f + 0.5625f + 0.25f) / 3.0f, 1e-6);
-
-    const float bipolar[] = {-0.6f, 0.2f};
-    AudioWaveformCacheChunk d(bipolar, 2);
-    XCTAssertEqual(d.getMin(), -0.6f);
-    XCTAssertEqual(d.getMax(), 0.2f);
-}
-
-- (void)testNonFiniteSamplesAreClampedNotPropagated {
-    // A corrupt decode must not reach the renderers: NaN would produce NaN
-    // CGRects, and — since the decode still completes — get persisted under
-    // the file hash, breaking that track until the entry ages out.
-    const float withNaN[] = {0.5f, NAN, -0.25f};
-    AudioWaveformCacheChunk c(withNaN, 3);
-    XCTAssertTrue(std::isfinite(c.getMin()));
-    XCTAssertTrue(std::isfinite(c.getMax()));
-    XCTAssertTrue(std::isfinite(c.getMeanSquare()));
-
-    const float withInf[] = {INFINITY, -INFINITY};
-    AudioWaveformCacheChunk d(withInf, 2);
-    XCTAssertTrue(std::isfinite(d.getMin()));
-    XCTAssertTrue(std::isfinite(d.getMax()));
-    XCTAssertTrue(std::isfinite(d.getMeanSquare()));
-}
-
-- (void)testChunkFromMonoBufferAccumulatesEnergyWeightedByFrames {
-    const float first[] = {0.5f, -0.5f};       // meanSquare 0.25 over 2 frames
-    AudioWaveformCacheChunk c(first, 2);
-    XCTAssertEqualWithAccuracy(c.getMeanSquare(), 0.25f, 1e-6);
-
-    const float second[] = {1.0f};             // meanSquare 1.0 over 1 frame
-    c.mergeFromMonoBuffer(second, 1);
-    XCTAssertEqualWithAccuracy(c.getMeanSquare(), (0.25f * 2 + 1.0f) / 3.0f, 1e-6);
-}
-
-- (void)testABarWeighsEachChunksEnergyByItsFrames {
-    // Energy is a sum plus a frame count, not a stored mean, or a bar of
-    // uneven chunks would count a short chunk as much as a long one.
-    AudioWaveformCacheChunk chunks[3];
-    chunks[0].set(0, 0, 4.0f, 2.0f);
-    chunks[1].set(0, 0, 1.0f, 1.0f);
-    chunks[2].set(0, 0, 10.0f, 5.0f);
-    float meanSquare = 0;
-    AudioWaveform(3, chunks).getBarMeanSquares(1, 0, &meanSquare, nullptr);
-    XCTAssertEqualWithAccuracy(meanSquare, 15.0f / 8.0f, 1e-6);
-}
-
-- (void)testEmptyMonoBufferLeavesTheChunkUntouched {
-    AudioWaveformCacheChunk c;
-    c.set(-2.0f, 3.0f);
-    c.mergeFromMonoBuffer(nullptr, 0);
-    XCTAssertEqual(c.getMin(), -2.0f);
-    XCTAssertEqual(c.getMax(), 3.0f);
-    XCTAssertEqual(c.getMeanSquare(), 0.0f, @"no frames merged means no energy");
-}
-
-#pragma mark - AudioWaveformMonoMix
-
-- (void)testMonoInputIsPassedThroughWithoutCopying {
-    const float mono[] = {0.1f, 0.2f};
-    float scratch[2] = {0};
-    const float *out = AudioWaveformMonoMix(mono, scratch, 2, 1);
-    XCTAssertEqual(out, (const float *)mono, @"mono must not pay for a copy");
-}
-
-- (void)testStereoIsAveragedIntoScratch {
-    // Interleaved L0 R0 L1 R1.
-    const float stereo[] = {1.0f, 3.0f, 2.0f, 4.0f};
-    float scratch[2] = {0};
-    const float *out = AudioWaveformMonoMix(stereo, scratch, 2, 2);
-    XCTAssertEqual(out, (const float *)scratch);
-    XCTAssertEqualWithAccuracy(out[0], 2.0f, 1e-6);
-    XCTAssertEqualWithAccuracy(out[1], 3.0f, 1e-6);
-}
-
-- (void)testMultiChannelIsAveragedAcrossEveryChannel {
-    // 3 channels, 2 frames: c0f0 c1f0 c2f0 c0f1 c1f1 c2f1.
-    const float surround[] = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
-    float scratch[2] = {0};
-    const float *out = AudioWaveformMonoMix(surround, scratch, 2, 3);
-    XCTAssertEqualWithAccuracy(out[0], 2.0f, 1e-6);
-    XCTAssertEqualWithAccuracy(out[1], 5.0f, 1e-6);
 }
 
 @end
