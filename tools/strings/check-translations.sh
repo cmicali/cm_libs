@@ -18,13 +18,13 @@
 # other source lists the languages, and that loss is deliberate, not drift.
 #
 # Usage:
-#   scripts/check-translations.sh            fail on any missing translation
-#                                            (or: make check-translations)
-#   scripts/check-translations.sh --github   report only, always exit 0
+#   scripts/checks/check-translations.sh            fail on any missing translation
+#                                                   (or: make check-translations)
+#   scripts/checks/check-translations.sh --github   report only, always exit 0
 
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CATALOGS=("$ROOT/Resources/Localizable.xcstrings" "$ROOT/Resources/InfoPlist.xcstrings" "$ROOT/Resources/ThemeNames.xcstrings")
 
 GITHUB_MODE=0
@@ -34,7 +34,7 @@ case "${1:-}" in
     *) echo "usage: $(basename "$0") [--github]" >&2; exit 2 ;;
 esac
 
-LANGS=$("$ROOT/scripts/catalog-languages.sh" | jq -Rn '[inputs]')
+LANGS=$("$ROOT/scripts/strings/catalog-languages.sh" | jq -Rn '[inputs]')
 LANG_COUNT=$(jq -r 'length' <<<"$LANGS")
 
 # One pass over every catalog, rendered two ways below, so the CI annotations

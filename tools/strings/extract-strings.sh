@@ -3,8 +3,8 @@
 # Extracts NSLocalizedString keys from the first-party Objective-C sources into
 # Resources/Localizable.xcstrings.
 #
-#   scripts/extract-strings.sh            update the catalog in place
-#   scripts/extract-strings.sh --check    fail if the catalog is out of date
+#   scripts/strings/extract-strings.sh            update the catalog in place
+#   scripts/strings/extract-strings.sh --check    fail if the catalog is out of date
 #
 # NOT a build phase, deliberately: the build has no String Catalog extraction
 # for Objective-C (clang emits .stringsdata for Swift only; the only xcstrings
@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-REPO_ROOT="${SRCROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+REPO_ROOT="${SRCROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 CATALOG="$REPO_ROOT/Resources/Localizable.xcstrings"
 REGISTRY="$REPO_ROOT/Vibe/Common/VibeStrings.h"
 
@@ -57,7 +57,6 @@ while IFS= read -r -d '' file; do
 done < <(find "$REPO_ROOT/Vibe" \( -name '*.m' -o -name '*.mm' -o -name '*.h' \) \
              -not -path '*/ThirdParty/*' -not -path '*/Debug/*' \
              -not -path "$REGISTRY" -print0 | sort -z)
-SOURCES+=("$REPO_ROOT/main.m")
 
 # The genstrings-compatible mode: NSLocalizedString and its siblings.
 xcrun xcstringstool extract "${SOURCES[@]}" \
