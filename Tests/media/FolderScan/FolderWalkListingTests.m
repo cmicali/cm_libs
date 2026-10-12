@@ -1,18 +1,18 @@
 #import <XCTest/XCTest.h>
 
 #import "AudioTrack.h"
-#import "NSURLUtil.h"
+#import "FolderWalk.h"
 
-@interface NSURLUtilListingTests : XCTestCase
+@interface FolderWalkListingTests : XCTestCase
 @end
 
-@implementation NSURLUtilListingTests {
+@implementation FolderWalkListingTests {
     NSURL *_dir;
 }
 
 - (void)setUp {
     [super setUp];
-    NSString *name = [NSString stringWithFormat:@"NSURLUtilListingTests-%@", NSUUID.UUID.UUIDString];
+    NSString *name = [NSString stringWithFormat:@"FolderWalkListingTests-%@", NSUUID.UUID.UUIDString];
     _dir = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:name]
                       isDirectory:YES];
     NSError *error = nil;
@@ -53,7 +53,7 @@
 
 - (NSArray<NSString *> *)listedNamesSortedBy:(VibeFolderOpenSort)sort {
     NSMutableArray<NSString *> *names = [NSMutableArray array];
-    for (AudioTrack *row in [NSURLUtil rowsInDirectory:_dir sortedBy:sort]) {
+    for (AudioTrack *row in [FolderWalk rowsInDirectory:_dir sortedBy:sort]) {
         [names addObject:[row keyByAppendingWindowTo:row.url.lastPathComponent]];
     }
     return names;
@@ -165,7 +165,7 @@
 
 - (void)testMissingDirectoryReturnsEmpty {
     NSURL *gone = [_dir URLByAppendingPathComponent:@"missing" isDirectory:YES];
-    XCTAssertEqualObjects([NSURLUtil rowsInDirectory:gone sortedBy:VibeFolderOpenSortName],
+    XCTAssertEqualObjects([FolderWalk rowsInDirectory:gone sortedBy:VibeFolderOpenSortName],
                           @[]);
 }
 
@@ -196,13 +196,13 @@
 
     NSArray<NSURL *> *playlists = nil;
     NSArray<NSURL *> *audio = nil;
-    [NSURLUtil listDirectory:_dir sortedBy:VibeFolderOpenSortName folders:NULL playlists:&playlists audio:&audio];
+    [FolderWalk listDirectory:_dir sortedBy:VibeFolderOpenSortName folders:NULL playlists:&playlists audio:&audio];
     XCTAssertEqualObjects([playlists valueForKey:@"lastPathComponent"], @[@"Mix.M3U"]);
     XCTAssertEqualObjects([audio valueForKey:@"lastPathComponent"], (@[@"a.flac", @"b.mp3"]));
     XCTAssertEqualObjects([self listedNamesSortedBy:VibeFolderOpenSortName], (@[@"a.flac", @"b.mp3"]));
 
     NSMutableArray<NSString *> *entries = [NSMutableArray array];
-    for (AudioTrack *row in [NSURLUtil rowsForFile:m3u]) {
+    for (AudioTrack *row in [FolderWalk rowsForFile:m3u]) {
         [entries addObject:row.url.lastPathComponent];
     }
     XCTAssertEqualObjects(entries, (@[@"b.mp3", @"a.flac"]));
