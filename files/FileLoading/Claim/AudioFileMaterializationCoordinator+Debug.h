@@ -2,7 +2,8 @@
 //  AudioFileMaterializationCoordinator+Debug.h
 //  Vibe
 //
-//  Debug-only declaration for the path-wide admission counters.
+//  The path-wide admission counters and the stage-2 open hang. Both
+//  categories are implemented in AudioFileMaterializationCoordinator+Debug.m.
 //
 
 #if DEBUG
@@ -24,12 +25,15 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSUInteger)debugHungOpenCount;
 @end
 
-// Implemented in AudioFileMaterializationCoordinator.m, beside the counters it
-// reads.
+// The counters it reads are in AudioFileMaterializationCoordinatorInternal.h.
 @interface AudioFileMaterializationCoordinator (DebugCounters)
 // Outstanding AudioFileHandle calls, lock-free, for the health probe. Never
 // overstates; a racing open may read low.
 - (uint64_t)handleOpensInFlight;
+// Stage 2's two edges of that count, on the state queue
+// (AudioFileMaterializationCoordinator+HandleOpen.m).
+- (void)countHandleOpenStarted;
+- (void)countHandleOpenCompleted;
 @end
 
 NS_ASSUME_NONNULL_END

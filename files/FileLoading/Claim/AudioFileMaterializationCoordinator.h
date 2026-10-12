@@ -89,8 +89,9 @@ typedef void (^VibeAudioFileOpenCompletion)(AudioFileHandle * _Nullable file,
 // Suppresses a result whose completion block has not begun and detaches the
 // stage-1 waiter. A handle open already begun keeps its run registered until
 // the call returns, so a same-purpose/path retry binds to it instead of
-// starting another: a streaming open returns at once, its waits interrupted,
-// and a whole-file open, which does no waits, cannot be stopped.
+// starting another: a streaming or read-ahead open returns once its waits
+// are interrupted, and a whole-file open, which does no waits, cannot be
+// stopped.
 //
 // No detach-without-cancel variant: cancelling also marks the run abandoned,
 // which is how a rebound waiter gets a fresh run instead of the abandoned
@@ -118,26 +119,6 @@ typedef void (^VibeAudioFileOpenCompletion)(AudioFileHandle * _Nullable file,
                                          completionQueue:(dispatch_queue_t)completionQueue
                                               completion:(VibeAudioFileMaterializationCompletion)completion;
 
-// Stage 2: one current waiter per (purpose, standardized path); a later
-// request for that key rebinds delivery without another handle open. Both
-// purposes ride the path's stage-1 claim and open once it is Ready or, for a
-// remote transfer, readable: the handle then reads the part file while the
-// claim runs on, holding its lane until the transfer settles, and a stream no
-// handle reads any more is cancelled. At most six handle runs live at once,
-// purpose-blind: an existing
-// key rebinds even at the ceiling, a seventh is refused before stage 1, so
-// saturation can refuse playback. No queue, grace or configuration. Both
-// refusals are VibeAudioFileOpenErrorAdmissionExhausted, distinct from the
-// player's per-file open timeout.
-// The accepted probe's dataless verdict, at most once on completionQueue
-// while delivery is still waiting. Joining a classified claim also reports
-// it; the caller need not probe the filesystem to show loading promptly.
-- (AudioFileOpenToken *)openURL:(NSURL *)url
-                         purpose:(VibeAudioFileOpenPurpose)purpose
-                 completionQueue:(dispatch_queue_t)completionQueue
-                      onDataless:(nullable dispatch_block_t)onDataless
-                      completion:(VibeAudioFileOpenCompletion)completion;
-
 // YES while any claim has a playback or prefetch waiter whose stage 1 has not
 // settled, or a readable transfer still running under a live playback or
 // prefetch handle: the C1 rule's single source. While YES the coordinator yields
@@ -146,6 +127,31 @@ typedef void (^VibeAudioFileOpenCompletion)(AudioFileHandle * _Nullable file,
 // same-path foreground claim, and an already-local file is exempt. A snapshot:
 // a submission racing a rising edge is yielded before any provider operation.
 - (BOOL)isForegroundTransferActive;
+
+@end
+
+// Implemented in AudioFileMaterializationCoordinator+HandleOpen.m.
+@interface AudioFileMaterializationCoordinator (HandleOpen)
+
+// Stage 2: one current waiter per (purpose, standardized path); a later
+// request for that key rebinds delivery without another handle open. Both
+// purposes ride the path's stage-1 claim and open once it is Ready or, for a
+// remote transfer, readable: the handle then reads the part file while the
+// claim runs on, holding its lane until the transfer settles, and a stream no
+// handle reads any more is cancelled. At most six handle runs live at once,
+// purpose-blind: an existing key rebinds even at the ceiling, a seventh is
+// refused before stage 1, so saturation can refuse playback. No queue, grace or configuration. Both
+// refusals are VibeAudioFileOpenErrorAdmissionExhausted, distinct from the
+// player's per-file open timeout.
+//
+// The accepted probe's dataless verdict, at most once on completionQueue
+// while delivery is still waiting. Joining a classified claim also reports
+// it; the caller need not probe the filesystem to show loading promptly.
+- (AudioFileOpenToken *)openURL:(NSURL *)url
+                         purpose:(VibeAudioFileOpenPurpose)purpose
+                 completionQueue:(dispatch_queue_t)completionQueue
+                      onDataless:(nullable dispatch_block_t)onDataless
+                      completion:(VibeAudioFileOpenCompletion)completion;
 
 @end
 
