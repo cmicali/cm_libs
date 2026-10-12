@@ -9,7 +9,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "AudioTrackArtworkInternal.h" // the class the hook category extends
+#import "AudioTrackArtwork.h" // the class the hook category extends
 #import "PlatformTypes.h"
 
 @class AudioFileMaterializationCoordinator;
@@ -36,7 +36,7 @@ static const NSTimeInterval kArtworkLoadPendingGrace = 30;
 @property (nonatomic, readonly) NSUInteger registeredRequestCount;
 @end
 
-// Implemented in AudioTrackArtwork.m.
+// Implemented in AudioTrackArtwork+Loading.m.
 @interface AudioTrackArtwork (ArtworkLoadRegistrySupport)
 - (BOOL)prepareAsyncLoadReturningGeneration:(NSUInteger *)generation
                                   sourceURL:(NSURL * _Nullable * _Nonnull)sourceURL;

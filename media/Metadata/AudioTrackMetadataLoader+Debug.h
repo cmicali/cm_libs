@@ -2,13 +2,13 @@
 //  AudioTrackMetadataLoader+Debug.h
 //  Vibe
 //
-//  Declaration-only visibility into one loader's materialization lanes. The
-//  implementation stays beside the lane state in AudioTrackMetadataLoader.m.
+//  Visibility into one loader's materialization lanes. Implemented in
+//  AudioTrackMetadataLoader+Debug.m.
 //
 
 #if DEBUG
 
-#import "AudioTrackMetadataLoaderInternal.h"
+#import "AudioTrackMetadataLoader.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,12 +19,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSDictionary *)debugScanLaneState;
 
 // Test seams for AudioTrackMetadataLoaderTests. Their implementations are
-// DEBUG-only, so declaring them in the shipping Internal.h would leave them
-// unimplemented in Release.
+// DEBUG-only, so declaring them in the loader's shipping header would leave
+// them unimplemented in Release.
 // Fires before every off-lock scan-pick validation until cleared.
 - (void)debugSetBeforeScanPickValidation:(nullable dispatch_block_t)block;
 - (NSQualityOfService)debugLastScheduledParseQualityOfService;
 - (NSQualityOfService)debugParseQualityOfServiceForTrack:(AudioTrack *)track;
+// How the lane and the parse reach those debug-only ivars from their own files.
+// The first needs _materializationLock held.
+- (void)debugNoteScheduledParseQualityOfService:(NSQualityOfService)qualityOfService;
+- (nullable dispatch_block_t)debugBeforeScanPickValidation;
 
 @end
 
