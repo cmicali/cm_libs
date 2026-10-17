@@ -2,7 +2,7 @@
 
 Guidance for any coding agent working in this repository.
 
-cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe). **Nothing has moved yet.** The plan is [docs/plan.md](docs/plan.md). Read it before changing anything here.
+cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **Nothing has moved yet.** The plan is [docs/plan.md](docs/plan.md). Read it before changing anything here.
 
 ## What this repo is for
 
@@ -14,10 +14,15 @@ cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes onl
 
 **A piece is one directory, one template in `cm_libs.yml`, one test bundle in `project.yml`, and one `AGENTS.md`.** That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
 
-- **A piece imports only from the pieces it declares.** The dependency table is in the plan. The test bundles build each piece with the headermap off and only its declared header paths. A crossed boundary then fails to compile here, even when an app's headermap would resolve it.
-- **Third-party code is a piece of its own** under `ThirdParty/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code. Keep `/ThirdParty/` in its path, because the analyzer gate drops findings by that substring.
+- **Pieces sit in groups by what they are about**: `core/`, `files/`, `audio/`, `media/`, `waveform/`, `ui/`, `system/`, `dev/`, and `third_party/`. A group is only a directory. It has no template and no build of its own.
+- **Anything general enough for another app to use belongs here.** Code that names an app's settings, strings, or model stays in the app.
+- **One job per piece.** Split when it saves a consumer a dependency. Merge when the parts only work together, or when splitting saves nothing. The plan's "How the pieces are cut" section has the rest.
+- **A piece imports only from the pieces it declares.** The dependency list is in the plan. The test bundles build each piece with the headermap off and only its declared header paths. A crossed boundary then fails to compile here, even when an app's headermap would resolve it.
+- **Pieces meet through values and blocks**, never through another piece's model class. Optional work is injected, never imported.
+- **A portable piece**, marked ◆ in the plan, is C or C++ with a `CMakeLists.txt`, and depends only on portable pieces.
+- **Third-party code is a piece of its own** under `third_party/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code.
 - **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both.
-- **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `Common/CMMMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
+- **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `core/Common/CMMMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
 
 ## Names
 

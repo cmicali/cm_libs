@@ -1,22 +1,24 @@
 # cm_libs
 
-A toolbox of small libraries for macOS and iOS apps. Each library is a piece an app can take on its own. Take the audio engine, or only the waveform drawing, or only TagLib.
+A toolbox of small libraries for macOS and iOS apps. Each library is a piece an app can take on its own. Take the whole audio player, or only the waveform data, or only TagLib.
 
-The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, FX, tempo and key analysis, waveform data and drawing, and the third-party code it vendors. Pieces with nothing to do with audio join later.
+The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in Vibe that another app could use belongs here.
 
 **Nothing has moved yet.** The plan is [docs/plan.md](docs/plan.md).
 
 ## The pieces
 
-| Piece | What it is |
+| Group | Pieces |
 | --- | --- |
-| Audio | The playback engine: file handle and decoders, player, voice bus, resampler, levels, output devices, loading and transfers, metadata, artwork, and the waveform loader and cache |
-| FX | Realtime DSP stages a render can host, starting with the varispeed |
-| Analysis | BPM and key detection from PCM |
-| WaveformData | The waveform summary, its reads, its raster, and its archive |
-| WaveformUI | The waveform renderers, the morph engine, the theme rules, and the macOS and iOS views |
-| Common | The macros, the platform aliases, and the small helpers every piece uses |
-| ThirdParty | TagLib, dr_mp3, dr_flac, dr_wav, r8brain-free-src, PINCache, ogg, and vorbis, each a piece of its own |
+| `core/` | **Common**: logging, diagnostics, paths, work lanes. **Graphics**: images and colors. |
+| `files/` | **FileLoading**: local, iCloud, and network-share files, read even while they download. **RemoteFiles**, **HTTP**, **ShareLinks**, **SandboxAccess**, **DiskCache**. |
+| `audio/` | **DSP**, **Analysis** (tempo and key), **Decode**, **Meter**, **FX**, **OutputDevices**, and **Player**: gapless, crossfading, bit-perfect playback. |
+| `media/` | **Tags**, **Metadata** (tags, art, and their cache), **Playlists** (CUE and M3U), **FolderScan**, **PlayQueue**. |
+| `waveform/` | **Waveform** (the data), **WaveformStyles**, **WaveformLoading**, **WaveformView**. |
+| `ui/` | **Controls**: loading and equalizer indicators, and mac buttons, sliders, and a pitch fader. |
+| `system/` | **NowPlaying**, **AppOpening**, **Updates** (Sparkle). |
+| `dev/` | **DebugChannel**, **iOSDriver**. |
+| `third_party/` | TagLib, dr_mp3, dr_flac, dr_wav, r8brain-free-src, PINCache, PINOperation, ogg, vorbis, and Sparkle, each a piece of its own. |
 
 ## How an app uses it
 
