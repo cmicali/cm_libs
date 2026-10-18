@@ -43,11 +43,11 @@ Still open: the license. Apache 2.0, like Vibe, lets code move between the repos
 5. **Optional work is injected, never imported.** Analyzers ride the waveform decode as observers. Folder art takes its switch and its access check as providers. The file loader takes the opener of the handle it serves.
 6. **Every piece is Objective-C or Objective-C++ on Apple's frameworks when it moves.** `waveform/Waveform` is C++, but it calls Accelerate and Compression too. Making any piece portable is a later rewrite with its own measurements (see Later).
 7. **Policy stays in apps.** That means which files count as playable, what plays next under which settings, every display string, and every setting.
-8. **Fakes live with what they fake.** The manual render pump lives in Player, the fake cloud in FileLoading, and the fake HTTP host in HTTP.
+8. **Fakes live with what they fake.** The manual render pump lives in Player, the fake cloud in FileLoading, and the fake HTTP host in ShareLinks, whose services it imitates.
 
 ## The pieces
 
-**●** marks the playback and waveform path, which moves first. The other pieces are candidates that move when a second app needs them. The arrow names what a piece depends on, besides `core/Common`, which every piece may use.
+**●** marks the playback and waveform path, which moves first. The other pieces are candidates that move when a second app needs them. What each piece depends on is listed once, in the dependency map below.
 
 ```
 cm_libs/
@@ -55,12 +55,13 @@ cm_libs/
 ├── cm_libs.yml          the shared spec: one targetTemplate per piece, plus stack templates
 ├── project.yml          this repo's own project: one headermap-off test bundle per piece
 ├── Makefile  .github/workflows/ci.yml  scripts/checks/check-pieces.sh
+├── scripts/plan/derive-deps.py   re-derives the dependency map from Vibe's imports
 │
 ├── core/
 │   ├── Common ●         log, realtime-check and signpost macros; stall sampler, work tally,
 │   │                    load timing; path spelling and comparison, file identity and emptiness;
-│   │                    fixed-slot work lanes; a weak proxy; a display-paced update timer;
-│   │                    build provenance and the script that writes it
+│   │                    the disk key from a file's attributes; fixed-slot work lanes; a weak
+│   │                    proxy; a display-paced update timer; build provenance and its script
 │   └── Graphics ●       image and color aliases, bounded image decode, hex, blend and OKLCH
 │                        colors, dominant color, blur, dark-mode helpers
 │
@@ -68,54 +69,55 @@ cm_libs/
 │   ├── FileLoading ●    from a path to readable bytes: placeholder checks, downloads, reading
 │   │                    a file while it downloads, read-ahead on network mounts, progress, the
 │   │                    transfer registry, and one shared download and open per file
-│   ├── DiskCache ●      a bounded disk cache, and a cache key from a file's attributes      → PINCache
+│   ├── DiskCache ●      a bounded disk cache over PINCache
 │   ├── HTTP             ranged HTTP transfers
-│   ├── RemoteFiles      a local placeholder for a file on a server, fetched by range        → FileLoading, HTTP
-│   ├── ShareLinks       Dropbox, Google Drive and iCloud share links turned into direct URLs → HTTP
+│   ├── RemoteFiles      a local placeholder for a file on a server, fetched by range
+│   ├── ShareLinks       Dropbox, Google Drive and iCloud share links turned into direct URLs,
+│   │                    and the fake HTTP host that stands in for those services in tests
 │   └── SandboxAccess    security-scoped bookmarks and folder grants, with the grant panel
 │
 ├── audio/
-│   ├── DSP ●            varispeed, resampler, fades, FX math, FFT band math, analysis framing → r8brain
-│   ├── Analysis ●       tempo and musical key from PCM                                       → DSP
+│   ├── AudioTypes ●     the words every audio piece shares: file format identifiers, the
+│   │                    extensions the decoders open, the CUE window math, the musical key
+│   ├── DSP ●            varispeed, resampler, fades, FX math, FFT band math, analysis framing
+│   ├── Analysis ●       tempo and musical key from PCM
 │   ├── Decode ●         open a file or a frame window of it, and read PCM; the playable-item
-│   │                    protocol                                                             → FileLoading, dr_*, ogg, vorbis
-│   ├── Meter ●          live band levels from inside a render, only while someone looks      → DSP
-│   ├── FX ●             the DJ chain over Apple's audio units                                → DSP
+│   │                    protocol
+│   ├── Meter ●          live band levels from inside a render, only while someone looks
+│   ├── FX ●             the DJ chain over Apple's audio units
 │   ├── OutputDevices ●  Mac/ device discovery, rates, hog mode, format rules, event log;
 │   │                    iOS/ the audio session and its route rules
 │   └── Player ●         the transport, the voice bus, the master bus, the output unit,
 │                        prefetch, gapless, crossfades, open deadlines; Mac/ binding to a
-│                        device and bit-perfect output; iOS/ route recovery                   → Decode, DSP, Meter, FX,
-│                                                                                               OutputDevices, FileLoading
+│                        device and bit-perfect output; iOS/ route recovery
 ├── media/
-│   ├── Tags ●           TagLib fields and embedded art bytes                                 → taglib
+│   ├── Tags ●           TagLib fields and embedded art bytes
 │   ├── Metadata ●       the tag record, the CoreAudio fallback, the cache, the background
-│   │                    scan, embedded art and thumbnails, and covers beside the files       → Tags, Decode, DiskCache,
-│   │                                                                                           FileLoading, Graphics
+│   │                    scan, embedded art and thumbnails, and covers beside the files
 │   ├── PlayQueue ●      play order, shuffle, repeat, and what follows a track's end, over
 │   │                    caller-owned entries
 │   ├── Playlists        CUE sheets, also embedded in FLAC, and M3U, read and written as records
-│   └── FolderScan       walk folders and links into files and CUE rows, and search file names → Playlists, FileLoading
+│   └── FolderScan       walk folders and links into files and CUE rows, and search file names
 │
 ├── waveform/
 │   ├── Waveform ●       WaveformCore/: the summary, pyramid, deep zoom, raster, and archive,
 │   │                    C++ with its own Package.swift; beside it, in Objective-C++, the
 │   │                    AudioWaveform name, the mono mix, and CodableAudioWaveform
-│   ├── WaveformStyles ● each style's look: its columns, levels, colors, and the morph engine
-│   │                    that eases between them                                              → Waveform
+│   ├── WaveformStyles ● each style's look: its columns, levels, colors, zoom math, and the
+│   │                    morph engine that eases between them
 │   ├── WaveformLoading ● a file decoded into a summary, with observers on the same pass,
-│   │                    cached and shared                                                    → Waveform, Decode, DiskCache
-│   └── WaveformView ●   the layer host, the macOS view, the iOS scrubber                     → WaveformStyles, Controls
+│   │                    cached and shared
+│   └── WaveformView ●   the layer host, the macOS view, the iOS scrubber
 │
 ├── ui/
 │   └── Controls ●       loading bar and pill, equalizer bars; later, the mac symbol buttons,
-│                        drawn controls, detent slider, pitch fader, and image views          → Graphics
+│                        drawn controls, detent slider, pitch fader, and image views
 │
 ├── system/
-│   ├── NowPlaying       Now Playing info and remote commands, fed a snapshot                 → Graphics
+│   ├── NowPlaying       Now Playing info and remote commands, fed a snapshot
 │   ├── AppOpening       on the mac, one open request from the batches Launch Services
 │   │                    splits it into, delivered in order
-│   └── Updates          Sparkle for a direct-download build, compiled out of an App Store build → Sparkle
+│   └── Updates          Sparkle for a direct-download build, compiled out of an App Store build
 │
 ├── dev/
 │   ├── DebugChannel     drive and inspect a running debug build from a script
@@ -126,6 +128,63 @@ cm_libs/
 │
 └── Tests/               one directory per piece, mirroring the tree
 ```
+
+### The dependency map
+
+Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in Vibe's tree at `2910ee0e`, with each file assigned to the piece it moves into (`scripts/plan/derive-deps.py`). It is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.sh` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change.
+
+| Piece | Depends on |
+| --- | --- |
+| core/Common | nothing |
+| core/Graphics | nothing |
+| files/FileLoading | audio/AudioTypes |
+| files/DiskCache | third_party/PINCache |
+| files/HTTP | nothing |
+| files/RemoteFiles | files/FileLoading, files/HTTP |
+| files/ShareLinks | files/HTTP |
+| files/SandboxAccess | nothing |
+| audio/AudioTypes | nothing |
+| audio/DSP | third_party/r8brain |
+| audio/Analysis | audio/AudioTypes, audio/DSP |
+| audio/Decode | files/FileLoading, third_party/dr_mp3, third_party/dr_flac, third_party/dr_wav, third_party/vorbis |
+| audio/Meter | audio/DSP |
+| audio/FX | audio/DSP |
+| audio/OutputDevices | nothing |
+| audio/Player | audio/AudioTypes, audio/DSP, audio/Decode, audio/FX, audio/Meter, audio/OutputDevices, files/FileLoading |
+| media/Tags | audio/AudioTypes, third_party/taglib, third_party/vorbis |
+| media/Metadata | audio/AudioTypes, audio/Decode, media/Tags, files/DiskCache, files/FileLoading, core/Graphics, third_party/taglib, third_party/PINCache |
+| media/PlayQueue | nothing |
+| media/Playlists | audio/AudioTypes |
+| media/FolderScan | audio/AudioTypes, files/FileLoading, media/Playlists |
+| waveform/Waveform | nothing but Accelerate and Compression |
+| waveform/WaveformStyles | waveform/Waveform, core/Graphics |
+| waveform/WaveformLoading | waveform/Waveform, audio/AudioTypes, audio/Decode, files/DiskCache, files/FileLoading, third_party/PINCache |
+| waveform/WaveformView | waveform/WaveformStyles, waveform/Waveform, ui/Controls, core/Graphics |
+| ui/Controls | core/Graphics |
+| system/NowPlaying | core/Graphics, media/PlayQueue |
+| system/AppOpening | nothing |
+| system/Updates | third_party/Sparkle |
+| dev/DebugChannel | nothing |
+| dev/iOSDriver | nothing |
+| third_party/PINCache | third_party/PINOperation |
+| third_party/vorbis | third_party/ogg |
+| every other third_party piece | nothing |
+
+**Edges in today's tree that the cuts remove**, so none of them is declared:
+
+| Edge today | Removed by |
+| --- | --- |
+| every piece → Vibe's app code | the settings, strings, and reach cuts |
+| files/FileLoading → audio/Decode | seam 15, the handle protocol |
+| files/FileLoading → dev/DebugChannel | cut 1 |
+| files/RemoteFiles → media/Playlists | cut 2 |
+| files/ShareLinks → Vibe's `LinkStore` | seam 20: `LinkClient` stops importing the store |
+| media/Metadata → files/SandboxAccess | cut 4, folder art's providers |
+| media/Tags → media/Metadata, media/Tags → files/FileLoading | seam 16, art bytes and a byte-range reader |
+| media/FolderScan → media/Metadata | seam 23, the walk's file handler |
+| waveform/WaveformLoading → audio/Analysis | seam 17, the decode's observers |
+
+**Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
 
 **A stack is a template that lists other templates.** `cm_libs.yml` offers a few, so an app's `project.yml` stays short. Examples are a Playback stack (Player and everything it needs) and a Waveform stack (the four waveform pieces).
 
@@ -211,7 +270,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 - every piece has a template, a test bundle, and an `AGENTS.md`
 - every template's paths stay inside its piece
-- every import between pieces is in the dependency list above, and the list has no cycle
+- every import between pieces is in the dependency map, quoted or angled, and the map has no cycle
 - the platform rule: only `Mac/` and `iOS/` are platform-specific
 - no `#if DEBUG` in a shipping header
 - the classes with no prefix, listed
@@ -271,7 +330,9 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 - **19. The play queue holds caller-owned entries.** It keeps object identity, as `Playlist` does today, so two entries for one file stay two entries.
 - **22. Metadata installs results through a holder protocol of its own.** Today the loader reads an item's installed metadata, installs a result only if none is installed, and delivers only while that result is still installed. It does this through `AudioTrack (Internal)`'s `installMetadataIfUnresolved:` and `deliverIfMetadataStillInstalled:usingBlock:`. Metadata declares those three operations as its own protocol, and Vibe's row adopts it with the methods it has. The check and the install stay atomic in the object that holds the result, so a replaced item never shows a stale result. None of it goes into Decode's playable-item protocol, which stays free of metadata.
 
-**Waiting for their pieces:** cut 2 and seam 20 (RemoteFiles and ShareLinks), cut 5 (only needed if `AudioTrack` ever moves), seam 18 (Playlists returns records), the Now Playing half of seam 19, and seam 21 (the shell pieces).
+- **23. FolderScan reports each walked file to a handler.** Today the walk notes cover-art candidates itself, through Metadata's `FolderArtRules.h`. Metadata's folder art installs the handler instead, as FolderWalk's other launch-installed handlers already work.
+
+**Waiting for their pieces:** cut 2 and seam 20 (RemoteFiles and ShareLinks; seam 20 also stops `LinkClient` importing `LinkStore`), seam 23 (FolderScan), cut 5 (only needed if `AudioTrack` ever moves), seam 18 (Playlists returns records), the Now Playing half of seam 19, and seam 21 (the shell pieces).
 
 **Done when** this returns nothing in Vibe for the path's directories:
 
@@ -287,10 +348,11 @@ In this order, each its own move:
 
 1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split.
 2. `core/Common` and `core/Graphics`.
-3. `files/FileLoading` and `files/DiskCache`.
-4. `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
-5. `media/Tags`, `media/Metadata`, and `media/PlayQueue`.
-6. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
+3. `audio/AudioTypes`.
+4. `files/FileLoading` and `files/DiskCache`.
+5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
+6. `media/Tags`, `media/Metadata`, and `media/PlayQueue`.
+7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
 
 **The other app's first slice starts after this phase.** It scans a folder, lists its songs, and plays a queue.
 

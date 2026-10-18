@@ -12,7 +12,7 @@ The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in 
 | --- | --- |
 | `core/` | **Common**: logging, diagnostics, paths, work lanes. **Graphics**: images and colors. |
 | `files/` | **FileLoading**: local, iCloud, and network-share files, read even while they download. **RemoteFiles**, **HTTP**, **ShareLinks**, **SandboxAccess**, **DiskCache**. |
-| `audio/` | **DSP**, **Analysis** (tempo and key), **Decode**, **Meter**, **FX**, **OutputDevices**, and **Player**: gapless, crossfading, bit-perfect playback. |
+| `audio/` | **AudioTypes**, **DSP**, **Analysis** (tempo and key), **Decode**, **Meter**, **FX**, **OutputDevices**, and **Player**: gapless, crossfading, bit-perfect playback. |
 | `media/` | **Tags**, **Metadata** (tags, art, and their cache), **Playlists** (CUE and M3U), **FolderScan**, **PlayQueue**. |
 | `waveform/` | **Waveform** (the data), **WaveformStyles**, **WaveformLoading**, **WaveformView**. |
 | `ui/` | **Controls**: loading and equalizer indicators, and mac buttons, sliders, and a pitch fader. |
