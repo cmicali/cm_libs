@@ -26,4 +26,4 @@ An app adds this repo as a git submodule at `cm_libs/`. Its XcodeGen `project.ym
 
 ## License
 
-Not chosen yet. Until one is, nothing here is licensed for reuse.
+Apache 2.0, in `LICENSE`. The libraries under `third_party/` keep their own licenses.

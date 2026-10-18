@@ -21,7 +21,7 @@ CI runs all four on every pull request.
 
 - **Its users are Vibe and another app, not the public, for now.** Each adds this repo as a git submodule at `cm_libs/`, includes the shared XcodeGen spec `cm_libs.yml`, and lists the pieces it wants as templates. There is no `Package.swift` for the apps. The plan says when that changes.
 - **The other app is closed source. Never name it** in this repo: not in code, comments, docs, commits, issues, pull requests, setting names, or template attributes. Call it "another app" when you must refer to it. Name a per-app switch by what it does, never by who uses it.
-- **There is no license yet.** Until one is chosen, nothing here is licensed for reuse.
+- **The license is Apache 2.0** (`LICENSE`). Each library under `third_party/` keeps its own.
 
 ## Pieces
 
@@ -48,8 +48,8 @@ CI runs all four on every pull request.
 
 - **Decoupling happens in Vibe first**, under Vibe's gates. Then a move here is mechanical.
 - **A move carries history with `git filter-repo`.** It arrives as one merge with `--allow-unrelated-histories`.
-- **A move changes no performance.** Vibe's `perf.py compare` shows every benchmark's retired instructions inside the no-op band. Vibe's `make test-audio` time stays within noise.
-- **After a piece moves, its changes land here first.** Then each app bumps its submodule.
+- **A move is measured, not assumed free.** Between fixed before and after commits, Vibe's `perf.py compare` keeps each affected benchmark's retired instructions inside its own no-change band, and the pull request reports every outlier and rerun. Vibe's `make test-audio` time stays within noise. The plan's build audit compares what every target compiles.
+- **A change across the repos lands here first**, then in the consumer's pin, then through the consumer's gates. The old pin is the rollback.
 
 ## Writing
 
