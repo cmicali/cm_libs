@@ -15,7 +15,7 @@ Its users are Vibe and another app. Both add it as a git submodule.
 - **Third-party code is a piece of its own**, one per library.
 - **Extraction first, everything else after.** A move changes no API, no language, and no platform. Portable C or C++ rewrites, new tag fields, and other redesigns are separate work with their own scope and measurements.
 - **The playback and waveform path moves first.** The other app builds its first slice on it. Every other piece follows demonstrated reuse.
-- **Vibe's waveform engine (PR #294) merges in Vibe before the waveform data moves.**
+- **Vibe's waveform engine (PR #294) merged in Vibe before any move**, so the waveform data moves once.
 
 Still open: the license. Apache 2.0, like Vibe, lets code move between the repos freely.
 
@@ -35,8 +35,9 @@ Still open: the license. Apache 2.0, like Vibe, lets code move between the repos
 1. **One job per piece, named for the job.** Ask whether someone would want it without its neighbors.
 2. **Split when it saves a consumer a dependency. Merge when the parts only work together, or when splitting saves nothing.** Tempo and key detection are one piece, because they share their framing and depend on nothing. Tags and Metadata are two pieces, because a tag reader should not drag in the cache, the scan, and the decoders.
 3. **A piece's code lives with the piece that reaches into it.** The morph engine is used by the renderers, so it sits with the styles. The device categories on `AudioPlayer` read the player's private state, so they sit in `Player/Mac` and `Player/iOS`. The device and session classes they call do not, so those are their own piece.
-4. **Pieces hold the caller's objects, never another piece's model class.** A playable item is any object that adopts a small protocol giving its file, its frame window, and its source key. Vibe's `AudioTrack` adopts it. The player, the caches, and the queue keep the caller's object and hand the same one back. Three identities stay separate:
-   - **Source identity** is the source key: the file and its window. Caches match on it.
+4. **Pieces hold the caller's objects, never another piece's model class.** A playable item is any object that adopts a small protocol giving its file, its frame window, its source key, and its disk key. Vibe's `AudioTrack` adopts it. The player, the caches, and the queue keep the caller's object and hand the same one back. A piece that writes results into an item declares a protocol of its own for that, as Metadata does (seam 22). Four identities stay separate:
+   - **Source identity** is the source key: the file's path and its window. It names the same stretch of audio, so shared work, claims, and late deliveries match on it. It does not change when the file's contents do.
+   - **Version identity** is the disk key: DiskCache's `cacheKey` of the file's size, modification time, and resolved path, with the window appended for a waveform. It names one version of the file, so persisted entries match on it. An item may memoize it. FileLoading's handler tells the app to forget the memo when a download installs a new version.
    - **Entry identity** is the caller's object. Two entries for the same file are two entries.
    - **Submission identity** is the player's own counter for each play. It decides which settlement is current.
 5. **Optional work is injected, never imported.** Analyzers ride the waveform decode as observers. Folder art takes its switch and its access check as providers. The file loader takes the opener of the handle it serves.
@@ -98,12 +99,12 @@ cm_libs/
 │
 ├── waveform/
 │   ├── Waveform ●       WaveformCore/: the summary, pyramid, deep zoom, raster, and archive,
-│   │                    C++ with its own Package.swift; beside it, the AudioWaveform name and
-│   │                    the mono mix
+│   │                    C++ with its own Package.swift; beside it, in Objective-C++, the
+│   │                    AudioWaveform name, the mono mix, and CodableAudioWaveform
 │   ├── WaveformStyles ● each style's look: its columns, levels, colors, and the morph engine
 │   │                    that eases between them                                              → Waveform
-│   ├── WaveformLoading ● a file decoded into a summary, with observers on the same pass, its
-│   │                    archive entry, cached and shared                                     → Waveform, Decode, DiskCache
+│   ├── WaveformLoading ● a file decoded into a summary, with observers on the same pass,
+│   │                    cached and shared                                                    → Waveform, Decode, DiskCache
 │   └── WaveformView ●   the layer host, the macOS view, the iOS scrubber                     → WaveformStyles, Controls
 │
 ├── ui/
@@ -146,11 +147,23 @@ cm_libs/
 - **PlayQueue** keeps an order over the caller's own entries. It never copies or compares them by content.
 - **WaveformLoading** decodes a file into a waveform and caches it. Decoding without caching has no second user, so the two are one piece.
 
+### Analyzing many files
+
+Vibe decodes a waveform only for the track on screen. An app that analyzes a whole library needs more, and it is new behavior in WaveformLoading, built after the move as its own change:
+
+- **A scan request kind**, apart from the track on screen. The app admits one at a time.
+- **Admission stops while an open the user waits on is active**, read from FileLoading's foreground state. It resumes when the open settles.
+- **An active scan decode is cancelled outright, not detached.** Today a superseded load is detached and finishes its decode, which keeps reading the file. A scan decode that yields must stop reading, and its partial summary is dropped, never filed.
+- **The playing track's waveform is never cancelled or delayed** by any of this.
+- **Tested on a throttled source**, with Vibe's fake cloud and read-ahead stubs, so a slow file proves the decode yields within one block.
+- **Tags have a cache-only path.** `loadCachedMetadata:` reads only the cache and never the file. It is the path for a File Provider placeholder, whose bytes cannot be read without downloading it. A remote placeholder can read its tags by range instead.
+
 ### Groupings forced by today's code
 
 - **`Player` holds the master bus and the device categories.** The master bus composes the varispeed, the FX, and the meter. The categories read the player's private state.
 - **`WaveformStyles` holds the morph engine.** The renderers drive it directly.
-- **`waveform/Waveform` keeps the C++ package whole.** Its `WaveformCore/` directory, `Package.swift`, and tests move unchanged. The Objective-C archive wrapper, `CodableAudioWaveform`, is the cache's entry, so it goes to WaveformLoading, not beside the package.
+- **`waveform/Waveform` keeps the C++ package whole, and its Darwin part beside it.** The `WaveformCore/` directory, its `Package.swift`, and its tests move unchanged. `AudioWaveform.h` and `.mm`, with `CodableAudioWaveform`, sit beside it in the same piece, outside the package directory. The wrapper is more than the cache's entry: both views hold it, the style registry draws from it, and the widget publisher bakes it. With it in WaveformLoading, drawing would depend on Decode and FileLoading.
+- **WaveformLoading's decodes do not go through FileLoading's claims.** The loader opens its own handle. So FileLoading's foreground rule, which yields background downloads to the open the user waits on, never stops a waveform decode of a local file. An app that analyzes many files schedules that itself (below).
 - **Artwork is inside `Metadata`.** The art is found during the tag parse and cached beside the tags. Nothing uses one without the other.
 
 **Artwork is the one place the engine hands out UI types.** `Metadata` returns `NSImage` or `UIImage`. AppKit and UIKit are always present, so that is tolerable. A UI-free version would return a `CGImage`. Leave it until someone asks.
@@ -225,7 +238,7 @@ Choose the license. Then answer eight questions with throwaway specs and branche
 
 ### Phase 1: the pilot, DSP with the varispeed
 
-The smallest real piece goes first, after its one prerequisite. `AudioVarispeed` uses Vibe's realtime-check macros, so the macros move out of Vibe's prefix header into `CMMMacros.h` first (cut 12 below). Nothing else blocks it.
+The smallest real piece goes first, after its one prerequisite. `AudioVarispeed` uses Vibe's realtime-check macros, so cut 12 first moves the macros out of Vibe's prefix header into `CMMMacros.h`. **The pilot then moves that header here with the varispeed**, as the first file of `core/Common`. A header left in Vibe would not satisfy this repo's isolated build. Vibe's prefix header imports it from the submodule. Nothing else blocks the pilot.
 
 `AudioVarispeed` is Vibe's own windowed-sinc converter for the pitch fader. Its distortion sits near −150 dB, against −83 to −135 dB for Apple's Varispeed unit. It is flat to 20 kHz and a bit-perfect pass-through at zero pitch. It costs about 0.2% of one core at 48 kHz. Its API is plain C, it has one caller in Vibe, and its tests and benchmark stand alone.
 
@@ -250,13 +263,13 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 
 **The seams between pieces:**
 
-- **13. The playable-item protocol.** A small protocol gives an item's file, frame window, and source key. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. The player, both caches, and the queue take `id` of the protocol and hand back the same object. The CUE window math moves to Decode beside it.
+- **13. The playable-item protocol.** A small protocol gives an item's file, frame window, source key, and disk key. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. The player, both caches, and the queue take `id` of the protocol and hand back the same object. The CUE window math moves to Decode beside it.
 - **14. `AudioFileOpenRules.h` splits.** It holds the open's delivery states, path spelling, and the network mount's read-ahead rules, and four areas import it. Each part goes to the piece that owns it.
 - **15. The file loader stops naming the audio file handle.** Its opener is already a block. The handle it serves becomes a small protocol for interrupting reads and holding a stream. Its call into `AudioTrack` to forget memoized cache keys becomes a handler block.
 - **16. Tags returns art bytes and takes a byte-range reader.** Today the TagLib wrapper returns an artwork extractor and reads remote ranges through the materializer.
 - **17. The waveform decode takes observers of each mono block.** Today it builds the tempo and key analyzers itself. The app attaches them.
 - **19. The play queue holds caller-owned entries.** It keeps object identity, as `Playlist` does today, so two entries for one file stay two entries.
-- **22. `AudioWaveform.h` splits.** The `AudioWaveform` name and the mono mix stay with the waveform data. `CodableAudioWaveform` goes with the cache.
+- **22. Metadata installs results through a holder protocol of its own.** Today the loader reads an item's installed metadata, installs a result only if none is installed, and delivers only while that result is still installed. It does this through `AudioTrack (Internal)`'s `installMetadataIfUnresolved:` and `deliverIfMetadataStillInstalled:usingBlock:`. Metadata declares those three operations as its own protocol, and Vibe's row adopts it with the methods it has. The check and the install stay atomic in the object that holds the result, so a replaced item never shows a stale result. None of it goes into Decode's playable-item protocol, which stays free of metadata.
 
 **Waiting for their pieces:** cut 2 and seam 20 (RemoteFiles and ShareLinks), cut 5 (only needed if `AudioTrack` ever moves), seam 18 (Playlists returns records), the Now Playing half of seam 19, and seam 21 (the shell pieces).
 
@@ -277,7 +290,7 @@ In this order, each its own move:
 3. `files/FileLoading` and `files/DiskCache`.
 4. `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
 5. `media/Tags`, `media/Metadata`, and `media/PlayQueue`.
-6. `waveform/`, after #294 merges in Vibe: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
+6. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
 
 **The other app's first slice starts after this phase.** It scans a folder, lists its songs, and plays a queue.
 
@@ -317,13 +330,14 @@ Vibe already has HTTP transfers, ranged reads, remote placeholders, opens that p
 - **The original bytes.** OpenSubsonic transcodes unless asked not to, so every stream request passes `format=raw`. A transcoded stream would change the waveform, the analysis, and bit-perfect output.
 - **Compatibility tests** against Navidrome, Gonic, Airsonic, and Ampache, which answer the same API differently.
 
-That work belongs to the app that ships the source. The pieces it reuses (HTTP, RemoteFiles, FileLoading, Player) move in Phase 5.
+That work belongs to the app that ships the source. FileLoading and Player already moved in Phase 3. HTTP and RemoteFiles move in Phase 5, when the source is built.
 
 ## New types
 
 The cuts add these small types. Each replaces a dependency on an app class:
 
 - the playable-item protocol
+- Metadata's holder protocol
 - the protocol of a handle the file loader serves
 - the observer block of the waveform decode
 - later, with Playlists: the record of a playlist entry
@@ -335,7 +349,7 @@ The cuts add these small types. Each replaces a dependency on an app class:
 - **The headermap hides a crossed boundary.** In any project holding two pieces, an import by basename resolves across them. Only this repo's headermap-off bundles make the compiler refuse.
 - **`xcodegen dump` leaves templates unresolved.** A tool that rebuilds a consumer's target from the dump must copy `templates` and `templateAttributes`. Otherwise it builds without the pieces.
 - **Vibe's analyzer gate drops findings by the substring `/ThirdParty/`** (`scripts/build/analyze.sh`). Vendored code here sits under `third_party/`, so the gate must also drop `/third_party/` before Phase 3 lands, or it fails on TagLib's findings.
-- **A queue, a player, or a cache that compares items by content merges duplicates.** Two entries for one file are two entries. Only caches match by source key.
+- **A queue, a player, or a cache that compares items by content merges duplicates.** Two entries for one file are two entries. Shared work matches by source key, and a persisted entry by disk key.
 
 ## Costs
 

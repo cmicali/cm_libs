@@ -19,7 +19,7 @@ cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes onl
 - **One job per piece.** Split when it saves a consumer a dependency. Merge when the parts only work together, or when splitting saves nothing. The plan's "How the pieces are cut" section has the rest.
 - **A piece imports only from the pieces it declares.** The dependency list is in the plan. The test bundles build each piece with the headermap off and only its declared header paths. A crossed boundary then fails to compile here, even when an app's headermap would resolve it.
 - **Pieces meet through values and blocks**, never through another piece's model class. Optional work is injected, never imported.
-- **A piece keeps the caller's objects.** It never copies or compares them by content, so two entries for one file stay two entries. Only caches match by source key.
+- **A piece keeps the caller's objects.** It never copies or compares them by content, so two entries for one file stay two entries. Shared work matches by source key, the path and window. A persisted entry matches by disk key, which also names the file's version.
 - **A move changes nothing but the path.** No API, language, or platform change rides on it. A portable C or C++ rewrite is separate work with its own measurements.
 - **Third-party code is a piece of its own** under `third_party/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code.
 - **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both.
