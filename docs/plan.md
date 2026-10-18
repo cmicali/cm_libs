@@ -95,7 +95,7 @@ cm_libs/
 │   ├── Metadata ●       the tag record, the CoreAudio fallback, the cache, the background
 │   │                    scan, embedded art and thumbnails, and covers beside the files
 │   ├── PlayQueue ●      play order, shuffle, repeat, and what follows a track's end, over
-│   │                    caller-owned entries
+│   │                    opaque entries of the app's own
 │   ├── Playlists        CUE sheets, also embedded in FLAC, and M3U, read and written as records
 │   └── FolderScan       walk folders and links into files and CUE rows, and search file names
 │
@@ -131,7 +131,7 @@ cm_libs/
 
 ### The dependency map
 
-Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in Vibe's tree at `2910ee0e`, with each file assigned to the piece it moves into (`scripts/plan/derive-deps.py`). It is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.sh` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change.
+Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in Vibe's tree at `6cb717e0`, with each file assigned to the piece it moves into (`scripts/plan/derive-deps.py`). The script resolves an include as the compiler does: a quoted include in its own directory first, then the app's header search paths from `project.yml`, in order, then a unique basename. **A collision those rules cannot settle fails the script** until an explicit mapping names the header the build uses, so no edge comes from the filesystem's order. TagLib's `<vorbisfile.h>`, for one, is TagLib's own Ogg Vorbis header, which the `taglib/ogg/vorbis` search path finds, not libvorbis's. The table is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.sh` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change.
 
 | Piece | Depends on |
 | --- | --- |
@@ -151,9 +151,9 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | audio/FX | audio/DSP |
 | audio/OutputDevices | nothing |
 | audio/Player | audio/AudioTypes, audio/DSP, audio/Decode, audio/FX, audio/Meter, audio/OutputDevices, files/FileLoading |
-| media/Tags | audio/AudioTypes, third_party/taglib, third_party/vorbis |
+| media/Tags | audio/AudioTypes, third_party/taglib |
 | media/Metadata | audio/AudioTypes, audio/Decode, media/Tags, files/DiskCache, files/FileLoading, core/Graphics, third_party/taglib, third_party/PINCache |
-| media/PlayQueue | nothing |
+| media/PlayQueue | nothing: its entries are opaque objects (seam 19) |
 | media/Playlists | audio/AudioTypes |
 | media/FolderScan | audio/AudioTypes, files/FileLoading, media/Playlists |
 | waveform/Waveform | nothing but Accelerate and Compression |
@@ -183,6 +183,19 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | media/Tags → media/Metadata, media/Tags → files/FileLoading | seam 16, art bytes and a byte-range reader |
 | media/FolderScan → media/Metadata | seam 23, the walk's file handler |
 | waveform/WaveformLoading → audio/Analysis | seam 17, the decode's observers |
+
+**Planned edges.** The script reads today's imports, so it cannot see an edge a new type will add. Each new type's owner, and what it implies:
+
+| New type | Owned by | Used by | Edge it adds |
+| --- | --- | --- | --- |
+| the playable-item protocol | audio/Decode | audio/Player, media/Metadata, waveform/WaveformLoading; adopted by the app's entries | none: each user already depends on Decode |
+| Metadata's holder protocol | media/Metadata | adopted by the app's entries | none |
+| the handle protocol of FileLoading | files/FileLoading | adopted by audio/Decode's file handle | none: Decode already depends on FileLoading |
+| the waveform decode's observer block | waveform/WaveformLoading | the app, which attaches audio/Analysis | none: the app joins them |
+| the playlist record, later | media/Playlists | media/FolderScan, the app | none: FolderScan already depends on Playlists |
+| the Now Playing snapshot, later | system/NowPlaying | the app | none |
+
+**PlayQueue stays free of all of them.** Its entries are opaque objects, never the playable-item protocol. Declaring that protocol would pull Decode, FileLoading, and the decoders into a play-order list.
 
 **Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
 
@@ -322,12 +335,12 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 
 **The seams between pieces:**
 
-- **13. The playable-item protocol.** A small protocol gives an item's file, frame window, source key, and disk key. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. The player, both caches, and the queue take `id` of the protocol and hand back the same object. The CUE window math moves to Decode beside it.
+- **13. The playable-item protocol.** A small protocol gives an item's file, frame window, source key, and disk key. Only the pieces that read a file take it: the player, Metadata, and WaveformLoading. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. They take `id` of the protocol and hand back the same object. The queue takes any object (seam 19). The CUE window math moves to Decode beside it.
 - **14. `AudioFileOpenRules.h` splits.** It holds the open's delivery states, path spelling, and the network mount's read-ahead rules, and four areas import it. Each part goes to the piece that owns it.
 - **15. The file loader stops naming the audio file handle.** Its opener is already a block. The handle it serves becomes a small protocol for interrupting reads and holding a stream. Its call into `AudioTrack` to forget memoized cache keys becomes a handler block.
 - **16. Tags returns art bytes and takes a byte-range reader.** Today the TagLib wrapper returns an artwork extractor and reads remote ranges through the materializer.
 - **17. The waveform decode takes observers of each mono block.** Today it builds the tempo and key analyzers itself. The app attaches them.
-- **19. The play queue holds caller-owned entries.** It keeps object identity, as `Playlist` does today, so two entries for one file stay two entries.
+- **19. The play queue holds opaque entries.** It keeps object identity, as `Playlist` does today, so two entries for one file stay two entries. Today it reads two members of `AudioTrack`: the URL, to index the rows of each file, and the source key, to stamp a tempo or key onto every row sounding one window. The app passes both as key blocks when it makes the queue. Vibe passes the URL and the source key. A queue made without them has no lookup by file. So the queue imports no protocol and depends on nothing.
 - **22. Metadata installs results through a holder protocol of its own.** Today the loader reads an item's installed metadata, installs a result only if none is installed, and delivers only while that result is still installed. It does this through `AudioTrack (Internal)`'s `installMetadataIfUnresolved:` and `deliverIfMetadataStillInstalled:usingBlock:`. Metadata declares those three operations as its own protocol, and Vibe's row adopts it with the methods it has. The check and the install stay atomic in the object that holds the result, so a replaced item never shows a stale result. None of it goes into Decode's playable-item protocol, which stays free of metadata.
 
 - **23. FolderScan reports each walked file to a handler.** Today the walk notes cover-art candidates itself, through Metadata's `FolderArtRules.h`. Metadata's folder art installs the handler instead, as FolderWalk's other launch-installed handlers already work.

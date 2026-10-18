@@ -2,8 +2,9 @@
 
 Usage: python3 -I scripts/plan/derive-deps.py <root> [--sites]
 
-<root> holds a Vibe checkout's Vibe/, Packages/ and Tests/iOSDriver/, for
-example a `git archive origin/main Vibe Packages Tests/iOSDriver` unpacked.
+<root> holds a Vibe checkout's Vibe/, Packages/, Tests/iOSDriver/ and
+project.yml, for example
+`git archive origin/main Vibe Packages Tests/iOSDriver project.yml` unpacked.
 Run it before the moves, and after each cut, and update the map in
 docs/plan.md in the same change.
 
@@ -12,10 +13,20 @@ code that stays in Vibe). Every #import and #include, quoted or angled, is
 resolved to a file in the tree, and the piece-to-piece edges are printed.
 With --sites it also prints the files behind each edge.
 
-Resolution: an include resolves to the tree file whose path ends with the
-include's spelling. A quoted include that matches no path suffix falls back
-to its basename, as Xcode's headermap does. An angled include never falls
-back, so a system header such as <string.h> cannot match a vendored file.
+<root> must also hold Vibe's project.yml, whose app header search paths
+the resolver follows.
+
+Resolution follows the compiler, never the filesystem's order:
+  1. A quoted include looks in the including file's own directory first.
+  2. Then both kinds look through the app's header search paths, in the
+     order project.yml lists them.
+  3. Then, as Xcode's headermap does, a quoted include may match a header by
+     its basename anywhere in the tree, but only if exactly one matches.
+  4. An include listed in EXPLICIT resolves to the file named there.
+An include that still matches more than one file is reported as ambiguous,
+and the script exits 1 without printing a map. Add an EXPLICIT entry, naming
+the header the build really uses, to settle it. An angled include that
+matches nothing is a system header and is skipped.
 """
 import os
 import re
@@ -157,19 +168,60 @@ for top in ("Vibe", "Packages", "Tests/iOSDriver"):
 by_base = defaultdict(list)
 for f in files:
     by_base[os.path.basename(f)].append(f)
+file_set = set(files)
+
+# (including file, spelling) -> the file the build uses, for a collision the
+# search paths cannot settle. Each entry says why.
+EXPLICIT = {}
+
+
+def search_paths():
+    """The app's HEADER_SEARCH_PATHS from project.yml, relative to root."""
+    paths, inside = [], False
+    with open(os.path.join(root, "project.yml")) as fh:
+        for line in fh:
+            if "HEADER_SEARCH_PATHS: &vibe-header-search-paths" in line:
+                inside = True
+                continue
+            if not inside:
+                continue
+            stripped = line.strip()
+            if stripped.startswith("#") or not stripped:
+                continue
+            if not stripped.startswith("- "):
+                break
+            value = stripped[2:].split("#")[0].strip().strip('"')
+            if value.startswith("$(SRCROOT)/"):
+                paths.append(value[len("$(SRCROOT)/"):])
+    if not paths:
+        sys.exit("no app header search paths found in project.yml")
+    return paths
+
+
+SEARCH = search_paths()
+ambiguous = []
 
 
 def resolve(src, kind, spelling):
-    base = os.path.basename(spelling)
-    cands = by_base.get(base, [])
-    suffix = [c for c in cands if c == spelling or c.endswith("/" + spelling)]
-    if suffix:
-        # Prefer a candidate in the including file's own piece, then any.
-        own = [c for c in suffix if piece_of(c) == piece_of(src)]
-        return (own or suffix)[0]
-    if kind == '"' and cands:
-        own = [c for c in cands if piece_of(c) == piece_of(src)]
-        return (own or cands)[0]
+    explicit = EXPLICIT.get((src, spelling))
+    if explicit:
+        return explicit
+    if kind == '"':
+        local = os.path.normpath(os.path.join(os.path.dirname(src), spelling))
+        if local in file_set:
+            return local
+    for directory in SEARCH:
+        candidate = os.path.normpath(os.path.join(directory, spelling))
+        if candidate in file_set:
+            return candidate
+    if kind != '"':
+        return None
+    cands = [c for c in by_base.get(os.path.basename(spelling), [])
+             if c == spelling or c.endswith("/" + spelling)]
+    if len(cands) == 1:
+        return cands[0]
+    if len(cands) > 1:
+        ambiguous.append((src, spelling, cands))
     return None
 
 
@@ -187,6 +239,11 @@ for f in files:
         dst = piece_of(target)
         if dst != src:
             edges[src][dst].add(f"{f.split('/')[-1]} -> {spelling}")
+
+if ambiguous:
+    for src, spelling, cands in ambiguous:
+        print(f"ambiguous: {src} includes \"{spelling}\": {', '.join(cands)}", file=sys.stderr)
+    sys.exit(1)
 
 for src in sorted(edges):
     deps = sorted(d for d in edges[src])
