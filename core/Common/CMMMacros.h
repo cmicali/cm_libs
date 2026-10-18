@@ -21,3 +21,82 @@
 #define VIBE_REALTIME_UNCHECKED_BEGIN
 #define VIBE_REALTIME_END
 #endif
+
+#ifdef __OBJC__
+
+#import <Foundation/Foundation.h>
+#import <os/log.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+// The log every piece writes to, under the app's own bundle identifier, so
+// each app's messages stream under its own name.
+static inline os_log_t VibeLog(void) {
+    static os_log_t log;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSString *subsystem = NSBundle.mainBundle.bundleIdentifier ?: @"cm_libs";
+        log = os_log_create(subsystem.UTF8String, "app");
+    });
+    return log;
+}
+
+// A second sink for every message, at every level, with its type. An app's
+// debug build may set it before main, as Vibe's does for --log-stderr. A
+// shipping build leaves it NULL, so each log pays one load and no call.
+typedef void (*CMMLogMirrorFunction)(os_log_type_t type, NSString *message);
+extern CMMLogMirrorFunction _Nullable CMMLogMirror;
+
+// Skips the formatting for a level os_log discards. A mirror takes every
+// level, so it joins the test rather than sitting under it.
+static inline BOOL VibeLogWants(os_log_type_t type) {
+    return CMMLogMirror != NULL || os_log_type_enabled(VibeLog(), type);
+}
+
+// os_log needs a constant format, so messages arrive pre-formatted; %{public}
+// stops os_log redacting them.
+static inline void VibeLogEmit(os_log_type_t type, NSString *message) {
+    CMMLogMirrorFunction mirror = CMMLogMirror;
+    if (mirror) {
+        mirror(type, message);
+    }
+    os_log_with_type(VibeLog(), type, "%{public}@", message);
+}
+
+#define VibeLogAt(type, fmt, ...)                                                              \
+    do {                                                                                       \
+        if (VibeLogWants(type)) {                                                              \
+            VibeLogEmit(type, [NSString stringWithFormat:(fmt), ##__VA_ARGS__]);               \
+        }                                                                                      \
+    } while (0)
+
+#define LogError(fmt, ...)  VibeLogAt(OS_LOG_TYPE_ERROR, fmt, ##__VA_ARGS__)
+#define LogWarn(fmt, ...)   VibeLogAt(OS_LOG_TYPE_DEFAULT, fmt, ##__VA_ARGS__)
+
+// VIBE_VERBOSE_LOGGING, a build setting of the app's, writes info and debug
+// at Default level, so they are kept for a later export. Errors keep Error
+// level. Warn always uses Default.
+#if VIBE_VERBOSE_LOGGING
+#define LogInfo(fmt, ...)   VibeLogAt(OS_LOG_TYPE_DEFAULT, fmt, ##__VA_ARGS__)
+#define LogDebug(fmt, ...)  VibeLogAt(OS_LOG_TYPE_DEFAULT, fmt, ##__VA_ARGS__)
+#else
+#define LogInfo(fmt, ...)   VibeLogAt(OS_LOG_TYPE_INFO, fmt, ##__VA_ARGS__)
+#define LogDebug(fmt, ...)  VibeLogAt(OS_LOG_TYPE_DEBUG, fmt, ##__VA_ARGS__)
+#endif
+
+// Log timed steps at Warn level. Without verbose logging, only those over
+// their threshold.
+#if VIBE_VERBOSE_LOGGING
+#define LogTiming(slow, fmt, ...)  LogWarn(fmt, ##__VA_ARGS__)
+#else
+#define LogTiming(slow, fmt, ...)                                                              \
+    do {                                                                                       \
+        if (slow) {                                                                            \
+            LogWarn(fmt, ##__VA_ARGS__);                                                       \
+        }                                                                                      \
+    } while (0)
+#endif
+
+NS_ASSUME_NONNULL_END
+
+#endif // __OBJC__
