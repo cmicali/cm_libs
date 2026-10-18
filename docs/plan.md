@@ -1,6 +1,6 @@
 # cm_libs: the plan
 
-**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18, but for two answers the pilot gives. Phase 1, the pilot, in review.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -308,9 +308,9 @@ The eight build questions, answered on 2026-10-18 with XcodeGen 2.46.0, Xcode 27
 | 3 | Do a template's header search paths join the target's? | **Yes, if the target sets its paths in its own `base`.** Two templates' paths and the app's own all reached the target. **But a value the target takes from a settings group is replaced, not joined.** Vibe's pilot found it: its app targets took TagLib's and WaveformCore's paths from a group, and the template dropped them. Vibe now sets them in each app target's base. |
 | 4 | Does a headermap-off build fail on a stray app import? | **Yes**, with `'AppOnly.h' file not found`, while the app's own build of the same file passes. |
 | 5 | Does `xcodegen dump` keep an included spec's templates? | **Yes, and better than hoped.** The dump rewrites their paths relative to the app, and a project regenerated from the dump elsewhere has the same file references. So `perf.py`'s rebuild from the dump works unchanged. |
-| 6 | Does the pilot pass the performance proof? | Answered by the pilot's Vibe pull request. |
+| 6 | Does the pilot pass the performance proof? | **Yes.** Across all 619 component benchmarks, 539 sit within ±0.5% of retired instructions, against 538 with no change at all. Every `pitch.*` benchmark is unchanged to 0.0%. The few that moved fell back into the noise when rerun with 6 rounds (Vibe #315). |
 | 7 | When does SwiftPM refuse `unsafeFlags`? | **Only from a dependency pinned by version.** By path, by branch, or by revision, it accepts them. A version-pinned consumer fails with "contains unsafe build flags". This matters only for a future `Package.swift`. |
-| 8 | Does `submodules: recursive` reach every CI job in Vibe? | Answered by the pilot's Vibe pull request. |
+| 8 | Does `submodules: recursive` reach every CI job in Vibe? | **Yes.** Every job on Vibe #315 passed with the submodule checked out: the Linux checks, which now fail without it, and the macOS, iOS, unit and audio jobs. |
 
 ### Phase 1: the pilot, DSP with the varispeed
 
