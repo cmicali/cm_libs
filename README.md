@@ -2,7 +2,7 @@
 
 A toolbox of small libraries for macOS and iOS apps. Each library is a piece an app can take on its own. Take the whole audio player, or only the waveform data, or only TagLib.
 
-The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in Vibe that another app could use belongs here.
+The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in Vibe that another app could use is a candidate. It moves when a second app needs it.
 
 **Nothing has moved yet.** The plan is [docs/plan.md](docs/plan.md).
 
