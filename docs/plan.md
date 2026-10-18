@@ -305,7 +305,7 @@ The eight build questions, answered on 2026-10-18 with XcodeGen 2.46.0, Xcode 27
 | --- | --- | --- |
 | 1 | Do paths in an included spec resolve relative to that spec? | **Yes.** A template's `core/Common` became `cm_libs/core/Common` in the app's project. The submodule can sit anywhere. |
 | 2 | Can a template list other templates, and does `${excludedPlatform}` substitute? | **Yes, both.** A piece's template pulled in Common's through its own `templates:`. The `Mac/` half compiled and the `iOS/` half did not. A per-file `-O3` carried through. |
-| 3 | Do a template's header search paths join the target's? | **Yes.** Two templates' paths and the app's own all reached the target. |
+| 3 | Do a template's header search paths join the target's? | **Yes, if the target sets its paths in its own `base`.** Two templates' paths and the app's own all reached the target. **But a value the target takes from a settings group is replaced, not joined.** Vibe's pilot found it: its app targets took TagLib's and WaveformCore's paths from a group, and the template dropped them. Vibe now sets them in each app target's base. |
 | 4 | Does a headermap-off build fail on a stray app import? | **Yes**, with `'AppOnly.h' file not found`, while the app's own build of the same file passes. |
 | 5 | Does `xcodegen dump` keep an included spec's templates? | **Yes, and better than hoped.** The dump rewrites their paths relative to the app, and a project regenerated from the dump elsewhere has the same file references. So `perf.py`'s rebuild from the dump works unchanged. |
 | 6 | Does the pilot pass the performance proof? | Answered by the pilot's Vibe pull request. |
@@ -427,6 +427,7 @@ The cuts add these small types. Each replaces a dependency on an app class:
 
 ## TRAPs
 
+- **A template's settings replace a value the target takes from a settings group.** They join only a value in the target's own `base`. So an app sets its own header search paths in `base`, never only through a group (the header of `cm_libs.yml`).
 - **A checkout without the submodule compiles nothing from here and fails late.** Every consumer's `make project`, benchmark worktrees, and CI checkouts must update it.
 - **YAML anchors do not cross `include:` files.** A consumer's own flag anchors cannot reach a template's entries. Every flag lives in its template.
 - **The headermap hides a crossed boundary.** In any project holding two pieces, an import by basename resolves across them. Only this repo's headermap-off bundles make the compiler refuse.

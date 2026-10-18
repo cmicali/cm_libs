@@ -5,6 +5,11 @@
 # the pieces it depends on, so an app names only the pieces it uses.
 # Each template's header search paths are its own piece's, so a build with
 # the headermap off reaches only the pieces a piece declares.
+#
+# TRAP: an app sets a target's own HEADER_SEARCH_PATHS in that target's
+# `settings: base:`, never only through a settings group. A template's paths
+# join a target's base setting, but they replace a group's, which silently
+# drops the app's own paths from that target.
 
 targetTemplates:
   CMMCommon:
