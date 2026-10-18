@@ -31,3 +31,6 @@ jobs:
 
       - name: Build every piece for iOS
         run: make build-ios
+
+      - name: Build and run a minimal consumer
+        run: make consumer

@@ -131,7 +131,7 @@ cm_libs/
 
 ### The dependency map
 
-Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in Vibe's tree at `6cb717e0`, with each file assigned to the piece it moves into (`scripts/plan/derive-deps.py`). The script resolves an include as the compiler does: a quoted include in its own directory first, then the app's header search paths from `project.yml`, in order, then a unique basename. **A collision those rules cannot settle fails the script** until an explicit mapping names the header the build uses, so no edge comes from the filesystem's order. TagLib's `<vorbisfile.h>`, for one, is TagLib's own Ogg Vorbis header, which the `taglib/ogg/vorbis` search path finds, not libvorbis's. The table is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.sh` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change.
+Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in Vibe's tree at `6cb717e0`, with each file assigned to the piece it moves into (`scripts/plan/derive-deps.py`). The script resolves an include as the compiler does: a quoted include in its own directory first, then the app's header search paths from `project.yml`, in order, then a unique basename. **A collision those rules cannot settle fails the script** until an explicit mapping names the header the build uses, so no edge comes from the filesystem's order. TagLib's `<vorbisfile.h>`, for one, is TagLib's own Ogg Vorbis header, which the `taglib/ogg/vorbis` search path finds, not libvorbis's. The table is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.py` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change.
 
 | Piece | Depends on |
 | --- | --- |
@@ -279,17 +279,24 @@ Vibe's audio, render, and signal-quality suites keep running against the moved c
 
 This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMAP: NO`, `ALWAYS_SEARCH_USER_PATHS: NO`, and `GCC_PREFIX_HEADER: ""`, with header search paths for only its piece and the pieces it declares. An import outside them fails to compile here. Each piece also builds for iOS, so an AppKit leak fails here too.
 
-`scripts/checks/check-pieces.py` checks the rest:
+**A compile alone cannot enforce every edge.** One build with the headermap off sees every header its templates expose, so an include of a piece two steps away compiles. A header nothing compiles is never checked at all. So `scripts/checks/check-pieces.py` resolves every include itself. It reads the spec through `xcodegen dump`, as XcodeGen does, and checks:
 
-- every piece has a template, a test bundle, and an `AGENTS.md`
-- every template's paths stay inside its piece
-- every import between pieces is in the dependency map, quoted or angled, and the map has no cycle
-- the platform rule: only `Mac/` and `iOS/` are platform-specific
+- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target
+- the map names only known pieces and has no cycle, counting every piece's edge to `core/Common`
+- each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows
+- every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.
+- no two first-party headers share a basename, since an app's headermap would pick one
+- every header is compiled by a source or test of its piece. A header-only piece imports its headers from a plain probe file in its tests, which its iOS target compiles too.
+- `Mac/` and `iOS/` are the only platform directories, and only at the top of a piece, where the template's exclude reaches them. A shared file imports AppKit or UIKit only under a platform guard. A half never imports the other platform's framework.
 - no `#if DEBUG` in a shipping header
-- the classes with no prefix, listed
 - the other app's name appears nowhere
+- and it lists the classes with no prefix
 
-CI runs `make check-pieces`, `make test`, and `make build-ios`. `make analyze CONFIG=Release` joins when the first piece with more than the varispeed moves. Until then Vibe's own analyzer run covers the varispeed, since Vibe compiles it. GitHub Actions is free for a public repo, macOS runners included.
+**The checker has tests of its own.** `scripts/checks/check-pieces-test.py` copies the repo, breaks one rule per case, and fails unless the checker fails with that rule's message. Each new rule gets a case. Two cases are the ones a review reproduced against the first checker: an angled include of another piece from `core/Common`, and a map edge from `core/Common` back to a piece that uses it.
+
+**A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `cm_libs.yml` from two directories up, sets `CMM_ROOT`, lists a template, builds with no prefix header and no headermap, and runs. It grows into the consumer the end of Phase 3 asks for.
+
+CI runs `make check-pieces`, `make test`, `make build-ios`, and `make consumer`. `make analyze CONFIG=Release` joins when the first piece with more than the varispeed moves. Until then Vibe's own analyzer run covers the varispeed, since Vibe compiles it. GitHub Actions is free for a public repo, macOS runners included.
 
 ## The work, in order
 

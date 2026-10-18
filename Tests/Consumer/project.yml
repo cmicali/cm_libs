@@ -1,0 +1,34 @@
+# A minimal app of its own, outside this repo's project. It includes the
+# shared spec from another directory, as an app's submodule does, and builds
+# with no prefix header and no headermap. `make consumer` builds and runs it.
+
+name: Consumer
+
+include:
+  - path: ../../cm_libs.yml
+
+options:
+  deploymentTarget:
+    macOS: "13.0"
+
+settings:
+  base:
+    CMM_ROOT: "$(SRCROOT)/../.."
+    USE_HEADERMAP: NO
+    ALWAYS_SEARCH_USER_PATHS: NO
+    GCC_PREFIX_HEADER: ""
+    CLANG_ENABLE_OBJC_ARC: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    CLANG_WARN_UNGUARDED_AVAILABILITY: YES_AGGRESSIVE
+    CODE_SIGNING_ALLOWED: NO
+
+targets:
+  Consumer:
+    type: tool
+    platform: macOS
+    templates: [CMMDSP]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: main.m
+    scheme: {}

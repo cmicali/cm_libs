@@ -12,9 +12,10 @@ The Xcode project is generated from `project.yml` by XcodeGen and is not checked
 | --- | --- |
 | `make test` | Every piece's tests on macOS, Debug, each piece built with the headermap off and no prefix header. |
 | `make build-ios` | Every piece built for the iOS simulator, so an AppKit leak fails. |
-| `make check-pieces` | The piece rules below, the dependency map in the plan, no `#if DEBUG` in a header, and the other app's name nowhere. |
+| `make check-pieces` | The piece rules below, the dependency map in the plan, no `#if DEBUG` in a header, and the other app's name nowhere. Then it breaks each rule in a copy of the repo and fails unless the check catches it. |
+| `make consumer` | A minimal app outside this repo's project includes `cm_libs.yml` as an app would, builds with no prefix header and no headermap, and runs. |
 
-CI runs all three on every pull request.
+CI runs all four on every pull request.
 
 ## What this repo is for
 
@@ -24,12 +25,13 @@ CI runs all three on every pull request.
 
 ## Pieces
 
-**A piece is one directory, one template in `cm_libs.yml`, one test bundle in `project.yml`, and one `AGENTS.md`.** That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
+**A piece is one directory, one template in `cm_libs.yml`, a macOS test bundle and an iOS target in `project.yml`, and one `AGENTS.md`.** That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
 
 - **Pieces sit in groups by what they are about**: `core/`, `files/`, `audio/`, `media/`, `waveform/`, `ui/`, `system/`, `dev/`, and `third_party/`. A group is only a directory. It has no template and no build of its own.
 - **Anything general enough for another app to use belongs here, once a second app needs it.** Code that names an app's settings, strings, or model stays in the app.
 - **One job per piece.** Split when it saves a consumer a dependency. Merge when the parts only work together, or when splitting saves nothing. The plan's "How the pieces are cut" section has the rest.
-- **A piece imports only from the pieces it declares.** The dependency list is in the plan. The test bundles build each piece with the headermap off and only its declared header paths. A crossed boundary then fails to compile here, even when an app's headermap would resolve it.
+- **A piece imports only from the pieces it declares.** The dependency list is in the plan. The test bundles build each piece with the headermap off and only its declared header paths. A crossed boundary then fails to compile here, even when an app's headermap would resolve it. `make check-pieces` also resolves every include itself, so a header no build compiles is checked too.
+- **Every header is compiled here.** A header-only piece imports its headers from a plain probe file in its tests, which the iOS target compiles as well.
 - **Pieces meet through values and blocks**, never through another piece's model class. Optional work is injected, never imported.
 - **A piece keeps the caller's objects.** It never copies or compares them by content, so two entries for one file stay two entries. Shared work matches by source key, the path and window. A persisted entry matches by disk key, which also names the file's version.
 - **A move changes nothing but the path.** No API, language, or platform change rides on it. A portable C or C++ rewrite is separate work with its own measurements.
