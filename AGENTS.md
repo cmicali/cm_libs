@@ -2,7 +2,19 @@
 
 Guidance for any coding agent working in this repository.
 
-cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **Nothing has moved yet.** The plan is [docs/plan.md](docs/plan.md). Read it before changing anything here.
+cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first two pieces are here**: `core/Common` and `audio/DSP`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
+
+## Building
+
+The Xcode project is generated from `project.yml` by XcodeGen and is not checked in. `make help` lists every target.
+
+| Command | What it does |
+| --- | --- |
+| `make test` | Every piece's tests on macOS, Debug, each piece built with the headermap off and no prefix header. |
+| `make build-ios` | Every piece built for the iOS simulator, so an AppKit leak fails. |
+| `make check-pieces` | The piece rules below, the dependency map in the plan, no `#if DEBUG` in a header, and the other app's name nowhere. |
+
+CI runs all three on every pull request.
 
 ## What this repo is for
 

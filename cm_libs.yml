@@ -1,0 +1,25 @@
+# The shared spec. An app includes it, sets CMM_ROOT to where this repo sits,
+# and lists the pieces it wants under `templates:`, with
+# `templateAttributes: {excludedPlatform: iOS}` on macOS or `Mac` on iOS.
+# Paths here resolve relative to this file. A template lists the templates of
+# the pieces it depends on, so an app names only the pieces it uses.
+# Each template's header search paths are its own piece's, so a build with
+# the headermap off reaches only the pieces a piece declares.
+
+targetTemplates:
+  CMMCommon:
+    sources:
+      - path: core/Common
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(CMM_ROOT)/core/Common"]
+
+  CMMDSP:
+    templates: [CMMCommon]
+    sources:
+      - path: audio/DSP
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(CMM_ROOT)/audio/DSP"]

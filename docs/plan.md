@@ -1,6 +1,6 @@
 # cm_libs: the plan
 
-**Status: planned 2026-10-17, not started. Revised the same day after a review.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18, but for two answers the pilot gives. Phase 1, the pilot, in review.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -54,7 +54,7 @@ cm_libs/
 ├── AGENTS.md  README.md  LICENSE  docs/plan.md
 ├── cm_libs.yml          the shared spec: one targetTemplate per piece, plus stack templates
 ├── project.yml          this repo's own project: one headermap-off test bundle per piece
-├── Makefile  .github/workflows/ci.yml  scripts/checks/check-pieces.sh
+├── Makefile  .github/workflows/ci.yml  scripts/checks/check-pieces.py
 ├── scripts/plan/derive-deps.py   re-derives the dependency map from Vibe's imports
 │
 ├── core/
@@ -258,7 +258,7 @@ The constraint is no performance change in either app. Compiling in meets it by 
 | --- | --- | --- |
 | Templates, compiled in | identical: the same files, flags, and objects as today | nothing |
 | Static library targets in the shared spec | identical, given `-ObjC` on every app | A library is built once per project. Vibe's audio tests build four render files at `-O2` and turn verbose logging on, and its unit tests link a stand-in metadata class. One shared build cannot serve both. |
-| A Swift package, linked | slower in Debug | Xcode builds a package with its own settings, unoptimized in Debug. `-O3` for the decoders exists only as `unsafeFlags`, which a package fetched by URL may not use. There is no prefix header and no per-file flag. |
+| A Swift package, linked | slower in Debug | Xcode builds a package with its own settings, unoptimized in Debug. `-O3` for the decoders exists only as `unsafeFlags`, which a package pinned by version may not use. There is no prefix header and no per-file flag. |
 
 Vibe has no link-time optimization today, so files inline across each other only through headers. A library boundary would not change that. The difference is entirely in the flags and the test builds. The number of pieces does not matter either.
 
@@ -279,7 +279,7 @@ Vibe's audio, render, and signal-quality suites keep running against the moved c
 
 This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMAP: NO`, `ALWAYS_SEARCH_USER_PATHS: NO`, and `GCC_PREFIX_HEADER: ""`, with header search paths for only its piece and the pieces it declares. An import outside them fails to compile here. Each piece also builds for iOS, so an AppKit leak fails here too.
 
-`scripts/checks/check-pieces.sh` checks the rest:
+`scripts/checks/check-pieces.py` checks the rest:
 
 - every piece has a template, a test bundle, and an `AGENTS.md`
 - every template's paths stay inside its piece
@@ -289,7 +289,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 - the classes with no prefix, listed
 - the other app's name appears nowhere
 
-CI runs `make check-pieces`, `make test`, `make build-ios`, and `make analyze CONFIG=Release`. GitHub Actions is free for a public repo, macOS runners included.
+CI runs `make check-pieces`, `make test`, and `make build-ios`. `make analyze CONFIG=Release` joins when the first piece with more than the varispeed moves. Until then Vibe's own analyzer run covers the varispeed, since Vibe compiles it. GitHub Actions is free for a public repo, macOS runners included.
 
 ## The work, in order
 
@@ -297,20 +297,24 @@ CI runs `make check-pieces`, `make test`, `make build-ios`, and `make analyze CO
 
 ### Phase 0: setup and experiments
 
-Choose the license. Then answer eight questions with throwaway specs and branches, and record each answer here:
+**The license is Apache 2.0** (decided 2026-10-18), Vibe's own, so code moves between the repos under the terms it already has.
 
-1. Paths in an included spec resolve relative to the included file, so the submodule can sit anywhere.
-2. A template can list other templates, which the stacks need, and `${excludedPlatform}` substitutes from `templateAttributes`.
-3. A template's header search paths join the target's, rather than replace them.
-4. A test bundle with the headermap off fails on a stray import of an app header.
-5. `xcodegen dump` keeps an included spec's templates. Vibe's `perf.py` builds its benchmark tool from that dump.
-6. The pilot passes the performance proof.
-7. A package dependency by path accepts `unsafeFlags`, and one by URL refuses them.
-8. `actions/checkout` with `submodules: recursive` reaches every CI job in Vibe.
+The eight build questions, answered on 2026-10-18 with XcodeGen 2.46.0, Xcode 27.1 and Swift 6.4, in throwaway projects:
+
+| # | Question | Answer |
+| --- | --- | --- |
+| 1 | Do paths in an included spec resolve relative to that spec? | **Yes.** A template's `core/Common` became `cm_libs/core/Common` in the app's project. The submodule can sit anywhere. |
+| 2 | Can a template list other templates, and does `${excludedPlatform}` substitute? | **Yes, both.** A piece's template pulled in Common's through its own `templates:`. The `Mac/` half compiled and the `iOS/` half did not. A per-file `-O3` carried through. |
+| 3 | Do a template's header search paths join the target's? | **Yes.** Two templates' paths and the app's own all reached the target. |
+| 4 | Does a headermap-off build fail on a stray app import? | **Yes**, with `'AppOnly.h' file not found`, while the app's own build of the same file passes. |
+| 5 | Does `xcodegen dump` keep an included spec's templates? | **Yes, and better than hoped.** The dump rewrites their paths relative to the app, and a project regenerated from the dump elsewhere has the same file references. So `perf.py`'s rebuild from the dump works unchanged. |
+| 6 | Does the pilot pass the performance proof? | Answered by the pilot's Vibe pull request. |
+| 7 | When does SwiftPM refuse `unsafeFlags`? | **Only from a dependency pinned by version.** By path, by branch, or by revision, it accepts them. A version-pinned consumer fails with "contains unsafe build flags". This matters only for a future `Package.swift`. |
+| 8 | Does `submodules: recursive` reach every CI job in Vibe? | Answered by the pilot's Vibe pull request. |
 
 ### Phase 1: the pilot, DSP with the varispeed
 
-The smallest real piece goes first, after its one prerequisite. `AudioVarispeed` uses Vibe's realtime-check macros, so cut 12 first moves the macros out of Vibe's prefix header into `CMMMacros.h`. **The pilot then moves that header here with the varispeed**, as the first file of `core/Common`. A header left in Vibe would not satisfy this repo's isolated build. Vibe's prefix header imports it from the submodule. Nothing else blocks the pilot.
+The smallest real piece goes first, after its one prerequisite. `AudioVarispeed` uses Vibe's realtime-check macros, so cut 12 first moves the macros out of Vibe's prefix header into `CMMMacros.h`. **Only the realtime brackets move in cut 12.** Vibe's log and signpost macros carry debug-only parts, and a shipping header may not hold `#if DEBUG`. They move when the first piece that logs moves, with a design for those parts. **The pilot then moves that header here with the varispeed**, as the first file of `core/Common`. A header left in Vibe would not satisfy this repo's isolated build. Vibe's prefix header imports it from the submodule. Nothing else blocks the pilot.
 
 `AudioVarispeed` is Vibe's own windowed-sinc converter for the pitch fader. Its distortion sits near −150 dB, against −83 to −135 dB for Apple's Varispeed unit. It is flat to 20 kHz and a bit-perfect pass-through at zero pitch. It costs about 0.2% of one core at 48 kHz. Its API is plain C, it has one caller in Vibe, and its tests and benchmark stand alone.
 
