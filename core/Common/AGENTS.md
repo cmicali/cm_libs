@@ -2,7 +2,7 @@
 
 What every other piece may use, and nothing else. Every piece may import from it, so it depends on nothing.
 
-**Today it holds `CMMMacros.h` and its one definition, `CMMMacros.m`.** A file imports `CMMMacros.h` explicitly. No piece relies on a prefix header. An app's prefix header may import it too, as Vibe's does.
+**Today it holds only `CMMMacros.h`, a header.** A file imports `CMMMacros.h` explicitly. No piece relies on a prefix header. An app's prefix header may import it too, as Vibe's does.
 
 ## The realtime-effects brackets
 
@@ -14,11 +14,13 @@ What every other piece may use, and nothing else. Every piece may import from it
 
 - **The subsystem is the main bundle's identifier**, read once, so each app's messages stream under its own name. Vibe's two apps share one identifier, `com.commonwealthrecordings.Vibe`. A test bundle's messages land under its runner's identifier.
 - **`VIBE_VERBOSE_LOGGING`** is the app's build setting. At 1, info and debug are written at Default level, so they are kept for a later export. Unset, as in this repo's own builds, it reads as 0.
-- **A message is formatted only when something will take it**: `os_log` at its level, or the mirror.
+- **A message is formatted only when `os_log` takes its level.**
 
-**`CMMLogMirror` is a second sink for every message, at every level, with its type.** It is NULL unless an app sets it. Vibe's debug build sets it before `main` when launched with `--log-stderr`, to bring a device's logs back over the console. A shipping build leaves it NULL, so each log pays one load and no call. Set it once, before anything logs. It is a plain global, not a lock-guarded value.
+**To see messages on stderr, an app sets `OS_ACTIVITY_DT_MODE=1` in the process's environment.** `os_log` then copies every message it keeps to stderr, which is how Xcode's console gets them. Vibe's device workflow passes it through `devicectl`. Debug-level messages need their level enabled, or an app that logs them at Default, as Vibe's verbose builds do.
 
-**TRAP: `CMMMacros.h` has no `#if DEBUG` and names no app type.** Every piece and every app imports it, and a shipping header may not carry debug surface. That is why the mirror is a hook the app installs, not a debug-only branch in the header.
+**TRAP: `VibeLogWants` and `VibeLogEmit` hold nothing but the `os_log` calls.** Every log site in every piece inlines them. With a stderr hook there, Vibe's metadata-scan benchmarks retired 2 to 3% more instructions, although they never log. The system's own switch costs the call sites nothing.
+
+**TRAP: `CMMMacros.h` has no `#if DEBUG` and names no app type.** Every piece and every app imports it, and a shipping header may not carry debug surface.
 
 ## Still in Vibe
 

@@ -41,25 +41,18 @@ static inline os_log_t VibeLog(void) {
     return log;
 }
 
-// A second sink for every message, at every level, with its type. An app's
-// debug build may set it before main, as Vibe's does for --log-stderr. A
-// shipping build leaves it NULL, so each log pays one load and no call.
-typedef void (*CMMLogMirrorFunction)(os_log_type_t type, NSString *message);
-extern CMMLogMirrorFunction _Nullable CMMLogMirror;
-
-// Skips the formatting for a level os_log discards. A mirror takes every
-// level, so it joins the test rather than sitting under it.
+// Skips the formatting for a level os_log discards.
+// TRAP: nothing else goes in this test or in the emit below. Every log site in
+// every piece inlines them. With a stderr hook added here, the metadata-scan
+// benchmarks, which never log, retired 2 to 3% more instructions. To copy
+// messages to stderr, an app sets OS_ACTIVITY_DT_MODE.
 static inline BOOL VibeLogWants(os_log_type_t type) {
-    return CMMLogMirror != NULL || os_log_type_enabled(VibeLog(), type);
+    return os_log_type_enabled(VibeLog(), type);
 }
 
 // os_log needs a constant format, so messages arrive pre-formatted; %{public}
 // stops os_log redacting them.
 static inline void VibeLogEmit(os_log_type_t type, NSString *message) {
-    CMMLogMirrorFunction mirror = CMMLogMirror;
-    if (mirror) {
-        mirror(type, message);
-    }
     os_log_with_type(VibeLog(), type, "%{public}@", message);
 }
 

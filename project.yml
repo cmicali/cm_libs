@@ -28,28 +28,6 @@ settings:
     CODE_SIGNING_ALLOWED: NO
 
 targets:
-  # core/Common, tested on macOS.
-  CommonTests:
-    type: bundle.unit-test
-    platform: macOS
-    templates: [CMMCommon]
-    templateAttributes:
-      excludedPlatform: iOS
-    sources:
-      - path: Tests/core/Common
-        excludes: ["**/*.md"]
-    settings:
-      base:
-        GENERATE_INFOPLIST_FILE: YES
-
-  # core/Common built for iOS.
-  Common-iOS:
-    type: library.static
-    platform: iOS
-    templates: [CMMCommon]
-    templateAttributes:
-      excludedPlatform: Mac
-
   # audio/DSP, tested on macOS. The tests' hang bound matches Vibe's.
   DSPTests:
     type: bundle.unit-test
@@ -77,9 +55,7 @@ schemes:
   cm_libs:
     build:
       targets:
-        CommonTests: [test]
-        Common-iOS: all
         DSPTests: [test]
         DSP-iOS: all
     test:
-      targets: [CommonTests, DSPTests]
+      targets: [DSPTests]
