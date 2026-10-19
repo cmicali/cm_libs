@@ -4,7 +4,7 @@ Usage: python3 -I scripts/checks/check-pieces.py   (from the repo root)
 
 A piece is a directory under one of the groups below. For each piece:
   - it has an AGENTS.md
-  - cm_libs.yml has its template, named CMM<piece>
+  - vibe-libs.yml has its template, named CMM<piece>
   - a piece with source files has a test bundle in project.yml that lists
     its template
   - every quoted import that names a header in another piece names one the
@@ -36,7 +36,7 @@ for group in GROUPS:
         if os.path.isdir(os.path.join(group, name)):
             pieces.append(f"{group}/{name}")
 
-spec = open("cm_libs.yml").read()
+spec = open("vibe-libs.yml").read()
 project = open("project.yml").read()
 plan = open("docs/plan.md").read()
 
@@ -64,7 +64,7 @@ for piece in pieces:
     if not os.path.isfile(os.path.join(piece, "AGENTS.md")):
         fail(f"{piece}: no AGENTS.md")
     if not re.search(rf"^  {re.escape(template)}:\s*$", spec, re.M):
-        fail(f"{piece}: cm_libs.yml has no template {template}")
+        fail(f"{piece}: vibe-libs.yml has no template {template}")
     has_source = any(f.endswith(SOURCE) for f in files_of(piece))
     if has_source and not re.search(rf"type: bundle\.unit-test(?:(?!\n  \S).)*templates: \[[^\]]*\b{re.escape(template)}\b", project, re.S):
         fail(f"{piece}: has source but no test bundle in project.yml lists {template}")

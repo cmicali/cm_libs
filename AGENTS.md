@@ -2,7 +2,7 @@
 
 Guidance for any coding agent working in this repository.
 
-cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first two pieces are here**: `core/Common` and `audio/DSP`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
+vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first two pieces are here**: `core/Common` and `audio/DSP`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
 
 ## Building
 
@@ -18,13 +18,13 @@ CI runs all three on every pull request.
 
 ## What this repo is for
 
-- **Its users are Vibe and another app, not the public, for now.** Each adds this repo as a git submodule at `cm_libs/`, includes the shared XcodeGen spec `cm_libs.yml`, and lists the pieces it wants as templates. There is no `Package.swift` for the apps. The plan says when that changes.
+- **Its users are Vibe and another app, not the public, for now.** Each adds this repo as a git submodule at `vibe-libs/`, includes the shared XcodeGen spec `vibe-libs.yml`, and lists the pieces it wants as templates. There is no `Package.swift` for the apps. The plan says when that changes.
 - **The other app is closed source. Never name it** in this repo: not in code, comments, docs, commits, issues, pull requests, setting names, or template attributes. Call it "another app" when you must refer to it. Name a per-app switch by what it does, never by who uses it.
 - **There is no license yet.** Until one is chosen, nothing here is licensed for reuse.
 
 ## Pieces
 
-**A piece is one directory, one template in `cm_libs.yml`, one test bundle in `project.yml`, and one `AGENTS.md`.** That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
+**A piece is one directory, one template in `vibe-libs.yml`, one test bundle in `project.yml`, and one `AGENTS.md`.** That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
 
 - **Pieces sit in groups by what they are about**: `core/`, `files/`, `audio/`, `media/`, `waveform/`, `ui/`, `system/`, `dev/`, and `third_party/`. A group is only a directory. It has no template and no build of its own.
 - **Anything general enough for another app to use belongs here, once a second app needs it.** Code that names an app's settings, strings, or model stays in the app.
