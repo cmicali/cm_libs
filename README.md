@@ -1,4 +1,4 @@
-# cm_libs
+# vibe-libs
 
 A toolbox of small libraries for macOS and iOS apps. Each library is a piece an app can take on its own. Take the whole audio player, or only the waveform data, or only TagLib.
 
@@ -22,7 +22,7 @@ The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in 
 
 ## How an app uses it
 
-An app adds this repo as a git submodule at `cm_libs/`. Its XcodeGen `project.yml` includes `cm_libs/cm_libs.yml` and lists the pieces it wants as templates on its targets. The pieces' sources compile into the app as its own files, so they build exactly as they would in the app's own tree.
+An app adds this repo as a git submodule at `vibe-libs/`. Its XcodeGen `project.yml` includes `vibe-libs/vibe-libs.yml` and lists the pieces it wants as templates on its targets. The pieces' sources compile into the app as its own files, so they build exactly as they would in the app's own tree.
 
 ## License
 
