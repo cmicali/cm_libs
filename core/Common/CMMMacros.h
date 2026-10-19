@@ -35,7 +35,7 @@ static inline os_log_t VibeLog(void) {
     static os_log_t log;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        NSString *subsystem = NSBundle.mainBundle.bundleIdentifier ?: @"cm_libs";
+        NSString *subsystem = NSBundle.mainBundle.bundleIdentifier ?: @"vibe-libs";
         log = os_log_create(subsystem.UTF8String, "app");
     });
     return log;
