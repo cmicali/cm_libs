@@ -1,4 +1,4 @@
-"""Derive cm_libs' dependency map from a Vibe tree's imports.
+"""Derive vibe-libs' dependency map from a Vibe tree's imports.
 
 Usage: python3 -I scripts/plan/derive-deps.py <root> [--sites]
 

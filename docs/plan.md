@@ -1,14 +1,14 @@
-# cm_libs: the plan
+# vibe-libs: the plan
 
 **Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
-cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
+vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
 Its users are Vibe and another app. Both add it as a git submodule.
 
 ## Decided
 
-- **The name is cm_libs, and the prefix for new code is `CMM`.** `CM` alone is CoreMedia's.
+- **The name is vibe-libs, and the prefix for new code is `CMM`.** `CM` alone is CoreMedia's.
 - **Code moved from Vibe keeps its names.** A move is `git mv` and nothing else. The `Vibe` C prefix stays.
 - **One repo of many pieces, grouped by what they are about.** An app picks pieces, not the whole repo.
 - **Apps compile the pieces' sources in their own targets**, through templates in a shared XcodeGen spec. No static libraries and no Swift package for the apps, for now.
@@ -23,7 +23,7 @@ Still open: the license. Apache 2.0, like Vibe, lets code move between the repos
 
 | Was | Now | Why |
 | --- | --- | --- |
-| PlaybackKit, prefix `PBK` | cm_libs, prefix `CMM` for new code | The repo is a toolbox, not only playback. |
+| PlaybackKit, prefix `PBK` | vibe-libs, prefix `CMM` for new code | The repo is a toolbox, not only playback. |
 | Four products cut along Vibe's directories | Pieces with one job each | Each piece should be usable without its neighbors. |
 | Rename every class and C symbol on the move | No rename | A rename touches 441 names in 678 files of Vibe and 88 of #294's 111 files. Folded into the move, it would turn every moved file into a content change and break the performance proof. |
 | Static framework targets in the shared spec | Templates the app compiles in | Same run time, and the app's test targets can still build the code with their own flags (below). |
@@ -50,9 +50,9 @@ Still open: the license. Apache 2.0, like Vibe, lets code move between the repos
 **●** marks the playback and waveform path, which moves first. The other pieces are candidates that move when a second app needs them. What each piece depends on is listed once, in the dependency map below.
 
 ```
-cm_libs/
+vibe-libs/
 ├── AGENTS.md  README.md  LICENSE  docs/plan.md
-├── cm_libs.yml          the shared spec: one targetTemplate per piece, plus stack templates
+├── vibe-libs.yml        the shared spec: one targetTemplate per piece, plus stack templates
 ├── project.yml          this repo's own project: one headermap-off test bundle per piece
 ├── Makefile  .github/workflows/ci.yml  scripts/checks/check-pieces.py
 ├── scripts/plan/derive-deps.py   re-derives the dependency map from Vibe's imports
@@ -199,7 +199,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 
 **Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
 
-**A stack is a template that lists other templates.** `cm_libs.yml` offers a few, so an app's `project.yml` stays short. Examples are a Playback stack (Player and everything it needs) and a Waveform stack (the four waveform pieces).
+**A stack is a template that lists other templates.** `vibe-libs.yml` offers a few, so an app's `project.yml` stays short. Examples are a Playback stack (Player and everything it needs) and a Waveform stack (the four waveform pieces).
 
 **What a few consumers would take:**
 
@@ -244,8 +244,8 @@ Vibe decodes a waveform only for the track on screen. An app that analyzes a who
 
 **A git submodule, compiled in tree.**
 
-- The app's repo has this repo as a submodule at `cm_libs/`, pinned to a commit. The app's `make project` runs `git submodule update --init --recursive` before it generates, so a fresh clone or a worktree works.
-- The app's `project.yml` has `include: [cm_libs/cm_libs.yml]`. Each app target lists the pieces or stacks it wants under `templates:`. It sets `templateAttributes: {excludedPlatform: iOS}` on macOS, or `Mac` on iOS.
+- The app's repo has this repo as a submodule at `vibe-libs/`, pinned to a commit. The app's `make project` runs `git submodule update --init --recursive` before it generates, so a fresh clone or a worktree works.
+- The app's `project.yml` has `include: [vibe-libs/vibe-libs.yml]`. Each app target lists the pieces or stacks it wants under `templates:`. It sets `templateAttributes: {excludedPlatform: iOS}` on macOS, or `Mac` on iOS.
 - The pieces' files compile as the app's own sources. Each vendored library keeps its own compiler flags in its template.
 - The spec reads one project setting, the verbose-logging switch. Vibe maps it from its beta switch, and test targets set it to 1.
 - The log subsystem is the main bundle's identifier, so each app logs under its own name.
@@ -294,7 +294,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **The checker has tests of its own.** `scripts/checks/check-pieces-test.py` copies the repo, breaks one rule per case, and fails unless the checker fails with that rule's message. Each new rule gets a case. Two cases are the ones a review reproduced against the first checker: an angled include of another piece from `core/Common`, and a map edge from `core/Common` back to a piece that uses it.
 
-**A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `cm_libs.yml` from two directories up, sets `CMM_ROOT`, lists a template, builds with no prefix header and no headermap, and runs. It grows into the consumer the end of Phase 3 asks for.
+**A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `vibe-libs.yml` from two directories up, sets `CMM_ROOT`, lists a template, builds with no prefix header and no headermap, and runs. It grows into the consumer the end of Phase 3 asks for.
 
 CI runs `make check-pieces`, `make test`, `make build-ios`, and `make consumer`. `make analyze CONFIG=Release` joins when the first piece with more than the varispeed moves. Until then Vibe's own analyzer run covers the varispeed, since Vibe compiles it. GitHub Actions is free for a public repo, macOS runners included.
 
@@ -310,7 +310,7 @@ The eight build questions, answered on 2026-10-18 with XcodeGen 2.46.0, Xcode 27
 
 | # | Question | Answer |
 | --- | --- | --- |
-| 1 | Do paths in an included spec resolve relative to that spec? | **Yes.** A template's `core/Common` became `cm_libs/core/Common` in the app's project. The submodule can sit anywhere. |
+| 1 | Do paths in an included spec resolve relative to that spec? | **Yes.** A template's `core/Common` became `vibe-libs/core/Common` in the app's project. The submodule can sit anywhere. |
 | 2 | Can a template list other templates, and does `${excludedPlatform}` substitute? | **Yes, both.** A piece's template pulled in Common's through its own `templates:`. The `Mac/` half compiled and the `iOS/` half did not. A per-file `-O3` carried through. |
 | 3 | Do a template's header search paths join the target's? | **Yes, if the target sets its paths in its own `base`.** Two templates' paths and the app's own all reached the target. **But a value the target takes from a settings group is replaced, not joined.** Vibe's pilot found it: its app targets took TagLib's and WaveformCore's paths from a group, and the template dropped them. Vibe now sets them in each app target's base. |
 | 4 | Does a headermap-off build fail on a stray app import? | **Yes**, with `'AppOnly.h' file not found`, while the app's own build of the same file passes. |
@@ -434,7 +434,7 @@ The cuts add these small types. Each replaces a dependency on an app class:
 
 ## TRAPs
 
-- **A template's settings replace a value the target takes from a settings group.** They join only a value in the target's own `base`. So an app sets its own header search paths in `base`, never only through a group (the header of `cm_libs.yml`).
+- **A template's settings replace a value the target takes from a settings group.** They join only a value in the target's own `base`. So an app sets its own header search paths in `base`, never only through a group (the header of `vibe-libs.yml`).
 - **A checkout without the submodule compiles nothing from here and fails late.** Every consumer's `make project`, benchmark worktrees, and CI checkouts must update it.
 - **YAML anchors do not cross `include:` files.** A consumer's own flag anchors cannot reach a template's entries. Every flag lives in its template.
 - **The headermap hides a crossed boundary.** In any project holding two pieces, an import by basename resolves across them. Only this repo's headermap-off bundles make the compiler refuse.

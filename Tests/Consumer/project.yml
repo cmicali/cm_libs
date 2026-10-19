@@ -5,7 +5,7 @@
 name: Consumer
 
 include:
-  - path: ../../cm_libs.yml
+  - path: ../../vibe-libs.yml
 
 options:
   deploymentTarget:
