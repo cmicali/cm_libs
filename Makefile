@@ -1,7 +1,7 @@
-# cm_libs: build, test and check every piece on its own.
+# vibe-libs: build, test and check every piece on its own.
 # Every target that builds regenerates the project first.
 
-PROJECT := cm_libs.xcodeproj
+PROJECT := vibe-libs.xcodeproj
 DERIVED := build/DerivedData
 
 .PHONY: help project test build-ios consumer check-pieces clean
@@ -17,13 +17,13 @@ project:
 # Runs every piece's tests on macOS, Debug, with the headermap off.
 test: project
 	rm -rf build/TestResults.xcresult
-	xcodebuild test -project $(PROJECT) -scheme cm_libs -destination 'platform=macOS' \
+	xcodebuild test -project $(PROJECT) -scheme vibe-libs -destination 'platform=macOS' \
 		-derivedDataPath $(DERIVED) -resultBundlePath build/TestResults.xcresult -quiet
 	@python3 -I scripts/checks/test-summary.py build/TestResults.xcresult
 
 # Builds every piece for the iOS simulator, so an AppKit leak fails here.
 build-ios: project
-	xcodebuild build -project $(PROJECT) -scheme cm_libs -destination 'generic/platform=iOS Simulator' \
+	xcodebuild build -project $(PROJECT) -scheme vibe-libs -destination 'generic/platform=iOS Simulator' \
 		-derivedDataPath $(DERIVED) -quiet
 
 # Builds and runs a minimal app that takes the pieces as another app would.

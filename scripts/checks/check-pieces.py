@@ -175,41 +175,41 @@ for piece in pieces:
     if piece not in allowed:
         fail(f"{piece}: missing from the dependency map in docs/plan.md")
     if template is None:
-        fail(f"{piece}: cm_libs.yml has no template {name}")
+        fail(f"{piece}: vibe-libs.yml has no template {name}")
         continue
     for source in template.get("sources", []):
         path = source if isinstance(source, str) else source.get("path", "")
         if not inside(path, piece):
-            fail(f"cm_libs.yml: {name} compiles {path}, outside {piece}")
+            fail(f"vibe-libs.yml: {name} compiles {path}, outside {piece}")
         excludes = [] if isinstance(source, str) else source.get("excludes", [])
         if first_party(piece) and "${excludedPlatform}/**" not in excludes:
-            fail(f"cm_libs.yml: {name}'s source {path} does not exclude ${{excludedPlatform}}/**")
+            fail(f"vibe-libs.yml: {name}'s source {path} does not exclude ${{excludedPlatform}}/**")
     paths = template.get("settings", {}).get("base", {}).get("HEADER_SEARCH_PATHS", [])
     for entry in [paths] if isinstance(paths, str) else paths:
         if entry == "$(inherited)":
             continue
         if not entry.startswith("$(CMM_ROOT)/"):
-            fail(f"cm_libs.yml: {name} searches {entry}, which is not under $(CMM_ROOT)")
+            fail(f"vibe-libs.yml: {name} searches {entry}, which is not under $(CMM_ROOT)")
             continue
         directory = entry[len("$(CMM_ROOT)/"):].strip('"')
         if not inside(directory, piece):
-            fail(f"cm_libs.yml: {name} searches {directory}, outside {piece}")
+            fail(f"vibe-libs.yml: {name} searches {directory}, outside {piece}")
         else:
             search_roots.append((directory, piece))
     by_template = {template_name(p): p for p in pieces}
     for listed in template.get("templates", []):
         dep = by_template.get(listed)
         if listed not in templates:
-            fail(f"cm_libs.yml: {name} lists {listed}, which does not exist")
+            fail(f"vibe-libs.yml: {name} lists {listed}, which does not exist")
         elif dep is None:
-            fail(f"cm_libs.yml: {name} lists {listed}, which is no piece's template")
+            fail(f"vibe-libs.yml: {name} lists {listed}, which is no piece's template")
         elif dep not in deps_of(piece) - {piece}:
-            fail(f"cm_libs.yml: {name} lists {listed}, but the map does not allow {piece} -> {dep}")
+            fail(f"vibe-libs.yml: {name} lists {listed}, but the map does not allow {piece} -> {dep}")
 
 piece_templates = {template_name(p) for p in pieces}
 for name, template in sorted(templates.items()):
     if template.get("sources") and name not in piece_templates:
-        fail(f"cm_libs.yml: {name} compiles sources but is no piece's template; a stack lists templates only")
+        fail(f"vibe-libs.yml: {name} compiles sources but is no piece's template; a stack lists templates only")
 
 
 # Headers, and the basename index an app's headermap would build.
