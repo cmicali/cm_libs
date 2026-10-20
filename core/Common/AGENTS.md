@@ -8,6 +8,8 @@ What every other piece may use, and nothing else. Every piece may import from it
 
 `VIBE_REALTIME_CHECKED_BEGIN`, `VIBE_REALTIME_UNCHECKED_BEGIN` and `VIBE_REALTIME_END`. Code between a checked bracket and its end compiles under `-Werror=function-effects`, so a `CA_REALTIME_API` function there cannot allocate, lock, log, dispatch or message. An unchecked bracket covers only the one-line shims around calls the checker cannot see, each documented at its site. This half is plain C, so a C file may use it.
 
+`Tests/core/Common/CommonProbe.m` compiles the header alone, with a function under the checked bracket. The macOS tests call it, and the iOS target compiles it. A new header here gets an import in the probe.
+
 ## Logging
 
 `LogError`, `LogWarn`, `LogInfo`, `LogDebug` and `LogTiming` wrap `os_log`. They are Objective-C only.

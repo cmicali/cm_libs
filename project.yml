@@ -28,6 +28,30 @@ settings:
     CODE_SIGNING_ALLOWED: NO
 
 targets:
+  # core/Common is only headers. Its tests compile them alone.
+  CommonTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsCommon]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/core/Common
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # core/Common built for iOS, through its probe.
+  Common-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsCommon]
+    templateAttributes:
+      excludedPlatform: Mac
+    sources:
+      - path: Tests/core/Common/CommonProbe.m
+
   # audio/DSP, tested on macOS. The tests' hang bound matches Vibe's.
   DSPTests:
     type: bundle.unit-test
@@ -55,7 +79,9 @@ schemes:
   vibe-libs:
     build:
       targets:
+        CommonTests: [test]
+        Common-iOS: all
         DSPTests: [test]
         DSP-iOS: all
     test:
-      targets: [DSPTests]
+      targets: [CommonTests, DSPTests]
