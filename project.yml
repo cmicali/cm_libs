@@ -27,6 +27,10 @@ settings:
     CLANG_WARN_UNGUARDED_AVAILABILITY: YES_AGGRESSIVE
     CODE_SIGNING_ALLOWED: NO
 
+# Each piece has a macOS test bundle over Tests/<piece> and a <piece>-iOS
+# static library, both listing its template. A macOS-only piece, marked in the
+# plan's map, has the test bundle alone: no <piece>-iOS target, and no iOS
+# target lists its template, directly or through another template.
 targets:
   # core/Common is only headers. Its tests compile them alone.
   CommonTests:

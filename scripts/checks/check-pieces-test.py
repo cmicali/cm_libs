@@ -45,6 +45,30 @@ def replace(root, path, old, new):
 HEADER = "core/Common/VibeMacros.h"
 SOURCE = "audio/DSP/AudioVarispeed.m"
 OTHER_APP = "vibe" + " " + "pro"
+DSP_ROW = "| audio/DSP | third_party/r8brain |"
+DSP_IOS = """  # audio/DSP built for iOS, so an AppKit leak fails here.
+  DSP-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsDSP]
+    templateAttributes:
+      excludedPlatform: Mac
+
+"""
+COMMON_IOS_TEMPLATES = "    templates: [VibeLibsCommon]\n    templateAttributes:\n      excludedPlatform: Mac"
+
+
+def mac_only(root):
+    """audio/DSP becomes macOS only, the way a shell piece arrives: the map
+    row says so, and the piece has no iOS target."""
+    replace(root, "docs/plan.md", DSP_ROW, "| audio/DSP | third_party/r8brain, macOS only |")
+    replace(root, "project.yml", DSP_IOS, "")
+    replace(root, "project.yml", "        DSP-iOS: all\n", "")
+
+
+def ios_target_listing(root, listed):
+    mac_only(root)
+    replace(root, "project.yml", COMMON_IOS_TEMPLATES, COMMON_IOS_TEMPLATES.replace("VibeLibsCommon]", f"VibeLibsCommon, {listed}]"))
 
 # (name, mutation, text the failure must contain, or None for a pass)
 CASES = [
@@ -106,6 +130,22 @@ CASES = [
     ("the other app's name",
      lambda r: append(r, "README.md", f"\n{OTHER_APP}\n"),
      "names the other app"),
+    ("a macOS-only piece given an iOS target",
+     lambda r: replace(r, "docs/plan.md", DSP_ROW, "| audio/DSP | third_party/r8brain, macOS only |"),
+     "DSP-iOS builds for iOS and lists VibeLibsDSP, but audio/DSP is macOS only"),
+    ("an iOS target listing a macOS-only template",
+     lambda r: ios_target_listing(r, "VibeLibsDSP"),
+     "Common-iOS builds for iOS and lists VibeLibsDSP, but audio/DSP is macOS only"),
+    ("an iOS target reaching a macOS-only template through a stack",
+     lambda r: (append(r, "vibe-libs.yml", "\n  VibeLibsShell:\n    templates: [VibeLibsDSP]\n"),
+                ios_target_listing(r, "VibeLibsShell")),
+     "Common-iOS builds for iOS and reaches VibeLibsDSP through VibeLibsShell, but audio/DSP is macOS only"),
+    ("a macOS-only piece with a Mac/ half",
+     lambda r: (mac_only(r), write(r, "audio/DSP/Mac/Thing.m", "int VibeThing(void) { return 0; }\n")),
+     "audio/DSP is macOS only and has no Mac/ half"),
+    ("a macOS-only piece importing AppKit with no guard",
+     lambda r: (mac_only(r), append(r, SOURCE, "\n#import <AppKit/AppKit.h>\n")),
+     None),
 ]
 
 

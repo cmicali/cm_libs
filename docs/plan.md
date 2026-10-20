@@ -217,7 +217,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 
 **Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
 
-**A piece whose row says macOS only builds for one platform.** It has no `Mac/` half and no iOS target, and an iOS target that lists its template fails the check. Today's checker ignores those words. The rule lands with the first such piece, on the shell track.
+**A piece whose row says macOS only builds for one platform.** It has no `Mac/` half and no iOS target, and an iOS target that lists its template, directly or through another template, fails the check. The checker reads those words since the shell track's step 2, on 2026-10-20, before the first such piece.
 
 **A stack is a template that lists other templates.** `vibe-libs.yml` offers a few, so an app's `project.yml` stays short. Examples are a Playback stack (Player and everything it needs) and a Waveform stack (the four waveform pieces).
 
@@ -370,7 +370,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **A compile alone cannot enforce every edge.** One build with the headermap off sees every header its templates expose, so an include of a piece two steps away compiles. A header nothing compiles is never checked at all. So `scripts/checks/check-pieces.py` resolves every include itself. It reads the spec through `xcodegen dump`, as XcodeGen does, and checks:
 
-- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. A piece whose row says macOS only has no iOS target, and no iOS target may list its template.
+- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. The checker reads the words macOS only at the end of a map row: such a piece has no iOS target, no iOS target lists its template, directly or through another template, it has no `Mac/` or `iOS/` directory, its template need not exclude one, and its files import AppKit with no platform guard.
 - the map names only known pieces and has no cycle, counting every piece's edge to `core/Common`
 - each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows
 - every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.
@@ -482,7 +482,7 @@ grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|FolderAccessManager\|DebugWireF
 The shell pieces touch none of the first path's files, so they move while Phase 2 cuts the path. They also prove the toolbox on a macOS-only piece with no audio, which is where the platform rule first bites. In this order, each its own move, each with the proof above:
 
 1. The prefix rename, on the pilot's branches before they merge (Decided).
-2. The macOS-only rule in the checker and `project.yml`, with its failing case.
+2. The macOS-only rule in the checker and `project.yml`, with its failing cases. Done 2026-10-20: the checker reads the map's words, `project.yml` states the pattern a macOS-only piece's targets follow, and the checker's tests gain four failing cases and one passing one.
 3. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window.
 4. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone.
 5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests.
