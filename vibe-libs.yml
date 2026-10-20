@@ -1,0 +1,30 @@
+# The shared spec. An app includes it, sets VIBE_LIBS_ROOT to where this repo sits,
+# and lists the pieces it wants under `templates:`, with
+# `templateAttributes: {excludedPlatform: iOS}` on macOS or `Mac` on iOS.
+# Paths here resolve relative to this file. A template lists the templates of
+# the pieces it depends on, so an app names only the pieces it uses.
+# Each template's header search paths are its own piece's, so a build with
+# the headermap off reaches only the pieces a piece declares.
+#
+# TRAP: an app sets a target's own HEADER_SEARCH_PATHS in that target's
+# `settings: base:`, never only through a settings group. A template's paths
+# join a target's base setting, but they replace a group's, which silently
+# drops the app's own paths from that target.
+
+targetTemplates:
+  VibeLibsCommon:
+    sources:
+      - path: core/Common
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/core/Common"]
+
+  VibeLibsDSP:
+    templates: [VibeLibsCommon]
+    sources:
+      - path: audio/DSP
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/audio/DSP"]

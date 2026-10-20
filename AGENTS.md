@@ -2,17 +2,29 @@
 
 Guidance for any coding agent working in this repository.
 
-cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **Nothing has moved yet.** The plan is [docs/plan.md](docs/plan.md). Read it before changing anything here.
+vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first two pieces are here**: `core/Common` and `audio/DSP`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
+
+## Building
+
+The Xcode project is generated from `project.yml` by XcodeGen and is not checked in. `make help` lists every target.
+
+| Command | What it does |
+| --- | --- |
+| `make test` | Every piece's tests on macOS, Debug, each piece built with the headermap off and no prefix header. |
+| `make build-ios` | Every piece built for the iOS simulator, so an AppKit leak fails. |
+| `make check-pieces` | The piece rules below, the dependency map in the plan, no `#if DEBUG` in a header, and the other app's name nowhere. |
+
+CI runs all three on every pull request.
 
 ## What this repo is for
 
-- **Its users are Vibe and another app, not the public, for now.** Each adds this repo as a git submodule at `cm_libs/`, includes the shared XcodeGen spec `cm_libs.yml`, and lists the pieces it wants as templates. There is no `Package.swift` for the apps. The plan says when that changes.
+- **Its users are Vibe and another app, not the public, for now.** Each adds this repo as a git submodule at `vibe-libs/`, includes the shared XcodeGen spec `vibe-libs.yml`, and lists the pieces it wants as templates. There is no `Package.swift` for the apps. The plan says when that changes.
 - **The other app is closed source. Never name it** in this repo: not in code, comments, docs, commits, issues, pull requests, setting names, or template attributes. Call it "another app" when you must refer to it. Name a per-app switch by what it does, never by who uses it.
 - **There is no license yet.** Until one is chosen, nothing here is licensed for reuse.
 
 ## Pieces
 
-**A piece is one directory, one template in `cm_libs.yml`, one test bundle in `project.yml`, and one `AGENTS.md`.** That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
+**A piece is one directory, one template in `vibe-libs.yml`, one test bundle in `project.yml`, and one `AGENTS.md`.** That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
 
 - **Pieces sit in groups by what they are about**: `core/`, `files/`, `audio/`, `media/`, `waveform/`, `ui/`, `system/`, `dev/`, and `third_party/`. A group is only a directory. It has no template and no build of its own.
 - **Anything general enough for another app to use belongs here, once a second app needs it.** Code that names an app's settings, strings, or model stays in the app.
@@ -23,11 +35,11 @@ cm_libs is a toolbox of small libraries for macOS and iOS apps. An app takes onl
 - **A move changes nothing but the path.** No API, language, or platform change rides on it. A portable C or C++ rewrite is separate work with its own measurements.
 - **Third-party code is a piece of its own** under `third_party/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code.
 - **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both.
-- **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `core/Common/CMMMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
+- **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `core/Common/VibeMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
 
 ## Names
 
-- **New classes and C symbols take the prefix `CMM`.** Objective-C and C each have one global namespace, and `CM` alone is CoreMedia's.
+- **One prefix, `Vibe`, for new code and moved code alike.** Objective-C and C each have one global namespace, so a generic name can collide with another library's at run time. `CMM` was the prefix while the repo was called cm_libs. It was retired before the pilot merged: `CMMMacros.h` became `VibeMacros.h`, `CMM_ROOT` became `VIBE_LIBS_ROOT`, and a piece's template is `VibeLibs<piece>`.
 - **Code arriving from Vibe keeps its names.** A move is `git mv` and nothing else, so history, blame, and the performance proof survive. The `Vibe` C prefix stays. `make check-pieces` lists the classes with no prefix, so a collision in a consuming app can be checked. A rename, if ever wanted, is one scripted pull request of its own.
 
 ## How work moves between the repos
