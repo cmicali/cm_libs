@@ -21,11 +21,11 @@ CI runs all four on every pull request.
 
 - **Its users are Vibe and another app, not the public, for now.** Each adds this repo as a git submodule at `vibe-libs/`, includes the shared XcodeGen spec `vibe-libs.yml`, and lists the pieces it wants as templates. There is no `Package.swift` for the apps. The plan says when that changes.
 - **The other app is closed source. Never name it** in this repo: not in code, comments, docs, commits, issues, pull requests, setting names, or template attributes. Call it "another app" when you must refer to it. Name a per-app switch by what it does, never by who uses it.
-- **There is no license yet.** Until one is chosen, nothing here is licensed for reuse.
+- **The license is Apache 2.0** (`LICENSE`). Each library under `third_party/` keeps its own.
 
 ## Pieces
 
-**A piece is one directory, one template in `vibe-libs.yml`, a macOS test bundle and an iOS target in `project.yml`, and one `AGENTS.md`.** That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
+**A piece is one directory, one template in `vibe-libs.yml`, a macOS test bundle and an iOS target in `project.yml`, and one `AGENTS.md`.** A macOS-only piece, marked in the plan's map, has no iOS target. That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added.
 
 - **Pieces sit in groups by what they are about**: `core/`, `files/`, `audio/`, `media/`, `waveform/`, `ui/`, `system/`, `dev/`, and `third_party/`. A group is only a directory. It has no template and no build of its own.
 - **Anything general enough for another app to use belongs here, once a second app needs it.** Code that names an app's settings, strings, or model stays in the app.
@@ -36,20 +36,20 @@ CI runs all four on every pull request.
 - **A piece keeps the caller's objects.** It never copies or compares them by content, so two entries for one file stay two entries. Shared work matches by source key, the path and window. A persisted entry matches by disk key, which also names the file's version.
 - **A move changes nothing but the path.** No API, language, or platform change rides on it. A portable C or C++ rewrite is separate work with its own measurements.
 - **Third-party code is a piece of its own** under `third_party/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code.
-- **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both.
+- **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both. A macOS-only piece, marked in the plan's map, has no halves, and no iOS target may list its template.
 - **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `core/Common/VibeMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
 
 ## Names
 
 - **One prefix, `Vibe`, for new code and moved code alike.** Objective-C and C each have one global namespace, so a generic name can collide with another library's at run time. `CMM` was the prefix while the repo was called cm_libs. It was retired before the pilot merged: `CMMMacros.h` became `VibeMacros.h`, `CMM_ROOT` became `VIBE_LIBS_ROOT`, and a piece's template is `VibeLibs<piece>`.
-- **Code arriving from Vibe keeps its names.** A move is `git mv` and nothing else, so history, blame, and the performance proof survive. The `Vibe` C prefix stays. `make check-pieces` lists the classes with no prefix, so a collision in a consuming app can be checked. A rename, if ever wanted, is one scripted pull request of its own.
+- **Code arriving from Vibe keeps its names.** A move is `git mv` and nothing else, so history, blame, and the performance proof survive. `make check-pieces` lists the classes with no prefix, so a collision in a consuming app can be checked. A rename of those, if ever wanted, is one scripted pull request of its own.
 
 ## How work moves between the repos
 
 - **Decoupling happens in Vibe first**, under Vibe's gates. Then a move here is mechanical.
 - **A move carries history with `git filter-repo`.** It arrives as one merge with `--allow-unrelated-histories`.
-- **A move changes no performance.** Vibe's `perf.py compare` shows every benchmark's retired instructions inside the no-op band. Vibe's `make test-audio` time stays within noise.
-- **After a piece moves, its changes land here first.** Then each app bumps its submodule.
+- **A move is measured, not assumed free.** Between fixed before and after commits, Vibe's `perf.py compare` keeps each affected benchmark's retired instructions inside its own no-change band, and the pull request reports every outlier and rerun. Vibe's `make test-audio` time stays within noise. The plan's build audit compares what every target compiles.
+- **A change across the repos lands here first**, then in the consumer's pin, then through the consumer's gates. The old pin is the rollback.
 
 ## Writing
 

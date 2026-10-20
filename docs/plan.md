@@ -1,6 +1,6 @@
 # vibe-libs: the plan
 
-**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -14,10 +14,11 @@ Its users are Vibe and another app. Both add it as a git submodule.
 - **Apps compile the pieces' sources in their own targets**, through templates in a shared XcodeGen spec. No static libraries and no Swift package for the apps, for now.
 - **Third-party code is a piece of its own**, one per library.
 - **Extraction first, everything else after.** A move changes no API, no language, and no platform. Portable C or C++ rewrites, new tag fields, and other redesigns are separate work with their own scope and measurements.
-- **The playback and waveform path moves first.** The other app builds its first slice on it. Every other piece follows demonstrated reuse.
+- **The playback and waveform path moves first, with FolderScan and Playlists.** The other app builds its first slice on them. Every other piece follows demonstrated reuse. [What the other app needs, and when](#what-the-other-app-needs-and-when) is the one list of its deliveries.
 - **Vibe's waveform engine (PR #294) merged in Vibe before any move**, so the waveform data moves once.
-
-Still open: the license. Apache 2.0, like Vibe, lets code move between the repos freely.
+- **The shell pieces move on a second track, beside Phase 2.** A third app, a mac app that plays no audio, needs the settings window, the mac controls, the typography slots, and remappable shortcuts. They touch none of the first path's files, so they wait on nothing in it. [The shell pieces](#the-shell-pieces) says what moves and what is cut first, and [the shell track](#the-shell-track-beside-phase-2) the order.
+- **The license is Apache 2.0**, Vibe's own, so code moves between the repos under the terms it already has.
+- **This plan is the authority** for the pieces, what each owns, and the shared milestones. Vibe's plan covers only Vibe's own edits.
 
 ### What changed from the 2026-10-09 plan
 
@@ -36,10 +37,12 @@ Still open: the license. Apache 2.0, like Vibe, lets code move between the repos
 2. **Split when it saves a consumer a dependency. Merge when the parts only work together, or when splitting saves nothing.** Tempo and key detection are one piece, because they share their framing and depend on nothing. Tags and Metadata are two pieces, because a tag reader should not drag in the cache, the scan, and the decoders.
 3. **A piece's code lives with the piece that reaches into it.** The morph engine is used by the renderers, so it sits with the styles. The device categories on `AudioPlayer` read the player's private state, so they sit in `Player/Mac` and `Player/iOS`. The device and session classes they call do not, so those are their own piece.
 4. **Pieces hold the caller's objects, never another piece's model class.** A playable item is any object that adopts a small protocol giving its file, its frame window, its source key, and its disk key. Vibe's `AudioTrack` adopts it. The player, the caches, and the queue keep the caller's object and hand the same one back. A piece that writes results into an item declares a protocol of its own for that, as Metadata does (seam 22). Four identities stay separate:
-   - **Source identity** is the source key: the file's path and its window. It names the same stretch of audio, so shared work, claims, and late deliveries match on it. It does not change when the file's contents do.
+   - **Source identity** is the source key: the file's path and its window. It names the same stretch of audio, so shared work and claims match on it. It does not change when the file's contents do, so it cannot tell a late result from an old version.
    - **Version identity** is the disk key: DiskCache's `cacheKey` of the file's size, modification time, and resolved path, with the window appended for a waveform. It names one version of the file, so persisted entries match on it. An item may memoize it. FileLoading's handler tells the app to forget the memo when a download installs a new version.
    - **Entry identity** is the caller's object. Two entries for the same file are two entries.
    - **Submission identity** is the player's own counter for each play. It decides which settlement is current.
+
+   **A late result carries the version it was read from.** A metadata or waveform job records the disk key when it is submitted. Before a receiver installs or files the result as an item's current data, it compares that key with the item's current one. On a mismatch it drops the result. The cache may still file it under its own disk key, which names the old version. A new version also clears what Metadata's holder installed, so the next parse can install. The source already sounding keeps the version it opened, and its transport still settles by submission identity.
 5. **Optional work is injected, never imported.** Analyzers ride the waveform decode as observers. Folder art takes its switch and its access check as providers. The file loader takes the opener of the handle it serves.
 6. **Every piece is Objective-C or Objective-C++ on Apple's frameworks when it moves.** `waveform/Waveform` is C++, but it calls Accelerate and Compression too. Making any piece portable is a later rewrite with its own measurements (see Later).
 7. **Policy stays in apps.** That means which files count as playable, what plays next under which settings, every display string, and every setting.
@@ -47,7 +50,7 @@ Still open: the license. Apache 2.0, like Vibe, lets code move between the repos
 
 ## The pieces
 
-**●** marks the playback and waveform path, which moves first. The other pieces are candidates that move when a second app needs them. What each piece depends on is listed once, in the dependency map below.
+**●** marks the first path: playback, the waveform, and the folder scan, which move first. **○** marks the shell track, which moves beside Phase 2. The other pieces are candidates that move when a second app needs them. What each piece depends on is listed once, in the dependency map below.
 
 ```
 vibe-libs/
@@ -63,7 +66,8 @@ vibe-libs/
 │   │                    the disk key from a file's attributes; fixed-slot work lanes; a weak
 │   │                    proxy; a display-paced update timer; build provenance and its script
 │   └── Graphics ●       image and color aliases, bounded image decode, hex, blend and OKLCH
-│                        colors, dominant color, blur, dark-mode helpers
+│                        colors, dominant color, blur, dark-mode helpers; Mac/ the typography
+│                        slots (Fonts), on the shell track
 │
 ├── files/
 │   ├── FileLoading ●    from a path to readable bytes: placeholder checks, downloads, reading
@@ -96,8 +100,8 @@ vibe-libs/
 │   │                    scan, embedded art and thumbnails, and covers beside the files
 │   ├── PlayQueue ●      play order, shuffle, repeat, and what follows a track's end, over
 │   │                    opaque entries of the app's own
-│   ├── Playlists        CUE sheets, also embedded in FLAC, and M3U, read and written as records
-│   └── FolderScan       walk folders and links into files and CUE rows, and search file names
+│   ├── Playlists ●      CUE sheets, also embedded in FLAC, and M3U, read and written as records
+│   └── FolderScan ●     walk folders and links into files and CUE rows, and search file names
 │
 ├── waveform/
 │   ├── Waveform ●       WaveformCore/: the summary, pyramid, deep zoom, raster, and archive,
@@ -110,8 +114,14 @@ vibe-libs/
 │   └── WaveformView ●   the layer host, the macOS view, the iOS scrubber
 │
 ├── ui/
-│   └── Controls ●       loading bar and pill, equalizer bars; later, the mac symbol buttons,
-│                        drawn controls, detent slider, pitch fader, and image views
+│   ├── Controls ●○      loading bar and pill, equalizer bars; Mac/ the symbol button, the drawn
+│   │                    slider and switch, the detent slider, the image views, and the link
+│   │                    label; later the pitch fader
+│   ├── SettingsWindow ○ macOS only: the System Settings shape, a sidebar with search, back
+│   │                    and forward history, the pane base, and the form views: cards, rows,
+│   │                    captions, lists, color-pair wells, sliders with readouts
+│   └── Shortcuts ○      macOS only: a shortcut as a key code or character with modifiers,
+│                        its matching, and the recorder pane over rows the app supplies
 │
 ├── system/
 │   ├── NowPlaying       Now Playing info and remote commands, fed a snapshot
@@ -123,6 +133,8 @@ vibe-libs/
 │   ├── DebugChannel     drive and inspect a running debug build from a script
 │   └── iOSDriver        taps, drags and pinches in the iOS simulator, for scripts
 │
+├── tools/strings ●      the strings registry's extraction and catalog checks, configured per app
+│
 ├── third_party/         taglib/ ●  dr_mp3/ ●  dr_flac/ ●  dr_wav/ ●  r8brain/ ●  PINCache/ ●  PINOperation/ ●
 │                        ogg/ ●  vorbis/ ●  Sparkle/
 │
@@ -131,7 +143,7 @@ vibe-libs/
 
 ### The dependency map
 
-Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in Vibe's tree at `6cb717e0`, with each file assigned to the piece it moves into (`scripts/plan/derive-deps.py`). The script resolves an include as the compiler does: a quoted include in its own directory first, then the app's header search paths from `project.yml`, in order, then a unique basename. **A collision those rules cannot settle fails the script** until an explicit mapping names the header the build uses, so no edge comes from the filesystem's order. TagLib's `<vorbisfile.h>`, for one, is TagLib's own Ogg Vorbis header, which the `taglib/ogg/vorbis` search path finds, not libvorbis's. The table is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.py` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change.
+Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in Vibe's tree at `6cb717e0`, with each file assigned to the piece it moves into (`scripts/plan/derive-deps.py`). The script resolves an include as the compiler does: a quoted include in its own directory first, then the app's header search paths from `project.yml`, in order, then a unique basename. **A collision those rules cannot settle fails the script** until an explicit mapping names the header the build uses, so no edge comes from the filesystem's order. TagLib's `<vorbisfile.h>`, for one, is TagLib's own Ogg Vorbis header, which the `taglib/ogg/vorbis` search path finds, not libvorbis's. The table is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.py` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change. Each cut records the script's output and the Vibe commit it ran on. **The script reads includes, not symbols, and it is no list of sources.** So the map also changes when a declaration moves between headers, even when no include goes away.
 
 | Piece | Depends on |
 | --- | --- |
@@ -142,7 +154,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | files/HTTP | nothing |
 | files/RemoteFiles | files/FileLoading, files/HTTP |
 | files/ShareLinks | files/HTTP |
-| files/SandboxAccess | nothing |
+| files/SandboxAccess | nothing, macOS only |
 | audio/AudioTypes | nothing |
 | audio/DSP | third_party/r8brain |
 | audio/Analysis | audio/AudioTypes, audio/DSP |
@@ -161,9 +173,11 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | waveform/WaveformLoading | waveform/Waveform, audio/AudioTypes, audio/Decode, files/DiskCache, files/FileLoading, third_party/PINCache |
 | waveform/WaveformView | waveform/WaveformStyles, waveform/Waveform, ui/Controls, core/Graphics |
 | ui/Controls | core/Graphics |
+| ui/SettingsWindow | ui/Controls, core/Graphics, macOS only |
+| ui/Shortcuts | ui/SettingsWindow, macOS only |
 | system/NowPlaying | core/Graphics, media/PlayQueue |
-| system/AppOpening | nothing |
-| system/Updates | third_party/Sparkle |
+| system/AppOpening | nothing, macOS only |
+| system/Updates | third_party/Sparkle, macOS only |
 | dev/DebugChannel | nothing |
 | dev/iOSDriver | nothing |
 | third_party/PINCache | third_party/PINOperation |
@@ -175,7 +189,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | Edge today | Removed by |
 | --- | --- |
 | every piece → Vibe's app code | the settings, strings, and reach cuts |
-| files/FileLoading → audio/Decode | seam 15, the handle protocol |
+| files/FileLoading → audio/Decode | seam 15: the handle protocol, and the read-ahead's test hooks in a header of FileLoading's own |
 | files/FileLoading → dev/DebugChannel | cut 1 |
 | files/RemoteFiles → media/Playlists | cut 2 |
 | files/ShareLinks → Vibe's `LinkStore` | seam 20: `LinkClient` stops importing the store |
@@ -191,13 +205,19 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | the playable-item protocol | audio/Decode | audio/Player, media/Metadata, waveform/WaveformLoading; adopted by the app's entries | none: each user already depends on Decode |
 | Metadata's holder protocol | media/Metadata | adopted by the app's entries | none |
 | the handle protocol of FileLoading | files/FileLoading | adopted by audio/Decode's file handle | none: Decode already depends on FileLoading |
-| the waveform decode's observer block | waveform/WaveformLoading | the app, which attaches audio/Analysis | none: the app joins them |
-| the playlist record, later | media/Playlists | media/FolderScan, the app | none: FolderScan already depends on Playlists |
+| a waveform decode's observer | waveform/WaveformLoading | the app, which attaches audio/Analysis | none: the app joins them |
+| the playlist record | media/Playlists | media/FolderScan, the app | none: FolderScan already depends on Playlists |
+| the catalog scan's verdict and read policy | media/FolderScan | the app | none |
 | the Now Playing snapshot, later | system/NowPlaying | the app | none |
+| the settings pane's effects sink: a block over an integer the app interprets | ui/SettingsWindow | the app | none |
+| the shortcut row: identifier, label, default | ui/Shortcuts | the app | none |
+| the typography slot table | core/Graphics | ui/Controls, ui/SettingsWindow, the app | none: both already depend on Graphics |
 
 **PlayQueue stays free of all of them.** Its entries are opaque objects, never the playable-item protocol. Declaring that protocol would pull Decode, FileLoading, and the decoders into a play-order list.
 
 **Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
+
+**A piece whose row says macOS only builds for one platform.** It has no `Mac/` half and no iOS target, and an iOS target that lists its template fails the check. Today's checker ignores those words. The rule lands with the first such piece, on the shell track.
 
 **A stack is a template that lists other templates.** `vibe-libs.yml` offers a few, so an app's `project.yml` stays short. Examples are a Playback stack (Player and everything it needs) and a Waveform stack (the four waveform pieces).
 
@@ -210,6 +230,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | An app that reads users' iCloud and network files | FileLoading, and nothing from audio |
 | A DJ tool reading CUE sheets | Playlists |
 | A waveform plugin | Waveform today; WaveformStyles once its later C++ rewrite lands |
+| A mac app that plays no audio | SettingsWindow, Shortcuts, Controls, Graphics, Updates, DebugChannel, and tools/strings; OutputDevices and Meter if it meters an output |
 
 ### What some pieces mean, in plain words
 
@@ -221,7 +242,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 
 ### Analyzing many files
 
-Vibe decodes a waveform only for the track on screen. An app that analyzes a whole library needs more, and it is new behavior in WaveformLoading, built after the move as its own change:
+Vibe decodes a waveform only for the track on screen. An app that analyzes a whole library needs more, and it is new behavior in WaveformLoading, built in Phase 5 as its own change:
 
 - **A scan request kind**, apart from the track on screen. The app admits one at a time.
 - **Admission stops while an open the user waits on is active**, read from FileLoading's foreground state. It resumes when the open settles.
@@ -229,6 +250,23 @@ Vibe decodes a waveform only for the track on screen. An app that analyzes a who
 - **The playing track's waveform is never cancelled or delayed** by any of this.
 - **Tested on a throttled source**, with Vibe's fake cloud and read-ahead stubs, so a slow file proves the decode yields within one block.
 - **Tags have a cache-only path.** `loadCachedMetadata:` reads only the cache and never the file. It is the path for a File Provider placeholder, whose bytes cannot be read without downloading it. A remote placeholder can read its tags by range instead.
+
+**Done when** the throttled-source tests pass, and Vibe's waveform benchmarks show no change for the track on screen.
+
+### Scanning a catalog
+
+Vibe's walk opens the readable part of a folder. `expandAndFilterList:` returns rows and a folder count, with no way to cancel and no verdict on whether it saw everything. Its enumerator logs an error and carries on. That is right for an open. It is not enough for a catalog, which may mark a file missing only after a scan that saw the whole folder. The walk also reads CUE sheets, beside the files and embedded in FLAC, so a listing may read file contents.
+
+The catalog scan is new behavior in FolderScan. It lands after FolderScan's move, as its own change:
+
+- **Files arrive in bounded batches**, not one array at the end.
+- **Every enumeration failure is reported** with its directory.
+- **Each root ends with one verdict: complete, partial, or cancelled.** Only a complete verdict lets a catalog mark unseen files missing.
+- **A read policy says which contents the scan may read**: none, local files only, or every file. It covers CUE sheets beside the files and embedded in FLAC. Under none, a CUE sheet is reported as a file and not expanded.
+- **A token cancels the scan**, checked between entries. A cancelled scan never reports complete.
+- **There is one enumerator.** Vibe's `expandAndFilterList:` becomes a caller of the same walk, reading every file and making its own rows. So CUE handling never runs under different access rules.
+
+**Done when** tests show these: a partly unreadable tree reports partial, a cancelled scan reports cancelled, a large tree arrives in bounded batches, and a listing over the fake cloud reads no audio. Vibe's open behaves as before.
 
 ### Groupings forced by today's code
 
@@ -239,6 +277,45 @@ Vibe decodes a waveform only for the track on screen. An app that analyzes a who
 - **Artwork is inside `Metadata`.** The art is found during the tag parse and cached beside the tags. Nothing uses one without the other.
 
 **Artwork is the one place the engine hands out UI types.** `Metadata` returns `NSImage` or `UIImage`. AppKit and UIKit are always present, so that is tolerable. A UI-free version would return a `CGImage`. Leave it until someone asks.
+
+### The shell pieces
+
+A third app, a mac app that plays no audio, is the second consumer of Vibe's shell: its settings window, its drawn controls, its typography, and its remappable shortcuts. Measured by imports on Vibe's `main` at `7fbeaaba`:
+
+| Piece | From Vibe | Lines | Reaches into Vibe today |
+| --- | --- | --- | --- |
+| ui/Controls, Mac/ | `SymbolButton`, `VibeDetentSlider`, `ScaledImageView`, `CrossfadingImageView`, `VibeLinkLabel` | 827 | nothing |
+| ui/Controls, Mac/ | `DrawnControls`: `VibeSlider` and `VibeSwitch` | 558 | `Formatters.percentString:`, for one accessibility value |
+| ui/SettingsWindow | `SettingsFormViews` | 751 | nothing |
+| ui/SettingsWindow | `SettingsPaneViewController` | 854 | `MainPlayerController`, held and called once, and the `VibeSettingsLiveEffect` type |
+| ui/SettingsWindow | `SettingsSidebarController` | 275 | two strings |
+| ui/SettingsWindow | `SettingsWindowController` | 773 | the list of nine panes, 34 strings, and the Themes and Audio panes by name |
+| core/Graphics, Mac/ | `Fonts` | 194 | `AppTheme`, for the five font slots and the theme push |
+| ui/Shortcuts | `ShortcutRules.h`, `SettingsShortcutsViewController` | 716 | Vibe's command table, its menu rules, transport math, settings, and strings |
+
+**What stays in Vibe:** `AppSettings` and `SettingsRules.h`, which are policy; every pane's content; `ArtworkImageView`; `PitchFaderView` and `PitchControlPanel` until seam 21; `MainMenuBuilder` and Vibe's command table; the About window; the iOS settings screens; and the theme record, its store, and the Themes pane.
+
+**The theme engine does not move.** `AppTheme` and its categories are about 3,500 lines, and the Themes pane 2,600 more. Its slots are Vibe's product: the waveform, the playlist, the transport buttons, and the window chrome. A theme piece needs a schema-driven record, which is a redesign, not a move, and no second app wants user themes. What is generic in it is small: the dark and light color-pair row, its seeding from the displayed fallback, and copy and paste of a color as hex. Those move into the form views, bound to a read block and a write block instead of a theme base (cut 29). A theme piece is reconsidered only when an app asks for user themes.
+
+**The debug walker splits.** Vibe's `DebugSettingsUI` drives a pane by row title and is keyed on the form-view classes. Its generic half, the walk from a row title to the controls beside it, moves as a debug seam of SettingsWindow, beside the class it opens, as every seam does. Vibe's theme and app verbs stay with the channel's command tables. So DebugChannel keeps depending on nothing.
+
+**The cuts, in Vibe first**, continuing the numbering:
+
+- **24. The pane base takes an effects sink.** `SettingsPaneViewController` holds `MainPlayerController` and calls `applySettingsLiveEffects:` once. It takes a block over an opaque integer instead. Vibe's `VibeSettingsLiveEffect` enum stays in Vibe, and its controller supplies the block.
+- **25. The settings window splits.** The generic window keeps the split controller, the sidebar and its search, the history, the size funnel, the pane-title chain, and undo routing to the selected pane. It takes its panes as a list of view controllers and its strings pushed in. A Vibe subclass supplies the nine panes and the Themes toolbar items.
+- **26. The drawn slider takes its percent formatter**, one block, so `DrawnControls` reaches nothing.
+- **27. Fonts takes its slots from the app.** It keeps the face-and-size table keyed by an integer slot and the monospaced-digits rule. The slot enum, the five Vibe slots, and `applyThemeFonts:` move to Vibe, which pushes faces in.
+- **28. The shortcut encoding leaves the command table.** `ShortcutRules.h` splits: the key-code-or-character encoding, the modifier mask, and the matching rules move, and Vibe's commands and their defaults stay. The recorder pane takes rows of identifier, label, and default from the app.
+- **29. The color-pair row moves into the form views**, bound by blocks, as above.
+
+**Done when** this returns nothing in Vibe, with the generic window controller joining the list once cut 25 names it:
+
+```
+grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|MainPlayerController\|MenuValidationRules\|Formatters' \
+  Vibe/Mac/Settings/SettingsFormViews.* Vibe/Mac/Settings/SettingsPaneViewController.* \
+  Vibe/Mac/Settings/SettingsSidebarController.* Vibe/Mac/Controls/DrawnControls.* \
+  Vibe/Mac/Controls/SymbolButton.* Vibe/Common/Mac/Theme/Fonts.* Vibe/Mac/Menu/ShortcutRules.h
+```
 
 ## How an app uses a piece
 
@@ -252,11 +329,11 @@ Vibe decodes a waveform only for the track on screen. An app that analyzes a who
 
 ### Why compile in, and not link
 
-The constraint is no performance change in either app. Compiling in meets it by construction.
+The constraint is no performance change in either app. Compiling in adds no boundary, since the same files build with the same flags. That makes a change unlikely, not impossible. A flag, a macro, or a changed call path can still move cost. The logging change showed it: a stderr hook inside the log check cost 2 to 3% on scans that never log. **So the claim is measured equivalence, proven for each move**, not a guarantee from the shape alone.
 
 | Shape | Run time | What it costs |
 | --- | --- | --- |
-| Templates, compiled in | identical: the same files, flags, and objects as today | nothing |
+| Templates, compiled in | the same files and flags as today | nothing |
 | Static library targets in the shared spec | identical, given `-ObjC` on every app | A library is built once per project. Vibe's audio tests build four render files at `-O2` and turn verbose logging on, and its unit tests link a stand-in metadata class. One shared build cannot serve both. |
 | A Swift package, linked | slower in Debug | Xcode builds a package with its own settings, unoptimized in Debug. `-O3` for the decoders exists only as `unsafeFlags`, which a package pinned by version may not use. There is no prefix header and no per-file flag. |
 
@@ -264,11 +341,23 @@ Vibe has no link-time optimization today, so files inline across each other only
 
 **The proof, for the pilot and every move**, run in Vibe with its `vibe-perf` skill:
 
-1. `perf.py compare main main` records the no-op band of retired instructions.
-2. `perf.py compare <before the move> <after the move>` keeps every benchmark inside that band.
-3. `make test-audio` wall time before and after stays within noise. This catches a lost Debug optimization, which Release benchmarks would not show.
+1. Fix the before and after commits, and name both in the pull request.
+2. Measure each affected benchmark's own no-change band: the before commit against itself. A benchmark that swings with binary layout, as the metadata scans do, gets its band from builds that change only layout.
+3. `perf.py compare <before> <after>` keeps each benchmark inside its own band. The pull request reports every outlier and every rerun, not only the median. Similar totals inside a tolerance are context, not proof that each moved workload stayed the same.
+4. `make test-audio` wall time before and after stays within noise. This catches a lost Debug optimization, which Release benchmarks would not show.
 
-Vibe's audio, render, and signal-quality suites keep running against the moved code at every step. They are the gate that the extraction changed nothing.
+Vibe's audio, render, and signal-quality suites keep running against the moved code at every step. They are the gate that the extraction changed no behavior.
+
+**The build audit, before a move deletes Vibe's source entries.** The pilot moved one plain source pair. Later pieces bring C++, platform categories, framework links, resources, third-party include collisions, and flags per configuration. So each move compares what every affected target compiles, before and after:
+
+- The compile inputs and their flags, for the macOS app in Debug, Release, and AppStore, the iOS app, the widget extension, the host-less tests, the render tests, WaveformCore's own tests, and the benchmark tool `perf.py` generates.
+- A file the move promises unchanged is compared byte for byte.
+- The source list changes only by the moved files' paths.
+- Every affected target builds and passes, the x86_64 slice included. No Intel benchmarks are added.
+- The widget extension compiles no engine code, but the iOS app's widget publisher draws with the waveform wrapper and renderers. So after the waveform moves, the app must publish the same widget images.
+- WaveformCore's package keeps its owner and a path check. `perf.py` still builds old refs, whose package sits at Vibe's `Packages/WaveformCore`.
+
+Preparing sources and changing behavior get separate evidence.
 
 ### When to switch shapes
 
@@ -277,11 +366,11 @@ Vibe's audio, render, and signal-quality suites keep running against the moved c
 
 ## The boundary check
 
-This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMAP: NO`, `ALWAYS_SEARCH_USER_PATHS: NO`, and `GCC_PREFIX_HEADER: ""`, with header search paths for only its piece and the pieces it declares. An import outside them fails to compile here. Each piece also builds for iOS, so an AppKit leak fails here too.
+This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMAP: NO`, `ALWAYS_SEARCH_USER_PATHS: NO`, and `GCC_PREFIX_HEADER: ""`, with header search paths for only its piece and the pieces it declares. An import outside them fails to compile here. Each piece also builds for iOS, so an AppKit leak fails here too, unless its map row says macOS only.
 
 **A compile alone cannot enforce every edge.** One build with the headermap off sees every header its templates expose, so an include of a piece two steps away compiles. A header nothing compiles is never checked at all. So `scripts/checks/check-pieces.py` resolves every include itself. It reads the spec through `xcodegen dump`, as XcodeGen does, and checks:
 
-- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target
+- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. A piece whose row says macOS only has no iOS target, and no iOS target may list its template.
 - the map names only known pieces and has no cycle, counting every piece's edge to `core/Common`
 - each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows
 - every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.
@@ -300,7 +389,9 @@ CI runs `make check-pieces`, `make test`, `make build-ios`, and `make consumer`.
 
 ## The work, in order
 
-**Correct the boundaries, prove the smallest extraction, move the playback and waveform path, let the other app build on it, then grow from actual reuse.** Each move is a pull request here, plus one in Vibe that bumps the submodule and deletes what moved. Each piece's `AGENTS.md` moves with it.
+**Correct the boundaries, prove the smallest extraction, move the first path, let the other app build on it, then grow from actual reuse.** Each move is a pull request here, plus one in Vibe that bumps the submodule and deletes what moved. Each piece's `AGENTS.md` moves with it.
+
+**Every change across the repos lands in one order:** the commit here first, then the consumer's pin, then the consumer's gates. The old pin is the rollback. Each move reports the code it removed from Vibe apart from the code it added across both repos, since a relocation is not a net reduction.
 
 ### Phase 0: setup and experiments
 
@@ -327,7 +418,7 @@ The smallest real piece goes first, after its one prerequisite. `AudioVarispeed`
 
 The pilot proves every step the later moves will take: `git filter-repo`, the template, this repo's CI, the submodule in Vibe, `make project`, worktrees, Vibe's CI checkout, and `perf.py`. **Done when** Vibe's checks pass with the varispeed coming from here, the `pitch` benchmark shows no change, and this repo's CI runs `AudioVarispeedTests`.
 
-### Phase 2: the cuts in Vibe, for the playback and waveform path
+### Phase 2: the cuts in Vibe, for the first path
 
 Small pull requests in Vibe remove every reach from the path's code into Vibe's own. Only the cuts the path needs come now. The rest wait for the piece they serve.
 
@@ -346,11 +437,24 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 
 **The seams between pieces:**
 
-- **13. The playable-item protocol.** A small protocol gives an item's file, frame window, source key, and disk key. Only the pieces that read a file take it: the player, Metadata, and WaveformLoading. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. They take `id` of the protocol and hand back the same object. The queue takes any object (seam 19). The CUE window math moves to Decode beside it.
+- **13. The playable-item protocol.** A small protocol gives an item's file, frame window, source key, and disk key. Only the pieces that read a file take it: the player, Metadata, and WaveformLoading. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. They take `id` of the protocol and hand back the same object. The queue takes any object (seam 19). The CUE window math goes to AudioTypes, so Playlists and FolderScan need no Decode for it.
 - **14. `AudioFileOpenRules.h` splits.** It holds the open's delivery states, path spelling, and the network mount's read-ahead rules, and four areas import it. Each part goes to the piece that owns it.
 - **15. The file loader stops naming the audio file handle.** Its opener is already a block. The handle it serves becomes a small protocol for interrupting reads and holding a stream. Its call into `AudioTrack` to forget memoized cache keys becomes a handler block.
+
+  **The read-ahead's test hooks move too.** `NetworkReadAhead.m` imports `AudioFileHandle+Debug.h` in Debug, and that header imports the concrete handle. So a FileLoading build in Debug would still need Decode, which already needs FileLoading. The hooks' declarations go to a debug header of FileLoading's own. Decode's category forwards to them, so its read-ahead tests keep the same hooks. **Done when** FileLoading builds and tests alone in Debug, with no Decode header path. A scan of every debug seam in Vibe found no other header that declares hooks for two owners.
 - **16. Tags returns art bytes and takes a byte-range reader.** Today the TagLib wrapper returns an artwork extractor and reads remote ranges through the materializer.
-- **17. The waveform decode takes observers of each mono block.** Today it builds the tempo and key analyzers itself. The app attaches them.
+- **17. The waveform decode takes observers of each mono block.** Today it builds the tempo and key analyzers itself, and the cache knows what they compute. It checks that a saved entry covers the tempo, key, and bands a request asks for. It files the analysis with the summary and hands it back on a hit. A request for the same source can join a running decode. A cancelled request detaches its decode, which finishes for the cache. The observer contract keeps all of that, in the fewest values and blocks:
+  - **An observer has a stable identifier**, which names its result in the archive. Vibe's two are the tempo and the key.
+  - **A request lists the observers it wants.** When a decode starts, the loader asks each for a sink, given the sample rate and the frame window. The sink takes each mono block in order.
+  - **When the decode finishes, each sink returns a small archivable result.** The cache files it beside the summary.
+  - **A cache hit decodes nothing.** The cache hands back the filed results with the summary, so the app still gets its tempo and key.
+  - **An entry covers a request only if it holds a result for every observer listed.** A request that asks for more decodes again.
+  - **A request joins a running decode only if that decode carries every observer it wants.** Otherwise it starts its own.
+  - **A cancelled request detaches its decode, as today.** Its sinks still finish, so the filed entry is whole. Cancelling outright belongs to the scan work, in its own change.
+  - **A late completion reaches only a request that is still current**, by source key and version (rule 4).
+  - **A CUE window decodes only its frames**, so its observers see only those.
+
+  The analyzer classes stay out of WaveformLoading. The bands stay the loader's own, since the summary holds them. The archive's format and its coverage rules do not change in the extraction. **Done when** tests cover a decode, a cache hit, a missing result, a joined decode, a cancellation, a late completion, and a CUE window. `perf.py --analyze` must prove tempo and key identical, and a cache hit must decode nothing.
 - **19. The play queue holds opaque entries.** It keeps object identity, as `Playlist` does today, so two entries for one file stay two entries. A scan of every `AudioTrack` member `Playlist.m` calls finds three, and no others:
   - **The URL**, to index the rows of each file, and **the source key**, to stamp a tempo or key onto every row sounding one window. The app passes both as key blocks when it makes the queue. Vibe passes the URL and the source key. A queue made without them has no lookup by file.
   - **`replacementAtURL:`**, which mints the row that replaces another when a file is converted. The queue stops minting rows. Replacing one row takes the replacement object, already made by the app, which must be fresh, never one already in the queue. Replacing every row of a file takes a block that maps each outgoing entry to its replacement, since each row may be a different CUE window. Vibe makes each replacement with `replacementAtURL:`. The queue keeps what it owns: the indexes, both shuffle orders, and one observer event per replaced row.
@@ -358,17 +462,33 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
   So the queue imports no protocol and no app API, and depends on nothing.
 - **22. Metadata installs results through a holder protocol of its own.** Today the loader reads an item's installed metadata, installs a result only if none is installed, and delivers only while that result is still installed. It does this through `AudioTrack (Internal)`'s `installMetadataIfUnresolved:` and `deliverIfMetadataStillInstalled:usingBlock:`. Metadata declares those three operations as its own protocol, and Vibe's row adopts it with the methods it has. The check and the install stay atomic in the object that holds the result, so a replaced item never shows a stale result. None of it goes into Decode's playable-item protocol, which stays free of metadata.
 
+- **18. Playlists returns records.** Today the CUE and M3U readers return `AudioTrack` rows. They return plain records, and Vibe makes its rows from them.
 - **23. FolderScan reports each walked file to a handler.** Today the walk notes cover-art candidates itself, through Metadata's `FolderArtRules.h`. Metadata's folder art installs the handler instead, as FolderWalk's other launch-installed handlers already work.
 
-**Waiting for their pieces:** cut 2 and seam 20 (RemoteFiles and ShareLinks; seam 20 also stops `LinkClient` importing `LinkStore`), seam 23 (FolderScan), cut 5 (only needed if `AudioTrack` ever moves), seam 18 (Playlists returns records), the Now Playing half of seam 19, and seam 21 (the shell pieces).
+**Waiting for their pieces:** cut 2 and seam 20 (RemoteFiles and ShareLinks; seam 20 also stops `LinkClient` importing `LinkStore`), the Now Playing half of seam 19, and seam 21 (the shell pieces). Cut 5 is not planned, since `AudioTrack` stays in Vibe.
+
+**Before Phase 3 starts:** the checker covers every rule it promises, with a failing case for each (this repo's #3). The contracts of seams 13, 15, 17, and 22, and rule 4's version check, are each proven in Vibe under its existing tests.
 
 **Done when** this returns nothing in Vibe for the path's directories:
 
 ```
 grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|FolderAccessManager\|DebugWireFormat\|AudioTrack.h' \
   Vibe/Audio Vibe/Loading/Claim Vibe/Loading/Transfer Vibe/Loading/PlaceholderFiles* \
-  Vibe/WaveformUI Vibe/Controls Vibe/Playlist/Playlist.*
+  Vibe/WaveformUI Vibe/Controls Vibe/Playlist/Playlist.* Vibe/Playlist/PlaylistFile.* Vibe/Playlist/FolderWalk.*
 ```
+
+### The shell track, beside Phase 2
+
+The shell pieces touch none of the first path's files, so they move while Phase 2 cuts the path. They also prove the toolbox on a macOS-only piece with no audio, which is where the platform rule first bites. In this order, each its own move, each with the proof above:
+
+1. The prefix rename, on the pilot's branches before they merge (Decided).
+2. The macOS-only rule in the checker and `project.yml`, with its failing case.
+3. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window.
+4. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone.
+5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests.
+6. `ui/Shortcuts` after cut 28.
+
+**Done when** the minimal consumer opens a settings window of two panes with a color-pair row, a switch, and a slider, records a shortcut, and draws every control, with no string, setting, or type of Vibe's. Vibe's settings window, pitch panel, and About window are unchanged on screen. The drawn-control, symbol-button, and shortcut-rule tests pass from their new homes.
 
 ### Phase 3: move the playback and waveform path
 
@@ -379,8 +499,12 @@ In this order, each its own move:
 3. `audio/AudioTypes`.
 4. `files/FileLoading` and `files/DiskCache`.
 5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
-6. `media/Tags`, `media/Metadata`, and `media/PlayQueue`.
+6. `media/Tags`, `media/Metadata`, `media/PlayQueue`, `media/Playlists`, and `media/FolderScan`.
 7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
+8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file.
+9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move.
+
+**Done when** a minimal consumer here, grown from `Tests/Consumer/`, uses the real templates with objects and strings of its own. It plays repeated queue entries and a CUE window, cancels a cloud open, roots a metadata cache of its own, and hits the waveform cache.
 
 **The other app's first slice starts after this phase.** It scans a folder, lists its songs, and plays a queue.
 
@@ -390,25 +514,50 @@ The other app's library needs fields Vibe never reads. `AudioTrackMetadata` toda
 
 - album, album artist, genre, year, track number and count, disc number and count, and composer
 - the compilation flag
-- the release identifier, such as MusicBrainz's, where a file carries one
+- the release and recording identifiers, such as MusicBrainz's, where a file carries them
+- FLAC's audio MD5, from its STREAMINFO header, where the encoder wrote one
+- the loudness tags: ReplayGain's track and album gain and peak, Opus's R128 track and album gain, and Apple's Sound Check
 
 The parse is TagLib's, which already reads title and artist. The metadata archive's version moves, so an entry without the fields is a miss. **That costs every Vibe user one re-parse of their files**, so it ships in an announced Vibe release. Vibe reads none of the fields.
 
 **This phase also decides album grouping.** Grouping by album title alone merges unrelated releases called "Greatest Hits". The key is the release identifier where present. Otherwise it is album artist, album, and year, with the track artist standing in when album artist is missing. A compilation groups by its album under one album artist, never splitting by track artist. The phase writes those rules as a tested `*Rules.h` decision, with fixtures for each case.
 
-### Phase 5: grow from reuse
+### Phase 5: what a library app adds
+
+Two changes of behavior, each its own pull request with its own measurements:
+
+- **WaveformLoading's scan requests** ([Analyzing many files](#analyzing-many-files)).
+- **A gain per file through a gapless splice, in Player.** The gapless successor shares the current voice, so a gain per voice is not enough. The gain changes on the exact frame where one file ends and the next begins. It runs on the audio thread under the render's realtime rules. **Done when** a render test shows the gain change on the boundary frame, and a soak run passes.
+
+### Phase 6: grow from reuse
 
 Each remaining candidate moves when a second app needs it, with the cuts it was waiting for:
 
+- **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates.
 - **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them.
-- **Playlists and FolderScan**, when the other app reads CUE sheets or walks folders through them. Seam 18 comes with them.
-- **NowPlaying**, with the rest of seam 19.
-- **SandboxAccess, AppOpening, Updates, the mac controls, DebugChannel, and iOSDriver**, each with its part of seam 21.
+- **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date.
+
+## What the other app needs, and when
+
+One list of what the other app waits on, so no prerequisite stays "later". A move and a new capability stay separate rows. Each row records the commit here that delivered it.
+
+| The other app's milestone | Delivery here | Kind | Phase | Proven by | Delivered at |
+| --- | --- | --- | --- | --- | --- |
+| First slice: scan a folder, list its songs, play a queue | the Playback and Waveform stacks, Metadata, PlayQueue, DiskCache, and FileLoading with its fake cloud | move | 3 | the minimal consumer | |
+| First slice | Playlists and FolderScan | move | 3 | Vibe's walk and CUE tests, moved here | |
+| First slice | the catalog scan | behavior | 3 | the tests in Scanning a catalog | |
+| First slice, from its first UI string | `tools/strings` | tool | 3 | the consumer's own catalog passes the checks | |
+| Full app: song matching and leveling | the tag fields, identifiers, audio MD5, and loudness tags | behavior | 4 | a parse fixture for each field | |
+| Full app: background analysis | WaveformLoading's scan requests | behavior | 5 | a throttled source yields within one block | |
+| Full app: leveling from tags | a gain per file through a gapless splice | behavior | 5 | the boundary-frame render test | |
+| First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | |
+
+Nothing else is scheduled for the other app. The shell pieces are scheduled for a third app, on the shell track. Portable rewrites wait until a consumer needs them.
 
 ### Later
 
 - **Portable rewrites.** Each is its own project, with its own measurements: WaveformStyles as C++ that paints pixels, which a waveform plugin needs; DSP, Analysis, Tags, and Playlists cores in C or C++; fallbacks for vDSP, simd, and Compression. Apple's LZFSE is open source under BSD, so it can be vendored and waveform archives stay readable everywhere. The Apple path keeps Accelerate, and `perf.py compare` proves it unchanged.
-- **tools/.** Vibe's release, notarization, App Store upload, Homebrew, and layout-check scripts, and its stress and performance harnesses, are general too. They move once each takes its app's names and paths from a config file.
+- **The rest of tools/.** Vibe's release, notarization, App Store upload, Homebrew, and layout-check scripts, and its stress and performance harnesses, are general too. Each moves once it takes its app's names and paths from a config file, as `tools/strings` does in Phase 3.
 
 ### Streaming is mostly built
 
@@ -420,7 +569,7 @@ Vibe already has HTTP transfers, ranged reads, remote placeholders, opens that p
 - **The original bytes.** OpenSubsonic transcodes unless asked not to, so every stream request passes `format=raw`. A transcoded stream would change the waveform, the analysis, and bit-perfect output.
 - **Compatibility tests** against Navidrome, Gonic, Airsonic, and Ampache, which answer the same API differently.
 
-That work belongs to the app that ships the source. FileLoading and Player already moved in Phase 3. HTTP and RemoteFiles move in Phase 5, when the source is built.
+That work belongs to the app that ships the source. FileLoading and Player already moved in Phase 3. HTTP and RemoteFiles move in Phase 6, when the source is built.
 
 ## New types
 
@@ -429,8 +578,12 @@ The cuts add these small types. Each replaces a dependency on an app class:
 - the playable-item protocol
 - Metadata's holder protocol
 - the protocol of a handle the file loader serves
-- the observer block of the waveform decode
-- later, with Playlists: the record of a playlist entry
+- a waveform decode's observer: its identifier, a sink for each decode, and the sink's result
+- the record of a playlist entry, from Playlists
+- the catalog scan's verdict and its read policy, from FolderScan
+- the settings pane's effects sink, a block over an integer the app interprets, from SettingsWindow
+- the shortcut row of identifier, label, and default, from Shortcuts
+- the typography slot table, from Graphics
 
 ## TRAPs
 
@@ -438,13 +591,14 @@ The cuts add these small types. Each replaces a dependency on an app class:
 - **A checkout without the submodule compiles nothing from here and fails late.** Every consumer's `make project`, benchmark worktrees, and CI checkouts must update it.
 - **YAML anchors do not cross `include:` files.** A consumer's own flag anchors cannot reach a template's entries. Every flag lives in its template.
 - **The headermap hides a crossed boundary.** In any project holding two pieces, an import by basename resolves across them. Only this repo's headermap-off bundles make the compiler refuse.
-- **`xcodegen dump` leaves templates unresolved.** A tool that rebuilds a consumer's target from the dump must copy `templates` and `templateAttributes`. Otherwise it builds without the pieces.
+- **`xcodegen dump` keeps a target's templates as fields, not expanded.** It rewrites their paths relative to the app. A tool that builds a new target from a dumped one must copy `templates` and `templateAttributes`, or it builds without the pieces. Vibe's `perf.py` copies both.
 - **Vibe's analyzer gate drops findings by the substring `/ThirdParty/`** (`scripts/build/analyze.sh`). Vendored code here sits under `third_party/`, so the gate must also drop `/third_party/` before Phase 3 lands, or it fails on TagLib's findings.
 - **A queue, a player, or a cache that compares items by content merges duplicates.** Two entries for one file are two entries. Shared work matches by source key, and a persisted entry by disk key.
 
 ## Costs
 
-- **About thirty pieces in the end, about twenty for the first path.** Each has a template, a test bundle, and a doc. The stacks keep a consumer's list short.
+- **About thirty pieces in the end, about twenty for the first path.** Each is a maintenance choice: a template, a doc, isolated builds, and a row in the map. A piece needs a consumer that gains from taking it alone. The stacks keep a consumer's list short.
+- **One copy of each thing that could drift.** Each vendored library's flags live in its template. Each piece's sources are listed once, in its template. The map is the plan's table. Each template's `templates:` list repeats part of it, and the checker fails when a template lists more than the map allows.
 - **Most engine changes also change app code.** Since 2026-04-01, 232 commits changed Vibe's engine, and 167 of them (72%) also changed Vibe's app code. After a move, each is a commit here, then a submodule bump. One editing session covers both through the submodule.
 - **Many changes span pieces.** 90 of those commits (39%) changed more than one of the old products. That is why this is one repo and not one per piece.
 - **Agent docs split across two repos.** An agent in an app must read this repo's `AGENTS.md` before changing a piece. Each app's root doc says so.
