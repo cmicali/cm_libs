@@ -37,11 +37,11 @@ CI runs all four on every pull request.
 - **A move changes nothing but the path.** No API, language, or platform change rides on it. A portable C or C++ rewrite is separate work with its own measurements.
 - **Third-party code is a piece of its own** under `third_party/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code.
 - **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both. A macOS-only piece, marked in the plan's map, has no halves, and no iOS target may list its template.
-- **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `core/Common/CMMMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
+- **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `core/Common/VibeMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
 
 ## Names
 
-- **One prefix, `Vibe`, for new code and moved code alike.** Objective-C and C each have one global namespace, so a generic name can collide with another library's at run time. `CMM` was the prefix while the repo was called cm_libs. It is retired on the pilot's branches before they merge: `CMMMacros.h` becomes `VibeMacros.h`, `CMM_ROOT` becomes `VIBE_LIBS_ROOT`, and a piece's template is `VibeLibs<piece>`.
+- **One prefix, `Vibe`, for new code and moved code alike.** Objective-C and C each have one global namespace, so a generic name can collide with another library's at run time. `CMM` was the prefix while the repo was called cm_libs. It was retired before the pilot merged: `CMMMacros.h` became `VibeMacros.h`, `CMM_ROOT` became `VIBE_LIBS_ROOT`, and a piece's template is `VibeLibs<piece>`.
 - **Code arriving from Vibe keeps its names.** A move is `git mv` and nothing else, so history, blame, and the performance proof survive. `make check-pieces` lists the classes with no prefix, so a collision in a consuming app can be checked. A rename of those, if ever wanted, is one scripted pull request of its own.
 
 ## How work moves between the repos

@@ -13,7 +13,7 @@ options:
 
 settings:
   base:
-    CMM_ROOT: "$(SRCROOT)/../.."
+    VIBE_LIBS_ROOT: "$(SRCROOT)/../.."
     USE_HEADERMAP: NO
     ALWAYS_SEARCH_USER_PATHS: NO
     GCC_PREFIX_HEADER: ""
@@ -26,7 +26,7 @@ targets:
   Consumer:
     type: tool
     platform: macOS
-    templates: [CMMDSP]
+    templates: [VibeLibsDSP]
     templateAttributes:
       excludedPlatform: iOS
     sources:

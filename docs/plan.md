@@ -8,7 +8,7 @@ Its users are Vibe and another app. Both add it as a git submodule.
 
 ## Decided
 
-- **The name is vibe-libs, and the one prefix is `Vibe`**, for moved code and new code alike. `CMM` came from the name cm_libs, which is gone, and every moved class already carries `Vibe`. It is retired in one commit on the pilot's own branches, before they merge: `CMMMacros.h` becomes `VibeMacros.h`, `CMM_ROOT` becomes `VIBE_LIBS_ROOT`, a piece's template is `VibeLibs<piece>`, and the checker and the consumer follow.
+- **The name is vibe-libs, and the one prefix is `Vibe`**, for moved code and new code alike. `CMM` came from the name cm_libs, which is gone, and every moved class already carries `Vibe`. It was retired in one commit on the pilot's branches, before they merged: `CMMMacros.h` became `VibeMacros.h`, `CMM_ROOT` became `VIBE_LIBS_ROOT`, a piece's template is `VibeLibs<piece>`, and the checker and the consumer followed.
 - **Code moved from Vibe keeps its names.** A move is `git mv` and nothing else. The `Vibe` C prefix stays.
 - **One repo of many pieces, grouped by what they are about.** An app picks pieces, not the whole repo.
 - **Apps compile the pieces' sources in their own targets**, through templates in a shared XcodeGen spec. No static libraries and no Swift package for the apps, for now.
@@ -383,7 +383,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **The checker has tests of its own.** `scripts/checks/check-pieces-test.py` copies the repo, breaks one rule per case, and fails unless the checker fails with that rule's message. Each new rule gets a case. Two cases are the ones a review reproduced against the first checker: an angled include of another piece from `core/Common`, and a map edge from `core/Common` back to a piece that uses it.
 
-**A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `vibe-libs.yml` from two directories up, sets `CMM_ROOT`, lists a template, builds with no prefix header and no headermap, and runs. It grows into the consumer the end of Phase 3 asks for.
+**A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `vibe-libs.yml` from two directories up, sets `VIBE_LIBS_ROOT`, lists a template, builds with no prefix header and no headermap, and runs. It grows into the consumer the end of Phase 3 asks for.
 
 CI runs `make check-pieces`, `make test`, `make build-ios`, and `make consumer`. `make analyze CONFIG=Release` joins when the first piece with more than the varispeed moves. Until then Vibe's own analyzer run covers the varispeed, since Vibe compiles it. GitHub Actions is free for a public repo, macOS runners included.
 
@@ -412,7 +412,7 @@ The eight build questions, answered on 2026-10-18 with XcodeGen 2.46.0, Xcode 27
 
 ### Phase 1: the pilot, DSP with the varispeed
 
-The smallest real piece goes first, after its one prerequisite. `AudioVarispeed` uses Vibe's realtime-check macros, so cut 12 first moves the macros out of Vibe's prefix header into `CMMMacros.h`. **Only the realtime brackets move in cut 12.** Vibe's log and signpost macros carry debug-only parts, and a shipping header may not hold `#if DEBUG`. They move when the first piece that logs moves, with a design for those parts. **The pilot then moves that header here with the varispeed**, as the first file of `core/Common`. A header left in Vibe would not satisfy this repo's isolated build. Vibe's prefix header imports it from the submodule. Nothing else blocks the pilot.
+The smallest real piece goes first, after its one prerequisite. `AudioVarispeed` uses Vibe's realtime-check macros, so cut 12 first moves the macros out of Vibe's prefix header into `VibeMacros.h`. **Only the realtime brackets move in cut 12.** Vibe's log and signpost macros carry debug-only parts, and a shipping header may not hold `#if DEBUG`. They move when the first piece that logs moves, with a design for those parts. **The pilot then moves that header here with the varispeed**, as the first file of `core/Common`. A header left in Vibe would not satisfy this repo's isolated build. Vibe's prefix header imports it from the submodule. Nothing else blocks the pilot.
 
 `AudioVarispeed` is Vibe's own windowed-sinc converter for the pitch fader. Its distortion sits near −150 dB, against −83 to −135 dB for Apple's Varispeed unit. It is flat to 20 kHz and a bit-perfect pass-through at zero pitch. It costs about 0.2% of one core at 48 kHz. Its API is plain C, it has one caller in Vibe, and its tests and benchmark stand alone.
 
@@ -433,7 +433,7 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 - **9.** The mapping from Vibe's settings onto a waveform theme becomes a category in Vibe.
 - **10.** The app pushes the mac waveform view its settings, instead of the view reading them.
 - **11.** The app pushes the iOS scrubber its settings, instead of the view reading them.
-- **12.** The macros move to `CMMMacros.h`. This one lands before Phase 1.
+- **12.** The macros move to `VibeMacros.h`. This one lands before Phase 1.
 
 **The seams between pieces:**
 
