@@ -7,7 +7,7 @@ reads them. A piece is a directory under one of the groups below.
 
 For each piece:
   - it has an AGENTS.md, a row in the dependency map, and a template named
-    CMM<piece>
+    VibeLibs<piece>
   - its template's sources and header search paths stay inside the piece,
     and its sources exclude the other platform's half
   - its template lists only the templates of pieces the map allows it
@@ -74,7 +74,7 @@ for group in GROUPS:
 
 
 def template_name(piece):
-    return "CMM" + piece.split("/")[1]
+    return "VibeLibs" + piece.split("/")[1]
 
 
 def piece_of(path):
@@ -188,10 +188,10 @@ for piece in pieces:
     for entry in [paths] if isinstance(paths, str) else paths:
         if entry == "$(inherited)":
             continue
-        if not entry.startswith("$(CMM_ROOT)/"):
-            fail(f"vibe-libs.yml: {name} searches {entry}, which is not under $(CMM_ROOT)")
+        if not entry.startswith("$(VIBE_LIBS_ROOT)/"):
+            fail(f"vibe-libs.yml: {name} searches {entry}, which is not under $(VIBE_LIBS_ROOT)")
             continue
-        directory = entry[len("$(CMM_ROOT)/"):].strip('"')
+        directory = entry[len("$(VIBE_LIBS_ROOT)/"):].strip('"')
         if not inside(directory, piece):
             fail(f"vibe-libs.yml: {name} searches {directory}, outside {piece}")
         else:
@@ -369,7 +369,7 @@ for path in walk("."):
 unprefixed = sorted({m for piece in pieces if first_party(piece) for f in walk(piece) if f.endswith(HEADER)
                      for m in re.findall(r"^@(?:interface|protocol)\s+([A-Za-z_]\w*)\b(?!\s*\()",
                                          open(f, errors="replace").read(), re.M)
-                     if not m.startswith(("CMM", "Vibe"))})
+                     if not m.startswith("Vibe")})
 
 if failures:
     print("\n".join(failures))

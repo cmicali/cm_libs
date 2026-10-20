@@ -42,7 +42,7 @@ def replace(root, path, old, new):
         f.write(text.replace(old, new, 1))
 
 
-HEADER = "core/Common/CMMMacros.h"
+HEADER = "core/Common/VibeMacros.h"
 SOURCE = "audio/DSP/AudioVarispeed.m"
 OTHER_APP = "vibe" + " " + "pro"
 
@@ -67,20 +67,20 @@ CASES = [
      lambda r: replace(r, "vibe-libs.yml", "- path: audio/DSP", "- path: audio"),
      "compiles audio, outside audio/DSP"),
     ("a template searching outside its piece",
-     lambda r: replace(r, "vibe-libs.yml", '"$(CMM_ROOT)/audio/DSP"]', '"$(CMM_ROOT)/audio/DSP", "$(CMM_ROOT)/core/Common"]'),
+     lambda r: replace(r, "vibe-libs.yml", '"$(VIBE_LIBS_ROOT)/audio/DSP"]', '"$(VIBE_LIBS_ROOT)/audio/DSP", "$(VIBE_LIBS_ROOT)/core/Common"]'),
      "searches core/Common, outside audio/DSP"),
     ("a template not excluding the other platform",
      lambda r: replace(r, "vibe-libs.yml", 'path: audio/DSP\n        excludes: ["**/*.md", "${excludedPlatform}/**"]',
                        'path: audio/DSP\n        excludes: ["**/*.md"]'),
      "does not exclude ${excludedPlatform}/**"),
     ("a template listing a piece the map does not allow",
-     lambda r: replace(r, "vibe-libs.yml", "  CMMCommon:\n", "  CMMCommon:\n    templates: [CMMDSP]\n"),
+     lambda r: replace(r, "vibe-libs.yml", "  VibeLibsCommon:\n", "  VibeLibsCommon:\n    templates: [VibeLibsDSP]\n"),
      "the map does not allow core/Common -> audio/DSP"),
     ("a platform directory with another name",
-     lambda r: write(r, "audio/DSP/macOS/Thing.m", "int CMMThing(void) { return 0; }\n"),
+     lambda r: write(r, "audio/DSP/macOS/Thing.m", "int VibeThing(void) { return 0; }\n"),
      "the only platform directories"),
     ("a platform half below the top of its piece",
-     lambda r: write(r, "audio/DSP/Sub/Mac/Thing.m", "int CMMThing(void) { return 0; }\n"),
+     lambda r: write(r, "audio/DSP/Sub/Mac/Thing.m", "int VibeThing(void) { return 0; }\n"),
      "sits at the top of its piece"),
     ("a shared file importing AppKit with no guard",
      lambda r: append(r, SOURCE, "\n#import <AppKit/AppKit.h>\n"),

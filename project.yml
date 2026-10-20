@@ -16,7 +16,7 @@ options:
 
 settings:
   base:
-    CMM_ROOT: "$(SRCROOT)"
+    VIBE_LIBS_ROOT: "$(SRCROOT)"
     USE_HEADERMAP: NO
     ALWAYS_SEARCH_USER_PATHS: NO
     GCC_PREFIX_HEADER: ""
@@ -32,7 +32,7 @@ targets:
   CommonTests:
     type: bundle.unit-test
     platform: macOS
-    templates: [CMMCommon]
+    templates: [VibeLibsCommon]
     templateAttributes:
       excludedPlatform: iOS
     sources:
@@ -46,7 +46,7 @@ targets:
   Common-iOS:
     type: library.static
     platform: iOS
-    templates: [CMMCommon]
+    templates: [VibeLibsCommon]
     templateAttributes:
       excludedPlatform: Mac
     sources:
@@ -56,7 +56,7 @@ targets:
   DSPTests:
     type: bundle.unit-test
     platform: macOS
-    templates: [CMMDSP]
+    templates: [VibeLibsDSP]
     templateAttributes:
       excludedPlatform: iOS
     sources:
@@ -71,7 +71,7 @@ targets:
   DSP-iOS:
     type: library.static
     platform: iOS
-    templates: [CMMDSP]
+    templates: [VibeLibsDSP]
     templateAttributes:
       excludedPlatform: Mac
 
