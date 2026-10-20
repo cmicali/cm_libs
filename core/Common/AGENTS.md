@@ -2,7 +2,7 @@
 
 What every other piece may use, and nothing else. Every piece may import from it, so it depends on nothing.
 
-**Today it holds only `CMMMacros.h`, a header.** A file imports `CMMMacros.h` explicitly. No piece relies on a prefix header. An app's prefix header may import it too, as Vibe's does.
+**Today it holds only `VibeMacros.h`, a header.** A file imports `VibeMacros.h` explicitly. No piece relies on a prefix header. An app's prefix header may import it too, as Vibe's does.
 
 ## The realtime-effects brackets
 
@@ -20,7 +20,7 @@ What every other piece may use, and nothing else. Every piece may import from it
 
 **TRAP: `VibeLogWants` and `VibeLogEmit` hold nothing but the `os_log` calls.** Every log site in every piece inlines them. With a stderr hook there, Vibe's metadata-scan benchmarks retired 2 to 3% more instructions, although they never log. The system's own switch costs the call sites nothing.
 
-**TRAP: `CMMMacros.h` has no `#if DEBUG` and names no app type.** Every piece and every app imports it, and a shipping header may not carry debug surface.
+**TRAP: `VibeMacros.h` has no `#if DEBUG` and names no app type.** Every piece and every app imports it, and a shipping header may not carry debug surface.
 
 ## Still in Vibe
 

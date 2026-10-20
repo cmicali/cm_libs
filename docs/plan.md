@@ -8,7 +8,7 @@ Its users are Vibe and another app. Both add it as a git submodule.
 
 ## Decided
 
-- **The name is vibe-libs, and the prefix for new code is `CMM`.** `CM` alone is CoreMedia's.
+- **The name is vibe-libs, and the one prefix is `Vibe`**, for moved code and new code alike. `CMM` came from the name cm_libs, which is gone, and every moved class already carries `Vibe`. It was retired in one commit on the pilot's branches, before they merged: `CMMMacros.h` became `VibeMacros.h`, `CMM_ROOT` became `VIBE_LIBS_ROOT`, a piece's template is `VibeLibs<piece>`, and the checker and the consumer followed.
 - **Code moved from Vibe keeps its names.** A move is `git mv` and nothing else. The `Vibe` C prefix stays.
 - **One repo of many pieces, grouped by what they are about.** An app picks pieces, not the whole repo.
 - **Apps compile the pieces' sources in their own targets**, through templates in a shared XcodeGen spec. No static libraries and no Swift package for the apps, for now.
@@ -23,7 +23,7 @@ Still open: the license. Apache 2.0, like Vibe, lets code move between the repos
 
 | Was | Now | Why |
 | --- | --- | --- |
-| PlaybackKit, prefix `PBK` | vibe-libs, prefix `CMM` for new code | The repo is a toolbox, not only playback. |
+| PlaybackKit, prefix `PBK` | vibe-libs, one prefix `Vibe` (`CMM` from 2026-10-17 to 2026-10-20) | The repo is a toolbox, not only playback, and the moved code already carries `Vibe`. |
 | Four products cut along Vibe's directories | Pieces with one job each | Each piece should be usable without its neighbors. |
 | Rename every class and C symbol on the move | No rename | A rename touches 441 names in 678 files of Vibe and 88 of #294's 111 files. Folded into the move, it would turn every moved file into a content change and break the performance proof. |
 | Static framework targets in the shared spec | Templates the app compiles in | Same run time, and the app's test targets can still build the code with their own flags (below). |
@@ -314,7 +314,7 @@ The eight build questions, answered on 2026-10-18 with XcodeGen 2.46.0, Xcode 27
 
 ### Phase 1: the pilot, DSP with the varispeed
 
-The smallest real piece goes first, after its one prerequisite. `AudioVarispeed` uses Vibe's realtime-check macros, so cut 12 first moves the macros out of Vibe's prefix header into `CMMMacros.h`. **Only the realtime brackets move in cut 12.** Vibe's log and signpost macros carry debug-only parts, and a shipping header may not hold `#if DEBUG`. They move when the first piece that logs moves, with a design for those parts. **The pilot then moves that header here with the varispeed**, as the first file of `core/Common`. A header left in Vibe would not satisfy this repo's isolated build. Vibe's prefix header imports it from the submodule. Nothing else blocks the pilot.
+The smallest real piece goes first, after its one prerequisite. `AudioVarispeed` uses Vibe's realtime-check macros, so cut 12 first moves the macros out of Vibe's prefix header into `VibeMacros.h`. **Only the realtime brackets move in cut 12.** Vibe's log and signpost macros carry debug-only parts, and a shipping header may not hold `#if DEBUG`. They move when the first piece that logs moves, with a design for those parts. **The pilot then moves that header here with the varispeed**, as the first file of `core/Common`. A header left in Vibe would not satisfy this repo's isolated build. Vibe's prefix header imports it from the submodule. Nothing else blocks the pilot.
 
 `AudioVarispeed` is Vibe's own windowed-sinc converter for the pitch fader. Its distortion sits near −150 dB, against −83 to −135 dB for Apple's Varispeed unit. It is flat to 20 kHz and a bit-perfect pass-through at zero pitch. It costs about 0.2% of one core at 48 kHz. Its API is plain C, it has one caller in Vibe, and its tests and benchmark stand alone.
 
@@ -335,7 +335,7 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 - **9.** The mapping from Vibe's settings onto a waveform theme becomes a category in Vibe.
 - **10.** The app pushes the mac waveform view its settings, instead of the view reading them.
 - **11.** The app pushes the iOS scrubber its settings, instead of the view reading them.
-- **12.** The macros move to `CMMMacros.h`. This one lands before Phase 1.
+- **12.** The macros move to `VibeMacros.h`. This one lands before Phase 1.
 
 **The seams between pieces:**
 
