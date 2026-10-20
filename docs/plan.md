@@ -1,6 +1,6 @@
 # vibe-libs: the plan
 
-**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -8,7 +8,7 @@ Its users are Vibe and another app. Both add it as a git submodule.
 
 ## Decided
 
-- **The name is vibe-libs, and the prefix for new code is `CMM`.** `CM` alone is CoreMedia's.
+- **The name is vibe-libs, and the one prefix is `Vibe`**, for moved code and new code alike. `CMM` came from the name cm_libs, which is gone, and every moved class already carries `Vibe`. It is retired in one commit on the pilot's own branches, before they merge: `CMMMacros.h` becomes `VibeMacros.h`, `CMM_ROOT` becomes `VIBE_LIBS_ROOT`, a piece's template is `VibeLibs<piece>`, and the checker and the consumer follow.
 - **Code moved from Vibe keeps its names.** A move is `git mv` and nothing else. The `Vibe` C prefix stays.
 - **One repo of many pieces, grouped by what they are about.** An app picks pieces, not the whole repo.
 - **Apps compile the pieces' sources in their own targets**, through templates in a shared XcodeGen spec. No static libraries and no Swift package for the apps, for now.
@@ -16,6 +16,7 @@ Its users are Vibe and another app. Both add it as a git submodule.
 - **Extraction first, everything else after.** A move changes no API, no language, and no platform. Portable C or C++ rewrites, new tag fields, and other redesigns are separate work with their own scope and measurements.
 - **The playback and waveform path moves first, with FolderScan and Playlists.** The other app builds its first slice on them. Every other piece follows demonstrated reuse. [What the other app needs, and when](#what-the-other-app-needs-and-when) is the one list of its deliveries.
 - **Vibe's waveform engine (PR #294) merged in Vibe before any move**, so the waveform data moves once.
+- **The shell pieces move on a second track, beside Phase 2.** A third app, a mac app that plays no audio, needs the settings window, the mac controls, the typography slots, and remappable shortcuts. They touch none of the first path's files, so they wait on nothing in it. [The shell pieces](#the-shell-pieces) says what moves and what is cut first, and [the shell track](#the-shell-track-beside-phase-2) the order.
 - **The license is Apache 2.0**, Vibe's own, so code moves between the repos under the terms it already has.
 - **This plan is the authority** for the pieces, what each owns, and the shared milestones. Vibe's plan covers only Vibe's own edits.
 
@@ -23,7 +24,7 @@ Its users are Vibe and another app. Both add it as a git submodule.
 
 | Was | Now | Why |
 | --- | --- | --- |
-| PlaybackKit, prefix `PBK` | vibe-libs, prefix `CMM` for new code | The repo is a toolbox, not only playback. |
+| PlaybackKit, prefix `PBK` | vibe-libs, one prefix `Vibe` (`CMM` from 2026-10-17 to 2026-10-20) | The repo is a toolbox, not only playback, and the moved code already carries `Vibe`. |
 | Four products cut along Vibe's directories | Pieces with one job each | Each piece should be usable without its neighbors. |
 | Rename every class and C symbol on the move | No rename | A rename touches 441 names in 678 files of Vibe and 88 of #294's 111 files. Folded into the move, it would turn every moved file into a content change and break the performance proof. |
 | Static framework targets in the shared spec | Templates the app compiles in | Same run time, and the app's test targets can still build the code with their own flags (below). |
@@ -49,7 +50,7 @@ Its users are Vibe and another app. Both add it as a git submodule.
 
 ## The pieces
 
-**●** marks the first path: playback, the waveform, and the folder scan, which move first. The other pieces are candidates that move when a second app needs them. What each piece depends on is listed once, in the dependency map below.
+**●** marks the first path: playback, the waveform, and the folder scan, which move first. **○** marks the shell track, which moves beside Phase 2. The other pieces are candidates that move when a second app needs them. What each piece depends on is listed once, in the dependency map below.
 
 ```
 vibe-libs/
@@ -65,7 +66,8 @@ vibe-libs/
 │   │                    the disk key from a file's attributes; fixed-slot work lanes; a weak
 │   │                    proxy; a display-paced update timer; build provenance and its script
 │   └── Graphics ●       image and color aliases, bounded image decode, hex, blend and OKLCH
-│                        colors, dominant color, blur, dark-mode helpers
+│                        colors, dominant color, blur, dark-mode helpers; Mac/ the typography
+│                        slots (Fonts), on the shell track
 │
 ├── files/
 │   ├── FileLoading ●    from a path to readable bytes: placeholder checks, downloads, reading
@@ -112,8 +114,14 @@ vibe-libs/
 │   └── WaveformView ●   the layer host, the macOS view, the iOS scrubber
 │
 ├── ui/
-│   └── Controls ●       loading bar and pill, equalizer bars; later, the mac symbol buttons,
-│                        drawn controls, detent slider, pitch fader, and image views
+│   ├── Controls ●○      loading bar and pill, equalizer bars; Mac/ the symbol button, the drawn
+│   │                    slider and switch, the detent slider, the image views, and the link
+│   │                    label; later the pitch fader
+│   ├── SettingsWindow ○ macOS only: the System Settings shape, a sidebar with search, back
+│   │                    and forward history, the pane base, and the form views: cards, rows,
+│   │                    captions, lists, color-pair wells, sliders with readouts
+│   └── Shortcuts ○      macOS only: a shortcut as a key code or character with modifiers,
+│                        its matching, and the recorder pane over rows the app supplies
 │
 ├── system/
 │   ├── NowPlaying       Now Playing info and remote commands, fed a snapshot
@@ -146,7 +154,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | files/HTTP | nothing |
 | files/RemoteFiles | files/FileLoading, files/HTTP |
 | files/ShareLinks | files/HTTP |
-| files/SandboxAccess | nothing |
+| files/SandboxAccess | nothing, macOS only |
 | audio/AudioTypes | nothing |
 | audio/DSP | third_party/r8brain |
 | audio/Analysis | audio/AudioTypes, audio/DSP |
@@ -165,9 +173,11 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | waveform/WaveformLoading | waveform/Waveform, audio/AudioTypes, audio/Decode, files/DiskCache, files/FileLoading, third_party/PINCache |
 | waveform/WaveformView | waveform/WaveformStyles, waveform/Waveform, ui/Controls, core/Graphics |
 | ui/Controls | core/Graphics |
+| ui/SettingsWindow | ui/Controls, core/Graphics, macOS only |
+| ui/Shortcuts | ui/SettingsWindow, macOS only |
 | system/NowPlaying | core/Graphics, media/PlayQueue |
-| system/AppOpening | nothing |
-| system/Updates | third_party/Sparkle |
+| system/AppOpening | nothing, macOS only |
+| system/Updates | third_party/Sparkle, macOS only |
 | dev/DebugChannel | nothing |
 | dev/iOSDriver | nothing |
 | third_party/PINCache | third_party/PINOperation |
@@ -199,10 +209,15 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | the playlist record | media/Playlists | media/FolderScan, the app | none: FolderScan already depends on Playlists |
 | the catalog scan's verdict and read policy | media/FolderScan | the app | none |
 | the Now Playing snapshot, later | system/NowPlaying | the app | none |
+| the settings pane's effects sink: a block over an integer the app interprets | ui/SettingsWindow | the app | none |
+| the shortcut row: identifier, label, default | ui/Shortcuts | the app | none |
+| the typography slot table | core/Graphics | ui/Controls, ui/SettingsWindow, the app | none: both already depend on Graphics |
 
 **PlayQueue stays free of all of them.** Its entries are opaque objects, never the playable-item protocol. Declaring that protocol would pull Decode, FileLoading, and the decoders into a play-order list.
 
 **Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
+
+**A piece whose row says macOS only builds for one platform.** It has no `Mac/` half and no iOS target, and an iOS target that lists its template fails the check. Today's checker ignores those words. The rule lands with the first such piece, on the shell track.
 
 **A stack is a template that lists other templates.** `vibe-libs.yml` offers a few, so an app's `project.yml` stays short. Examples are a Playback stack (Player and everything it needs) and a Waveform stack (the four waveform pieces).
 
@@ -215,6 +230,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | An app that reads users' iCloud and network files | FileLoading, and nothing from audio |
 | A DJ tool reading CUE sheets | Playlists |
 | A waveform plugin | Waveform today; WaveformStyles once its later C++ rewrite lands |
+| A mac app that plays no audio | SettingsWindow, Shortcuts, Controls, Graphics, Updates, DebugChannel, and tools/strings; OutputDevices and Meter if it meters an output |
 
 ### What some pieces mean, in plain words
 
@@ -261,6 +277,45 @@ The catalog scan is new behavior in FolderScan. It lands after FolderScan's move
 - **Artwork is inside `Metadata`.** The art is found during the tag parse and cached beside the tags. Nothing uses one without the other.
 
 **Artwork is the one place the engine hands out UI types.** `Metadata` returns `NSImage` or `UIImage`. AppKit and UIKit are always present, so that is tolerable. A UI-free version would return a `CGImage`. Leave it until someone asks.
+
+### The shell pieces
+
+A third app, a mac app that plays no audio, is the second consumer of Vibe's shell: its settings window, its drawn controls, its typography, and its remappable shortcuts. Measured by imports on Vibe's `main` at `7fbeaaba`:
+
+| Piece | From Vibe | Lines | Reaches into Vibe today |
+| --- | --- | --- | --- |
+| ui/Controls, Mac/ | `SymbolButton`, `VibeDetentSlider`, `ScaledImageView`, `CrossfadingImageView`, `VibeLinkLabel` | 827 | nothing |
+| ui/Controls, Mac/ | `DrawnControls`: `VibeSlider` and `VibeSwitch` | 558 | `Formatters.percentString:`, for one accessibility value |
+| ui/SettingsWindow | `SettingsFormViews` | 751 | nothing |
+| ui/SettingsWindow | `SettingsPaneViewController` | 854 | `MainPlayerController`, held and called once, and the `VibeSettingsLiveEffect` type |
+| ui/SettingsWindow | `SettingsSidebarController` | 275 | two strings |
+| ui/SettingsWindow | `SettingsWindowController` | 773 | the list of nine panes, 34 strings, and the Themes and Audio panes by name |
+| core/Graphics, Mac/ | `Fonts` | 194 | `AppTheme`, for the five font slots and the theme push |
+| ui/Shortcuts | `ShortcutRules.h`, `SettingsShortcutsViewController` | 716 | Vibe's command table, its menu rules, transport math, settings, and strings |
+
+**What stays in Vibe:** `AppSettings` and `SettingsRules.h`, which are policy; every pane's content; `ArtworkImageView`; `PitchFaderView` and `PitchControlPanel` until seam 21; `MainMenuBuilder` and Vibe's command table; the About window; the iOS settings screens; and the theme record, its store, and the Themes pane.
+
+**The theme engine does not move.** `AppTheme` and its categories are about 3,500 lines, and the Themes pane 2,600 more. Its slots are Vibe's product: the waveform, the playlist, the transport buttons, and the window chrome. A theme piece needs a schema-driven record, which is a redesign, not a move, and no second app wants user themes. What is generic in it is small: the dark and light color-pair row, its seeding from the displayed fallback, and copy and paste of a color as hex. Those move into the form views, bound to a read block and a write block instead of a theme base (cut 29). A theme piece is reconsidered only when an app asks for user themes.
+
+**The debug walker splits.** Vibe's `DebugSettingsUI` drives a pane by row title and is keyed on the form-view classes. Its generic half, the walk from a row title to the controls beside it, moves as a debug seam of SettingsWindow, beside the class it opens, as every seam does. Vibe's theme and app verbs stay with the channel's command tables. So DebugChannel keeps depending on nothing.
+
+**The cuts, in Vibe first**, continuing the numbering:
+
+- **24. The pane base takes an effects sink.** `SettingsPaneViewController` holds `MainPlayerController` and calls `applySettingsLiveEffects:` once. It takes a block over an opaque integer instead. Vibe's `VibeSettingsLiveEffect` enum stays in Vibe, and its controller supplies the block.
+- **25. The settings window splits.** The generic window keeps the split controller, the sidebar and its search, the history, the size funnel, the pane-title chain, and undo routing to the selected pane. It takes its panes as a list of view controllers and its strings pushed in. A Vibe subclass supplies the nine panes and the Themes toolbar items.
+- **26. The drawn slider takes its percent formatter**, one block, so `DrawnControls` reaches nothing.
+- **27. Fonts takes its slots from the app.** It keeps the face-and-size table keyed by an integer slot and the monospaced-digits rule. The slot enum, the five Vibe slots, and `applyThemeFonts:` move to Vibe, which pushes faces in.
+- **28. The shortcut encoding leaves the command table.** `ShortcutRules.h` splits: the key-code-or-character encoding, the modifier mask, and the matching rules move, and Vibe's commands and their defaults stay. The recorder pane takes rows of identifier, label, and default from the app.
+- **29. The color-pair row moves into the form views**, bound by blocks, as above.
+
+**Done when** this returns nothing in Vibe, with the generic window controller joining the list once cut 25 names it:
+
+```
+grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|MainPlayerController\|MenuValidationRules\|Formatters' \
+  Vibe/Mac/Settings/SettingsFormViews.* Vibe/Mac/Settings/SettingsPaneViewController.* \
+  Vibe/Mac/Settings/SettingsSidebarController.* Vibe/Mac/Controls/DrawnControls.* \
+  Vibe/Mac/Controls/SymbolButton.* Vibe/Common/Mac/Theme/Fonts.* Vibe/Mac/Menu/ShortcutRules.h
+```
 
 ## How an app uses a piece
 
@@ -311,11 +366,11 @@ Preparing sources and changing behavior get separate evidence.
 
 ## The boundary check
 
-This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMAP: NO`, `ALWAYS_SEARCH_USER_PATHS: NO`, and `GCC_PREFIX_HEADER: ""`, with header search paths for only its piece and the pieces it declares. An import outside them fails to compile here. Each piece also builds for iOS, so an AppKit leak fails here too.
+This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMAP: NO`, `ALWAYS_SEARCH_USER_PATHS: NO`, and `GCC_PREFIX_HEADER: ""`, with header search paths for only its piece and the pieces it declares. An import outside them fails to compile here. Each piece also builds for iOS, so an AppKit leak fails here too, unless its map row says macOS only.
 
 **A compile alone cannot enforce every edge.** One build with the headermap off sees every header its templates expose, so an include of a piece two steps away compiles. A header nothing compiles is never checked at all. So `scripts/checks/check-pieces.py` resolves every include itself. It reads the spec through `xcodegen dump`, as XcodeGen does, and checks:
 
-- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target
+- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. A piece whose row says macOS only has no iOS target, and no iOS target may list its template.
 - the map names only known pieces and has no cycle, counting every piece's edge to `core/Common`
 - each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows
 - every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.
@@ -422,6 +477,19 @@ grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|FolderAccessManager\|DebugWireF
   Vibe/WaveformUI Vibe/Controls Vibe/Playlist/Playlist.* Vibe/Playlist/PlaylistFile.* Vibe/Playlist/FolderWalk.*
 ```
 
+### The shell track, beside Phase 2
+
+The shell pieces touch none of the first path's files, so they move while Phase 2 cuts the path. They also prove the toolbox on a macOS-only piece with no audio, which is where the platform rule first bites. In this order, each its own move, each with the proof above:
+
+1. The prefix rename, on the pilot's branches before they merge (Decided).
+2. The macOS-only rule in the checker and `project.yml`, with its failing case.
+3. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window.
+4. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone.
+5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests.
+6. `ui/Shortcuts` after cut 28.
+
+**Done when** the minimal consumer opens a settings window of two panes with a color-pair row, a switch, and a slider, records a shortcut, and draws every control, with no string, setting, or type of Vibe's. Vibe's settings window, pitch panel, and About window are unchanged on screen. The drawn-control, symbol-button, and shortcut-rule tests pass from their new homes.
+
 ### Phase 3: move the playback and waveform path
 
 In this order, each its own move:
@@ -467,7 +535,7 @@ Each remaining candidate moves when a second app needs it, with the cuts it was 
 
 - **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates.
 - **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them.
-- **SandboxAccess, AppOpening, the mac controls, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. None has a date.
+- **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date.
 
 ## What the other app needs, and when
 
@@ -484,7 +552,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 | Full app: leveling from tags | a gain per file through a gapless splice | behavior | 5 | the boundary-frame render test | |
 | First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | |
 
-Nothing else is scheduled for the other app. Shell controls and portable rewrites wait until a consumer needs them.
+Nothing else is scheduled for the other app. The shell pieces are scheduled for a third app, on the shell track. Portable rewrites wait until a consumer needs them.
 
 ### Later
 
@@ -513,6 +581,9 @@ The cuts add these small types. Each replaces a dependency on an app class:
 - a waveform decode's observer: its identifier, a sink for each decode, and the sink's result
 - the record of a playlist entry, from Playlists
 - the catalog scan's verdict and its read policy, from FolderScan
+- the settings pane's effects sink, a block over an integer the app interprets, from SettingsWindow
+- the shortcut row of identifier, label, and default, from Shortcuts
+- the typography slot table, from Graphics
 
 ## TRAPs
 
