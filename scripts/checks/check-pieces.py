@@ -4,7 +4,7 @@ Usage: python3 -I scripts/checks/check-pieces.py   (from the repo root)
 
 A piece is a directory under one of the groups below. For each piece:
   - it has an AGENTS.md
-  - vibe-libs.yml has its template, named CMM<piece>
+  - vibe-libs.yml has its template, named VibeLibs<piece>
   - a piece with source files has a test bundle in project.yml that lists
     its template
   - every quoted import that names a header in another piece names one the
@@ -60,7 +60,7 @@ for piece in pieces:
             header_owner.setdefault(os.path.basename(f), piece)
 
 for piece in pieces:
-    template = "CMM" + piece.split("/")[1]
+    template = "VibeLibs" + piece.split("/")[1]
     if not os.path.isfile(os.path.join(piece, "AGENTS.md")):
         fail(f"{piece}: no AGENTS.md")
     if not re.search(rf"^  {re.escape(template)}:\s*$", spec, re.M):
