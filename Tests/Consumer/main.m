@@ -4,11 +4,12 @@
 //  Plays a ramp through the varispeed at zero pitch and checks it comes back
 //  exactly, then renders off zero. Round-trips a color through its hex form.
 //  Draws each mac control into a bitmap with no window. Builds a settings
-//  window of two panes without showing it, finds a color-pair row, a switch,
-//  and a slider in their panes, and picks the second pane in the sidebar.
-//  Keys a temporary file by its size, time and path, and keys it anew once it
-//  changes. Turns a CUE window into a file's frames. Exits 0 when all seven
-//  hold.
+//  window of three panes without showing it, finds a color-pair row, a switch,
+//  and a slider in two of them, and picks the second pane in the sidebar. In
+//  the third, the Shortcuts pane over two commands of its own, it records a
+//  shortcut from a key event sent through NSApp. Keys a temporary file by its
+//  size, time and path, and keys it anew once it changes. Turns a CUE window
+//  into a file's frames. Exits 0 when all eight hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -24,7 +25,9 @@
 #import "VibeLinkLabel.h"
 #import "SettingsPanesWindowController.h"
 #import "SettingsPaneViewController.h"
+#import "SettingsShortcutsViewController.h"
 #import "SettingsSidebarController.h"
+#import "ShortcutLayout.h"
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -38,6 +41,20 @@
 - (void)changed:(id)sender {
 }
 @end
+
+// The first view of a class under a view that passes a test, the view included.
+static __kindof NSView *Find(NSView *view, Class kind, BOOL (^match)(id view)) {
+    if ([view isKindOfClass:kind] && match(view)) {
+        return view;
+    }
+    for (NSView *child in view.subviews) {
+        NSView *found = Find(child, kind, match);
+        if (found) {
+            return found;
+        }
+    }
+    return nil;
+}
 
 // How many views of a class sit under a view, the view included.
 static NSUInteger Count(NSView *view, Class kind) {
@@ -162,12 +179,47 @@ int main(void) {
                                                             slider:&volume valueLabel:&readout];
         return @[[SettingsSectionView sectionWithRows:@[[SettingsRowView rowWithTitle:@"Volume" control:cluster]]]];
     };
+    // The recorder's monitor sees only events NSApp sends.
+    [NSApplication sharedApplication];
+    VibeShortcutSetKeyNames(@"Space", @"Keypad %@", @"Key %ld", @"None");
+    NSArray<NSArray *> *commands = @[@[@"zoom_in", @(kVibeShortcutNone)], @[@"zoom_out", @(kVibeShortcutNone)]];
+    NSMutableDictionary<NSString *, NSNumber *> *bindings = [NSMutableDictionary dictionary];
+    NSMutableArray<NSNumber *> *assigned = [NSMutableArray array];
+    SettingsShortcutsViewController *keys = [[SettingsShortcutsViewController alloc]
+            initWithEffectsSink:^(NSUInteger effects) {}
+                    commandRows:^{ return @[@[@"View", @[@[@"zoom_in", @"Zoom In"], @[@"zoom_out", @"Zoom Out"]]]]; }
+             shortcutForCommand:^(NSString *identifier) { return VibeShortcutEffective(commands, identifier, bindings); }
+                      overrides:^{ return [bindings copy]; }
+                   setOverrides:^(NSDictionary<NSString *, NSNumber *> *overrides) { [bindings setDictionary:overrides]; }
+                         assign:^(VibeShortcut shortcut, NSString *identifier, NSString **loser) {
+                             [assigned addObject:@(shortcut)];
+                             [bindings setDictionary:VibeShortcutOverridesByAssigning(commands, bindings, identifier,
+                                                                                      shortcut, 0, loser)];
+                             return VibeShortcutAssignmentStored;
+                         }];
+    keys.commandColumnTitle = @"Command";
+    keys.shortcutColumnTitle = @"Shortcut";
+    keys.recordTitle = @"Record Shortcut";
+    keys.clearTitle = @"Clear";
+    keys.resetAllTitle = @"Reset All";
+    keys.explainer = @"Select a command, then record its shortcut.";
+    keys.layoutNote = @"Keys follow the keyboard layout.";
+    keys.selectTip = @"Select a command first.";
+    keys.noneTip = @"This command has no shortcut.";
+    keys.defaultsTip = @"Every shortcut is its default.";
+    keys.undoActionName = @"Change Shortcut";
+    keys.recordingFormat = @"Type a shortcut for %@.";
+    keys.reservedFormat = @"%@ is reserved.";
+    keys.unusableCaption = @"That key cannot be shown.";
+    keys.reassignedFormat = @"%@ moved to %@ from %@.";
     SettingsPanesWindowController *settings = [[SettingsPanesWindowController alloc]
             initWithPaneGroups:@[@[
                 [SettingsPanesWindowController paneItemWithViewController:look identifier:@"look"
                                                                     label:@"Look" symbolName:@"paintbrush"],
                 [SettingsPanesWindowController paneItemWithViewController:sound identifier:@"sound"
                                                                     label:@"Sound" symbolName:@"speaker.wave.2"],
+                [SettingsPanesWindowController paneItemWithViewController:keys identifier:@"keys"
+                                                                    label:@"Keys" symbolName:@"keyboard"],
             ]]
                      backTitle:@"Back" forwardTitle:@"Forward" undoTitle:@"Undo" redoTitle:@"Redo"
              searchPlaceholder:@"Search" noResultsText:@"No Results"];
@@ -183,6 +235,29 @@ int main(void) {
     if (![settings.selectedTabItem.identifier isEqual:@"sound"] || ![settings.window.title isEqual:@"Sound"]
             || settings.window.isVisible) {
         fprintf(stderr, "consumer: the sidebar did not select the second pane\n");
+        return 1;
+    }
+    [sidebar.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:2] byExtendingSelection:NO];
+    [keys refreshFromSettings];
+    NSTableView *list = Find(keys.view, NSTableView.class, ^BOOL(id view) { return YES; });
+    [list selectRowIndexes:[NSIndexSet indexSetWithIndex:1] byExtendingSelection:NO];
+    NSButton *record = Find(keys.view, NSButton.class, ^BOOL(NSButton *button) {
+        return [button.title isEqualToString:@"Record Shortcut"];
+    });
+    [record performClick:nil];
+    NSEventModifierFlags held = NSEventModifierFlagControl | NSEventModifierFlagOption;
+    for (NSNumber *type in @[@(NSEventTypeKeyDown), @(NSEventTypeKeyUp)]) {
+        [NSApp sendEvent:[NSEvent keyEventWithType:(NSEventType)type.unsignedIntegerValue location:NSZeroPoint
+                                     modifierFlags:held timestamp:0 windowNumber:settings.window.windowNumber
+                                           context:nil characters:@"" charactersIgnoringModifiers:@""
+                                         isARepeat:NO keyCode:0]];
+    }
+    VibeShortcut recorded = VibeShortcutMake(0, held);
+    NSTableCellView *cell = [list viewAtColumn:1 row:1 makeIfNecessary:YES];
+    if (![assigned isEqual:@[@(recorded)]] || ![bindings isEqual:@{@"zoom_in": @(recorded)}]
+            || ![cell.textField.stringValue isEqualToString:VibeShortcutDisplayString(recorded)]) {
+        fprintf(stderr, "consumer: the pane did not record ⌃⌥ and the key, and shows %s\n",
+                cell.textField.stringValue.UTF8String);
         return 1;
     }
     [settings.window close];
