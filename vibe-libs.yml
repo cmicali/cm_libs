@@ -65,3 +65,159 @@ targetTemplates:
     settings:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/SettingsWindow/Mac"]
+
+  # ---- third_party/: other authors' code, one piece per library ----
+  #
+  # Each template carries the compiler flags its library builds with, so an
+  # app needs none of its own. None of these sources is analyzed. The license,
+  # privacy, and filter-table files stay out of an app's bundle. A template
+  # whose headers an app spells with the library's directory, as <ogg/ogg.h>,
+  # <PINCache/PINCache.h>, and "dr_flac/dr_flac.h" are, also searches
+  # third_party/ itself.
+
+  # A subset of TagLib 2.3.2. Its files include each other by name, so every
+  # directory that holds its headers is searched.
+  #
+  # TRAP: an app that also takes VibeLibsVorbis lists it first. taglib/ogg
+  # holds TagLib's own vorbis/vorbisfile.h, and the first search path wins.
+  VibeLibsTaglib:
+    sources:
+      - path: third_party/taglib
+        excludes: ["**/*.md", "**/LICENSE.MPL"]
+        compilerFlags: &third-party-flags
+          - "-Xclang"
+          - "-analyzer-disable-all-checks"
+          - "-Wno-documentation-html"
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/toolkit"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/mpeg"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/mpeg/id3v1"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/mpeg/id3v2"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/mpeg/id3v2/frames"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/ape"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/mp4"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/flac"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/riff"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/riff/aiff"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/riff/wav"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/ogg"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/ogg/vorbis"
+          - "$(VIBE_LIBS_ROOT)/third_party/taglib/ogg/opus"
+
+  # PINDiskCache.m builds with ARC exceptions on, as the pod's
+  # ARC-exception-safe subspec did.
+  VibeLibsPINCache:
+    templates: [VibeLibsPINOperation]
+    sources:
+      - path: third_party/PINCache
+        excludes: ["**/*.md", "**/*.txt", "**/*.xcprivacy", "PINDiskCache.m"]
+        compilerFlags: *third-party-flags
+      - path: third_party/PINCache/PINDiskCache.m
+        compilerFlags:
+          - "-fobjc-arc-exceptions"
+          - "-Xclang"
+          - "-analyzer-disable-all-checks"
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(VIBE_LIBS_ROOT)/third_party"
+          - "$(VIBE_LIBS_ROOT)/third_party/PINCache"
+
+  VibeLibsPINOperation:
+    sources:
+      - path: third_party/PINOperation
+        excludes: ["**/*.md", "**/*.txt", "**/*.xcprivacy"]
+        compilerFlags: *third-party-flags
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(VIBE_LIBS_ROOT)/third_party"
+          - "$(VIBE_LIBS_ROOT)/third_party/PINOperation"
+
+  # Header-only but for upstream's C entry points, DLL/r8bsrc.cpp, and its FFT.
+  # Optimized in every configuration, since at -O0 it costs many times its
+  # optimized self, and a Debug build is where an app's quality and cost tests
+  # run. The empty R8BSRC_DECL is upstream's switch from a DLL to an object
+  # file. R8B_PFFFT_DOUBLE is its README's speed setting.
+  #
+  # TRAP: PFFFT's NEON path is opt-in, and -w hides the message that says so.
+  # Without PFFFT_ENABLE_NEON, arm64 builds its scalar fallback.
+  VibeLibsR8brain:
+    sources:
+      - path: third_party/r8brain
+        excludes: ["**/*.md", "**/*.txt", "**/*.inc"]
+        compilerFlags:
+          - "-O3"
+          - "-DR8BSRC_DECL="
+          - "-DR8B_PFFFT_DOUBLE=1"
+          - "-DPFFFT_ENABLE_NEON=1"
+          - "-w"
+          - "-Xclang"
+          - "-analyzer-disable-all-checks"
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/third_party"]
+
+  # The dr_ decoders, each with fixes of Vibe's own. Optimized in every
+  # configuration, as r8brain is, so a Debug build decodes as a shipped one does.
+  VibeLibsDrMp3:
+    sources:
+      - path: third_party/dr_mp3
+        excludes: ["**/*.md"]
+        compilerFlags: &dr-libs-flags
+          - "-O3"
+          - "-w"
+          - "-Xclang"
+          - "-analyzer-disable-all-checks"
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/third_party"]
+
+  VibeLibsDrFlac:
+    sources:
+      - path: third_party/dr_flac
+        excludes: ["**/*.md"]
+        compilerFlags: *dr-libs-flags
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/third_party"]
+
+  VibeLibsDrWav:
+    sources:
+      - path: third_party/dr_wav
+        excludes: ["**/*.md"]
+        compilerFlags: *dr-libs-flags
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/third_party"]
+
+  # libogg and libvorbis build as the dr_ decoders do. Only their C files join
+  # an app's project.
+  #
+  # TRAP: none of their headers may join it. Xcode's headermap finds a header
+  # by its name from any target, and libvorbis's vorbisfile.h would answer for
+  # TagLib's.
+  VibeLibsOgg:
+    sources:
+      - path: third_party/ogg
+        includes: ["*.c"]
+        compilerFlags: *dr-libs-flags
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/third_party"]
+
+  VibeLibsVorbis:
+    templates: [VibeLibsOgg]
+    sources:
+      - path: third_party/vorbis/lib
+        includes: ["*.c"]
+        compilerFlags: *dr-libs-flags
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/third_party/vorbis/include"]

@@ -133,6 +133,153 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
 
+  # third_party/: each library's tests build it alone and call into it once,
+  # so a missing file or a broken link fails here. Each iOS target builds the
+  # library for the simulator. None of them excludes a platform half.
+  TaglibTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsTaglib]
+    sources:
+      - path: Tests/third_party/taglib
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  Taglib-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsTaglib]
+
+  PINCacheTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsPINCache]
+    sources:
+      - path: Tests/third_party/PINCache
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  PINCache-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsPINCache]
+
+  PINOperationTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsPINOperation]
+    sources:
+      - path: Tests/third_party/PINOperation
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  PINOperation-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsPINOperation]
+
+  R8brainTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsR8brain]
+    sources:
+      - path: Tests/third_party/r8brain
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  R8brain-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsR8brain]
+
+  DrMp3Tests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsDrMp3]
+    sources:
+      - path: Tests/third_party/dr_mp3
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  DrMp3-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsDrMp3]
+
+  DrFlacTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsDrFlac]
+    sources:
+      - path: Tests/third_party/dr_flac
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  DrFlac-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsDrFlac]
+
+  DrWavTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsDrWav]
+    sources:
+      - path: Tests/third_party/dr_wav
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  DrWav-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsDrWav]
+
+  OggTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsOgg]
+    sources:
+      - path: Tests/third_party/ogg
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  Ogg-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsOgg]
+
+  VorbisTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsVorbis]
+    sources:
+      - path: Tests/third_party/vorbis
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  Vorbis-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsVorbis]
+
 schemes:
   vibe-libs:
     build:
@@ -145,5 +292,25 @@ schemes:
         DSP-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
+        TaglibTests: [test]
+        Taglib-iOS: all
+        PINCacheTests: [test]
+        PINCache-iOS: all
+        PINOperationTests: [test]
+        PINOperation-iOS: all
+        R8brainTests: [test]
+        R8brain-iOS: all
+        DrMp3Tests: [test]
+        DrMp3-iOS: all
+        DrFlacTests: [test]
+        DrFlac-iOS: all
+        DrWavTests: [test]
+        DrWav-iOS: all
+        OggTests: [test]
+        Ogg-iOS: all
+        VorbisTests: [test]
+        Vorbis-iOS: all
     test:
-      targets: [CommonTests, GraphicsTests, DSPTests, ControlsTests, SettingsWindowTests]
+      targets: [CommonTests, GraphicsTests, DSPTests, ControlsTests, SettingsWindowTests, TaglibTests,
+                PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests,
+                OggTests, VorbisTests]

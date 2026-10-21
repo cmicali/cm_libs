@@ -7,9 +7,11 @@ reads them. A piece is a directory under one of the groups below.
 
 For each piece:
   - it has an AGENTS.md, a row in the dependency map, and a template named
-    VibeLibs<piece>
+    VibeLibs<piece>, each word of a vendored piece's name raised, as
+    VibeLibsDrFlac
   - its template's sources and header search paths stay inside the piece,
-    and its sources exclude the other platform's half
+    and its sources exclude the other platform's half. A third_party piece's
+    template may also search third_party/ itself, and it has no halves.
   - its template lists only the templates of pieces the map allows it
   - a piece with code has a macOS test bundle over Tests/<piece> and an iOS
     target, each listing its template
@@ -23,7 +25,8 @@ For each piece:
   - every include, quoted or angled, resolves as the compiler would: its own
     directory first for a quoted one, then every piece's search paths, then
     a unique basename, as an app's headermap would. One that reaches two
-    pieces fails. One that reaches a piece the map does not allow fails.
+    pieces fails, unless SETTLED names the header an app's build must find.
+    One that reaches a piece the map does not allow fails.
     A test may also include a helper from Tests/Support, which every test
     bundle searches. A piece's own file may not.
   - Mac/ and iOS/ are the only platform directories, and only at the top of
@@ -54,6 +57,15 @@ INCLUDE = re.compile(r'^\s*#\s*(?:import|include)\s+([<"])([^>"]+)[>"]')
 CONDITION = re.compile(r"^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b(.*)")
 
 SUPPORT = os.path.join("Tests", "Support")   # the tests' shared helpers, in no piece
+THIRD_PARTY = "third_party"   # a vendored piece's template may also search this group directory
+
+# Spellings that reach two vendored pieces, each with the header an app's
+# build must find. The app keeps it first by the order of its templates, and
+# the TRAP beside each template says so.
+SETTLED = {
+    # TagLib keeps its own vorbis/vorbisfile.h under taglib/ogg.
+    "vorbis/vorbisfile.h": "third_party/vorbis/include/vorbis/vorbisfile.h",
+}
 
 root = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else ".")
 os.chdir(root)
@@ -83,7 +95,9 @@ for group in GROUPS:
 
 
 def template_name(piece):
-    return "VibeLibs" + piece.split("/")[1]
+    # A vendored library keeps its own directory name, such as dr_flac, so
+    # each word's first letter is raised: VibeLibsDrFlac.
+    return "VibeLibs" + "".join(w[:1].upper() + w[1:] for w in piece.split("/")[1].split("_"))
 
 
 def piece_of(path):
@@ -204,7 +218,12 @@ for piece in pieces:
             fail(f"vibe-libs.yml: {name} searches {entry}, which is not under $(VIBE_LIBS_ROOT)")
             continue
         directory = entry[len("$(VIBE_LIBS_ROOT)/"):].strip('"')
-        if not inside(directory, piece):
+        if directory == THIRD_PARTY and not first_party(piece):
+            # Apps spell a vendored header with its library's directory, as
+            # <ogg/ogg.h>. An include of another piece still fails below.
+            if (directory, None) not in search_roots:
+                search_roots.append((directory, None))
+        elif not inside(directory, piece):
             fail(f"vibe-libs.yml: {name} searches {directory}, outside {piece}")
         else:
             search_roots.append((directory, piece))
@@ -276,6 +295,8 @@ def resolve(spelling, quoted, including):
         candidate = os.path.normpath(os.path.join(directory, spelling))
         if os.path.isfile(candidate) and candidate not in found:
             found.append(candidate)
+    if len(found) > 1 and SETTLED.get(spelling) in found:
+        return [SETTLED[spelling]]
     if not found and "/" not in spelling:
         found = list(headers_by_base.get(spelling, []))
     return found
