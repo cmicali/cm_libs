@@ -1,6 +1,6 @@
 # vibe-libs: the plan
 
-**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape. Wave 1 merged on 2026-10-21: `core/Graphics` moved (#6, Vibe #350), and seam 13 landed (Vibe #351). Waves 2 and 3 merged on 2026-10-21: `ui/Controls` and `ui/SettingsWindow` moved (#9, #11), and seams 14 to 18, the queue half of 19, 22, and 23 landed (Vibe #353 to #359).** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, merged on 2026-10-20: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape. Wave 1 merged on 2026-10-21: `core/Graphics` moved (#6, Vibe #350), and seam 13 landed (Vibe #351). Waves 2 and 3 merged on 2026-10-21: `ui/Controls` and `ui/SettingsWindow` moved (#9, #11), and seams 14 to 18, the queue half of 19, 22, and 23 landed (Vibe #353 to #359).** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -313,15 +313,14 @@ A third app, a mac app that plays no audio, is the second consumer of Vibe's she
 - **28. The shortcut encoding leaves the command table.** `ShortcutRules.h` splits: the key-code-or-character encoding, the modifier mask, and the matching rules move, and Vibe's commands and their defaults stay. The recorder pane takes rows of identifier, label, and default from the app.
 - **29. The color-pair row moves into the form views**, bound by blocks, as above.
 
-**Done when** this returns nothing in Vibe, with the generic window controller joining the list once cut 25 names it:
+**Done when** this returns nothing in Vibe:
 
 ```
 grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|MainPlayerController\|MenuValidationRules\|Formatters' \
-  Vibe/Mac/Settings/SettingsFormViews.* Vibe/Mac/Settings/SettingsPaneViewController.* \
-  Vibe/Mac/Settings/SettingsSidebarController.* Vibe/Common/Mac/Theme/Fonts.* Vibe/Mac/Menu/ShortcutRules.h
+  Vibe/Mac/Menu/ShortcutRules.h Vibe/Mac/Settings/SettingsShortcutsViewController.*
 ```
 
-The drawn controls and the symbol button now live here, in `ui/Controls/Mac/`. The grep no longer names them.
+The rest of the shell's generic files now live here. The drawn controls and the symbol button are in `ui/Controls/Mac/`. `Fonts` is in `core/Graphics/Mac/`. The form views, the pane base, the sidebar, and the generic window are in `ui/SettingsWindow/Mac/`. The grep no longer names them.
 
 ## How an app uses a piece
 
@@ -466,7 +465,7 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
   - **`replacementAtURL:`**, which mints the row that replaces another when a file is converted. The queue stops minting rows. Replacing one row takes the replacement object, already made by the app, which must be fresh, never one already in the queue. Replacing every row of a file takes a block that maps each outgoing entry to its replacement, since each row may be a different CUE window. Vibe makes each replacement with `replacementAtURL:`. The queue keeps what it owns: the indexes, both shuffle orders, and one observer event per replaced row.
 
   So the queue imports no protocol and no app API, and depends on nothing. Beside Foundation, `RepeatMode.h` is its only import. That header is the whole edge from NowPlaying to PlayQueue. Its home is decided at the move. The queue half landed on 2026-10-21 (Vibe #357).
-- **22. Metadata installs results through a holder protocol of its own.** Today the loader reads an item's installed metadata, installs a result only if none is installed, and delivers only while that result is still installed. It does this through `AudioTrack (Internal)`'s `installMetadataIfUnresolved:` and `deliverIfMetadataStillInstalled:usingBlock:`. Metadata declares those three operations as its own protocol, and Vibe's row adopts it with the methods it has. The check and the install stay atomic in the object that holds the result, so a replaced item never shows a stale result. None of it goes into the playable-item protocol, which stays free of metadata. The seam landed on 2026-10-21 (Vibe #358).
+- **22. Metadata installs results through a holder protocol of its own.** The loader read an item's installed metadata, installed a result only if none was installed, and delivered only while that result was still installed. It did this through `AudioTrack (Internal)`'s `installMetadataIfUnresolved:` and `deliverIfMetadataStillInstalled:usingBlock:`. That header is gone. Metadata now declares those three operations as its own protocol, `AudioTrackMetadataHolder`. Vibe's row adopts it with the methods it had. The check and the install stay atomic in the object that holds the result, so a replaced item never shows a stale result. None of it goes into the playable-item protocol, which stays free of metadata. The seam landed on 2026-10-21 (Vibe #358).
 
 - **18. Playlists returns records.** Today the CUE and M3U readers return `AudioTrack` rows. They return plain records, and Vibe makes its rows from them. The seam landed on 2026-10-21 (Vibe #359).
 - **23. FolderScan reports each walked file to a handler.** Today the walk notes cover-art candidates itself, through Metadata's `FolderArtRules.h`. The app installs the handler at launch, beside the walk's other handlers. Metadata cannot install it, since it has no edge to FolderScan. The handler returns a rank for each filename. The walk keeps the best-ranked file of each directory. The seam landed on 2026-10-21 (Vibe #359).
@@ -478,7 +477,7 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 **Done when** this returns nothing in Vibe for the path's directories:
 
 ```
-grep -rlF -e AppSettings -e AppTheme -e VibeStrings.h -e FolderAccessManager -e DebugWireFormat -e AudioTrack.h \
+grep -rlF --exclude='*.md' -e AppSettings -e AppTheme -e VibeStrings.h -e FolderAccessManager -e DebugWireFormat -e AudioTrack.h \
   Vibe/Audio Vibe/Loading/Claim Vibe/Loading/Transfer Vibe/Loading/PlaceholderFiles* \
   Vibe/WaveformUI Vibe/Controls Vibe/Playlist/Playlist.* Vibe/Playlist/PlaylistFile.* Vibe/Playlist/FolderWalk.*
 ```
