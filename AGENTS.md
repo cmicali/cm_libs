@@ -14,8 +14,9 @@ The Xcode project is generated from `project.yml` by XcodeGen and is not checked
 | `make build-ios` | Every piece built for the iOS simulator, so an AppKit leak fails. |
 | `make check-pieces` | The piece rules below, the dependency map in the plan, no `#if DEBUG` in a header, and the other app's name nowhere. Then it breaks each rule in a copy of the repo and fails unless the check catches it. |
 | `make consumer` | A minimal app outside this repo's project includes `vibe-libs.yml` as an app would, builds with no prefix header and no headermap, and runs. |
+| `make analyze [CONFIG=Debug]` | clang's static analyzer over every piece's macOS test bundle, Release by default. It fails on any finding outside `third_party/`. |
 
-CI runs all four on every pull request.
+CI runs all five on every pull request.
 
 ## What this repo is for
 

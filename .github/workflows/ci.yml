@@ -34,3 +34,6 @@ jobs:
 
       - name: Build and run a minimal consumer
         run: make consumer
+
+      - name: Analyze every piece
+        run: make analyze
