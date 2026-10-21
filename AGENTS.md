@@ -2,7 +2,7 @@
 
 Guidance for any coding agent working in this repository.
 
-vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first three pieces are here**: `core/Common`, `core/Graphics`, and `audio/DSP`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
+vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first four pieces are here**: `core/Common`, `core/Graphics`, `audio/DSP`, and `ui/Controls`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
 
 ## Building
 
@@ -37,7 +37,7 @@ CI runs all five on every pull request.
 - **A piece keeps the caller's objects.** It never copies or compares them by content, so two entries for one file stay two entries. Shared work matches by source key, the path and window. A persisted entry matches by disk key, which also names the file's version.
 - **A move changes nothing but the path.** No API, language, or platform change rides on it. A portable C or C++ rewrite is separate work with its own measurements.
 - **Third-party code is a piece of its own** under `third_party/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code.
-- **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both. A macOS-only piece, marked in the plan's map, has no halves, and no iOS target may list its template.
+- **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both. A macOS-only piece, marked in the plan's map, has no `iOS/` half, and no iOS target may list its template. It may keep its files in a `Mac/` half, so the shared files it gains later move nothing.
 - **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `core/Common/VibeMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
 
 ## Names
