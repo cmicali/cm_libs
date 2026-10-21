@@ -1,12 +1,15 @@
 //
 //  CommonProbe.m
 //
-//  Compiles VibeMacros.h alone, with no prefix header and no headermap. The
-//  macOS tests and the iOS build both compile it, since the piece is only
-//  headers.
+//  Compiles the header-only files alone, with no prefix header and no
+//  headermap. The macOS tests and the iOS build both compile it.
 //
 
 #import "VibeMacros.h"
+#import "AudioWorkAdmissionRules.h"
+#import "HelperMacros.h"
+#import "IntegerTokenRules.h"
+#import "UIUpdateMath.h"
 #import <CoreAudio/CoreAudioTypes.h>
 
 int VibeCommonProbeAdd(int a, int b) CA_REALTIME_API;
