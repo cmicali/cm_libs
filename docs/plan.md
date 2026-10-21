@@ -488,7 +488,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 2. The macOS-only rule in the checker and `project.yml`, with its failing cases. Done 2026-10-20: the checker reads the map's words, `project.yml` states the pattern a macOS-only piece's targets follow, and the checker's tests gain four failing cases and one passing one.
 3. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone. Done 2026-10-21: its 21 files moved with their history (this repo's #6), their tests run here, and Vibe compiles them through the template (Vibe #350).
 4. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window.
-5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests.
+5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests. Done 2026-10-21: its 13 files moved with their history (this repo's #11), and Vibe compiles them through the template (Vibe #356). Two of them came from Vibe's `Util/`, which the done-when grep does not search: `WindowAnimation.h` joined the piece, and `NSString+FormLabel` joined `core/Common`, since Vibe's iOS settings use it too. Vibe had no tests of these files, so their tests are new here.
 6. `ui/Shortcuts` after cut 28.
 
 **Done when** the minimal consumer opens a settings window of two panes with a color-pair row, a switch, and a slider, records a shortcut, and draws every control, with no string, setting, or type of Vibe's. Vibe's settings window, pitch panel, and About window are unchanged on screen. The drawn-control, symbol-button, and shortcut-rule tests pass from their new homes.
