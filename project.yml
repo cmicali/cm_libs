@@ -101,6 +101,20 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
+  ControlsTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsControls]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/ui/Controls
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   vibe-libs:
     build:
@@ -111,5 +125,6 @@ schemes:
         Graphics-iOS: all
         DSPTests: [test]
         DSP-iOS: all
+        ControlsTests: [test]
     test:
-      targets: [CommonTests, GraphicsTests, DSPTests]
+      targets: [CommonTests, GraphicsTests, DSPTests, ControlsTests]

@@ -172,7 +172,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | waveform/WaveformStyles | waveform/Waveform, core/Graphics |
 | waveform/WaveformLoading | waveform/Waveform, audio/AudioTypes, audio/Decode, files/DiskCache, files/FileLoading, third_party/PINCache |
 | waveform/WaveformView | waveform/WaveformStyles, waveform/Waveform, ui/Controls, core/Graphics |
-| ui/Controls | core/Graphics |
+| ui/Controls | core/Graphics, macOS only |
 | ui/SettingsWindow | ui/Controls, core/Graphics, macOS only |
 | ui/Shortcuts | ui/SettingsWindow, macOS only |
 | system/NowPlaying | core/Graphics, media/PlayQueue |
@@ -500,7 +500,7 @@ In this order, each its own move:
 4. `files/FileLoading` and `files/DiskCache`.
 5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
 6. `media/Tags`, `media/Metadata`, `media/PlayQueue`, `media/Playlists`, and `media/FolderScan`.
-7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
+7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. Controls' map row then drops macOS only, and the piece gains an iOS target. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file.
 9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move.
 
