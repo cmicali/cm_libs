@@ -65,7 +65,7 @@ vibe-libs/
 │   │                    load timing; path spelling and comparison, file identity and emptiness;
 │   │                    the disk key from a file's attributes; fixed-slot work lanes; a weak
 │   │                    proxy; a display-paced update timer; build provenance and its script
-│   └── Graphics ●       image and color aliases, bounded image decode, hex, blend and OKLCH
+│   └── Graphics ●○      image and color aliases, bounded image decode, hex, blend and OKLCH
 │                        colors, dominant color, blur, dark-mode helpers; Mac/ the typography
 │                        slots (Fonts), on the shell track
 │

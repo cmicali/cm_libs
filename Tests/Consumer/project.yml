@@ -18,6 +18,9 @@ settings:
     ALWAYS_SEARCH_USER_PATHS: NO
     GCC_PREFIX_HEADER: ""
     CLANG_ENABLE_OBJC_ARC: YES
+    # As Vibe and this repo's project build. Under a GNU dialect, Graphics'
+    # constant-sized arrays warn as a GNU extension, and warnings are errors.
+    GCC_C_LANGUAGE_STANDARD: c17
     GCC_TREAT_WARNINGS_AS_ERRORS: YES
     CLANG_WARN_UNGUARDED_AVAILABILITY: YES_AGGRESSIVE
     CODE_SIGNING_ALLOWED: NO
@@ -26,7 +29,7 @@ targets:
   Consumer:
     type: tool
     platform: macOS
-    templates: [VibeLibsDSP]
+    templates: [VibeLibsDSP, VibeLibsGraphics]
     templateAttributes:
       excludedPlatform: iOS
     sources:

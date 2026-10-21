@@ -20,6 +20,20 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/core/Common"]
 
+  # Each half's headers are searched on both platforms. The excluded half's
+  # sources do not compile, so only a stray import could reach its headers.
+  VibeLibsGraphics:
+    sources:
+      - path: core/Graphics
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(VIBE_LIBS_ROOT)/core/Graphics"
+          - "$(VIBE_LIBS_ROOT)/core/Graphics/Mac"
+          - "$(VIBE_LIBS_ROOT)/core/Graphics/iOS"
+
   VibeLibsDSP:
     templates: [VibeLibsCommon]
     sources:
