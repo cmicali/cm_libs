@@ -61,11 +61,11 @@ vibe-libs/
 ├── scripts/plan/derive-deps.py   re-derives the dependency map from Vibe's imports
 │
 ├── core/
-│   ├── Common ●○        log, realtime-check and signpost macros; stall sampler, work tally,
-│   │                    load timing; path spelling and comparison, file identity and emptiness;
-│   │                    the disk key from a file's attributes; fixed-slot work lanes; a weak
-│   │                    proxy; a display-paced update timer; build provenance and its script;
-│   │                    the form label's colon rule, on the shell track
+│   ├── Common ●○        log, realtime-check and signpost macros; stall sampler, work tally;
+│   │                    path spelling and comparison, file identity and emptiness; the disk
+│   │                    key from a file's attributes; fixed-slot work lanes; a weak proxy; a
+│   │                    display-paced update timer; helper macros; build provenance and its
+│   │                    script; the form label's colon rule, on the shell track
 │   └── Graphics ●○      image and color aliases, bounded image decode, hex, blend and OKLCH
 │                        colors, dominant color, blur, dark-mode helpers; Mac/ the typography
 │                        slots (Fonts), on the shell track
@@ -329,7 +329,7 @@ The rest of the shell's generic files now live here. The drawn controls and the 
 - The app's repo has this repo as a submodule at `vibe-libs/`, pinned to a commit. The app's `make project` runs `git submodule update --init --recursive` before it generates, so a fresh clone or a worktree works.
 - The app's `project.yml` has `include: [vibe-libs/vibe-libs.yml]`. Each app target lists the pieces or stacks it wants under `templates:`. It sets `templateAttributes: {excludedPlatform: iOS}` on macOS, or `Mac` on iOS.
 - The pieces' files compile as the app's own sources. Each vendored library keeps its own compiler flags in its template.
-- The spec reads one project setting, the verbose-logging switch. Vibe maps it from its beta switch, and test targets set it to 1.
+- The spec reads two project settings, the verbose-logging switch and the signposts switch. Vibe maps the first from its beta switch and sets the second in its Debug configuration. Test targets set both to 1.
 - The log subsystem is the main bundle's identifier, so each app logs under its own name.
 
 ### Why compile in, and not link

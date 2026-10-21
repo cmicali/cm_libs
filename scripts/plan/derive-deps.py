@@ -68,10 +68,11 @@ PIECES = [
     ("ui/Controls", "Vibe/Debug/Seams/EqualizerIndicatorView+"),
     ("ui/SettingsWindow", "Vibe/Debug/Mac/Seams/SettingsFormViews+"),
     ("core/Common", "Vibe/Debug/Oracles/VibeWorkTally"),
-    ("core/Common", "Vibe/Debug/Oracles/AudioLoadTiming"),
+    ("waveform/WaveformLoading", "Vibe/Debug/Oracles/AudioLoadTiming"),
     ("dev/DebugChannel", "Vibe/Debug/Channel/"),
     # core
     ("core/Common", "Vibe/Util/HelperMacros"),
+    ("core/Common", "Vibe/Util/IntegerTokenRules"),
     ("core/Common", "Vibe/Util/StallWatch"),
     ("core/Common", "Vibe/Util/FilePaths"),
     ("core/Common", "Vibe/Util/VibeWeakProxy"),
