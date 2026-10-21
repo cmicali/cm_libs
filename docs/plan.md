@@ -124,7 +124,8 @@ vibe-libs/
 │   │                    captions, lists, color-pair wells, sliders with readouts; the
 │   │                    walker's debug seam
 │   └── Shortcuts ○      macOS only: a shortcut as a key code or character with modifiers,
-│                        its matching, and the recorder pane over rows the app supplies
+│                        its matching, its name and key equivalent under the current
+│                        layout, and the recorder pane over rows the app supplies
 │
 ├── system/
 │   ├── NowPlaying       Now Playing info and remote commands, fed a snapshot
@@ -215,7 +216,6 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | the catalog scan's verdict and read policy | media/FolderScan | the app | none |
 | the Now Playing snapshot, later | system/NowPlaying | the app | none |
 | the settings pane's effects sink: a block over an integer the app interprets | ui/SettingsWindow | the app | none |
-| the shortcut row: identifier, label, default | ui/Shortcuts | the app | none |
 | the typography slot table | core/Graphics | ui/Controls, ui/SettingsWindow, the app | none: both already depend on Graphics |
 
 **PlayQueue stays free of all of them.** Its entries are opaque objects, never the playable-item protocol. The queue needs only each entry's identity, so declaring that protocol would add an edge to AudioTypes for nothing.
@@ -310,17 +310,17 @@ A third app, a mac app that plays no audio, is the second consumer of Vibe's she
 - **25. The settings window splits.** The generic window keeps the split controller, the sidebar and its search, the history, the size funnel, the pane-title chain, and undo routing to the selected pane. It takes its panes as a list of view controllers and its strings pushed in. A Vibe subclass supplies the nine panes and the Themes toolbar items.
 - **26. The drawn slider takes its percent formatter**, one block, so `DrawnControls` reaches nothing.
 - **27. Fonts takes its slots from the app.** It keeps the face-and-size table keyed by an integer slot and the monospaced-digits rule. The slot enum, the five Vibe slots, and `applyThemeFonts:` move to Vibe, which pushes faces in.
-- **28. The shortcut encoding leaves the command table.** `ShortcutRules.h` splits: the key-code-or-character encoding, the modifier mask, and the matching rules move, and Vibe's commands and their defaults stay. The recorder pane takes rows of identifier, label, and default from the app.
+- **28. The shortcut encoding leaves the command table.** `ShortcutRules.h` splits: the key-code-or-character encoding, the modifier mask, and the matching rules move, and Vibe's commands and their defaults stay. The recorder pane takes rows from the app, each a pair of identifier and label.
 - **29. The color-pair row moves into the form views**, bound by blocks, as above.
 
 **Done when** this returns nothing in Vibe:
 
 ```
-grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|MainPlayerController\|MenuValidationRules\|Formatters' \
-  Vibe/Mac/Menu/ShortcutRules.h Vibe/Mac/Settings/SettingsShortcutsViewController.*
+grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|MainPlayerController\|MenuValidationRules\|MainMenuBuilder\|MenuShortcutRules\|Formatters' \
+  Vibe/Mac/Menu/ShortcutRules.h Vibe/Mac/Menu/ShortcutLayout.* Vibe/Mac/Settings/SettingsShortcutsViewController.*
 ```
 
-The rest of the shell's generic files now live here. The drawn controls and the symbol button are in `ui/Controls/Mac/`. `Fonts` is in `core/Graphics/Mac/`. The form views, the pane base, the sidebar, and the generic window are in `ui/SettingsWindow/Mac/`. The grep no longer names them.
+It returned nothing on Vibe's branch after cut 30 and the layout's own cut, before the move. Every shell file it names now lives here. The drawn controls and the symbol button are in `ui/Controls/Mac/`. `Fonts` is in `core/Graphics/Mac/`. The form views, the pane base, the sidebar, and the generic window are in `ui/SettingsWindow/Mac/`. The shortcut encoding, the layout, and the Shortcuts pane are in `ui/Shortcuts/Mac/`.
 
 ## How an app uses a piece
 
@@ -491,9 +491,9 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 3. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone. Done 2026-10-21: its 21 files moved with their history (this repo's #6), their tests run here, and Vibe compiles them through the template (Vibe #350).
 4. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window. Done 2026-10-21: its 12 files moved with their history (this repo's #9), their tests run here, and Vibe compiles them through the template (Vibe #354).
 5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests. Done 2026-10-21: its 13 files moved with their history (this repo's #11), and Vibe compiles them through the template (Vibe #356). Two of them came from Vibe's `Util/`, which the done-when grep does not search: `WindowAnimation.h` joined `ui/Controls`, since Vibe's player window reads it too, and `NSString+FormLabel` joined `core/Common`, since Vibe's iOS settings use it too. Vibe had no tests of these files, so their tests are new here.
-6. `ui/Shortcuts` after cut 28.
+6. `ui/Shortcuts` after cut 28. Done 2026-10-21: its 5 files moved with their history (this repo's #17), and Vibe compiles them through the template (Vibe #366). Cut 30 handed the pane its rows, strings, and store. One more cut came first: the keyboard layout left Vibe's menu builder for `ShortcutLayout`, C functions beside `ShortcutRules.h`. The app pushes the four key names it localizes. The row stayed a pair of identifier and label, not a type. The pane reads only those two, and the command table beside it is pairs too. The default left the row, since the pane never read it. The encoding tests moved, and the layout's and the pane's tests are new here.
 
-**Done when** the minimal consumer opens a settings window of two panes with a color-pair row, a switch, and a slider, records a shortcut, and draws every control, with no string, setting, or type of Vibe's. Vibe's settings window, pitch panel, and About window are unchanged on screen. The drawn-control, symbol-button, and shortcut-rule tests pass from their new homes.
+**Done when** the minimal consumer opens a settings window of two panes with a color-pair row, a switch, and a slider, records a shortcut, and draws every control, with no string, setting, or type of Vibe's. Vibe's settings window, pitch panel, and About window are unchanged on screen. The drawn-control, symbol-button, and shortcut-rule tests pass from their new homes. **Met on 2026-10-21.** The consumer's settings window has a third pane, the Shortcuts pane over two commands of its own. It records ⌃⌥ and a key from a key event sent through `NSApp`, and checks the store and the row it draws. Vibe's settings window and its menus are unchanged on screen and in the debug channel.
 
 ### Phase 3: move the playback and waveform path
 
@@ -587,7 +587,6 @@ The cuts add these small types. Each replaces a dependency on an app class:
 - the record of a playlist entry, from Playlists. It also carries the M3U writer's fields, the duration, display title, and display artist, since the writer stays in Playlists.
 - the catalog scan's verdict and its read policy, from FolderScan
 - the settings pane's effects sink, a block over an integer the app interprets, from SettingsWindow
-- the shortcut row of identifier, label, and default, from Shortcuts
 - the typography slot table, from Graphics
 
 ## TRAPs
