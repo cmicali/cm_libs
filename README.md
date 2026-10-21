@@ -15,7 +15,7 @@ The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in 
 | `audio/` | **AudioTypes**, **DSP**, **Analysis** (tempo and key), **Decode**, **Meter**, **FX**, **OutputDevices**, and **Player**: gapless, crossfading, bit-perfect playback. |
 | `media/` | **Tags**, **Metadata** (tags, art, and their cache), **Playlists** (CUE and M3U), **FolderScan**, **PlayQueue**. |
 | `waveform/` | **Waveform** (the data), **WaveformStyles**, **WaveformLoading**, **WaveformView**. |
-| `ui/` | **Controls**: loading and equalizer indicators, and mac buttons, sliders, image views, and a pitch fader. **SettingsWindow**: a System Settings window with a sidebar, search, history, and form views. **Shortcuts**: remappable shortcuts and their recorder pane. Both macOS only. |
+| `ui/` | **Controls**: mac buttons, drawn sliders and switches, image views, and a link label today, with the loading and equalizer indicators coming in Phase 3. **SettingsWindow**: a System Settings window with a sidebar, search, history, and form views. **Shortcuts**: remappable shortcuts and their recorder pane. SettingsWindow and Shortcuts are macOS only. So is Controls, until its indicators join it in Phase 3. |
 | `system/` | **NowPlaying**, **AppOpening**, **Updates** (Sparkle). |
 | `dev/` | **DebugChannel**, **iOSDriver**. |
 | `third_party/` | TagLib, dr_mp3, dr_flac, dr_wav, r8brain-free-src, PINCache, PINOperation, ogg, vorbis, and Sparkle, each a piece of its own. |
