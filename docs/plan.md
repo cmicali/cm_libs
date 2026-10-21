@@ -217,7 +217,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 
 **Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
 
-**A piece whose row says macOS only builds for one platform.** It has no `Mac/` half and no iOS target, and an iOS target that lists its template, directly or through another template, fails the check. The checker reads those words since the shell track's step 2, on 2026-10-20, before the first such piece.
+**A piece whose row says macOS only builds for one platform.** It has no `iOS/` half and no iOS target. An iOS target that lists its template, directly or through another template, fails the check. It may keep its files in a `Mac/` half, so the shared files it gains later move nothing. `ui/Controls` does, until its indicators join it in Phase 3. The checker reads those words since the shell track's step 2, on 2026-10-20, before the first such piece.
 
 **A stack is a template that lists other templates.** `vibe-libs.yml` offers a few, so an app's `project.yml` stays short. Examples are a Playback stack (Player and everything it needs) and a Waveform stack (the four waveform pieces).
 
@@ -370,7 +370,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **A compile alone cannot enforce every edge.** One build with the headermap off sees every header its templates expose, so an include of a piece two steps away compiles. A header nothing compiles is never checked at all. So `scripts/checks/check-pieces.py` resolves every include itself. It reads the spec through `xcodegen dump`, as XcodeGen does, and checks:
 
-- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. The checker reads the words macOS only at the end of a map row: such a piece has no iOS target, no iOS target lists its template, directly or through another template, it has no `Mac/` or `iOS/` directory, its template need not exclude one, and its files import AppKit with no platform guard.
+- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. The checker reads the words macOS only at the end of a map row: such a piece has no iOS target, no iOS target lists its template, directly or through another template, it has no `iOS/` directory, its template need not exclude one, and its files import AppKit with no platform guard.
 - the map names only known pieces and has no cycle, counting every piece's edge to `core/Common`
 - each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows
 - every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.

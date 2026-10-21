@@ -15,8 +15,9 @@ For each piece:
     target, each listing its template
   - a piece whose map row ends in "macOS only" has no iOS target: no iOS
     target lists its template, directly or through another template. It has
-    no Mac/ or iOS/ directory, its template need not exclude one, and its
-    files import AppKit with no platform guard.
+    no iOS/ directory, its template need not exclude one, and its files
+    import AppKit with no platform guard. It may keep its files in a Mac/
+    half, so the shared files it gains later move nothing.
   - every header is compiled by one of its sources or tests. A header-only
     piece imports its headers from its tests.
   - every include, quoted or angled, resolves as the compiler would: its own
@@ -326,8 +327,8 @@ for piece in pieces:
             for dirpath, dirs, _ in os.walk(directory):
                 for d in dirs:
                     here = os.path.relpath(os.path.join(dirpath, d), directory)
-                    if d in PLATFORMS and piece in mac_only:
-                        fail(f"{os.path.join(dirpath, d)}: {piece} is macOS only and has no {d}/ half")
+                    if d == "iOS" and piece in mac_only:
+                        fail(f"{os.path.join(dirpath, d)}: {piece} is macOS only and has no iOS/ half")
                     elif d in PLATFORMS and os.sep in here:
                         fail(f"{os.path.join(dirpath, d)}: a platform half sits at the top of its piece, where the template's exclude reaches it")
                     elif d not in PLATFORMS and LOOKALIKE.match(d):
