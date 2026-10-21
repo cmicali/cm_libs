@@ -10,7 +10,7 @@ The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in 
 
 | Group | Pieces |
 | --- | --- |
-| `core/` | **Common**: logging, diagnostics, paths, work lanes. **Graphics**: images, colors, and typography. |
+| `core/` | **Common**: logging, diagnostics, paths, file identity, the disk key, and work lanes. **Graphics**: images, colors, and typography. |
 | `files/` | **FileLoading**: local, iCloud, and network-share files, read even while they download. **RemoteFiles**, **HTTP**, **ShareLinks**, **SandboxAccess**, **DiskCache**. |
 | `audio/` | **AudioTypes**, **DSP**, **Analysis** (tempo and key), **Decode**, **Meter**, **FX**, **OutputDevices**, and **Player**: gapless, crossfading, bit-perfect playback. |
 | `media/` | **Tags**, **Metadata** (tags, art, and their cache), **Playlists** (CUE and M3U), **FolderScan**, **PlayQueue**. |
@@ -18,7 +18,7 @@ The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in 
 | `ui/` | **Controls**: mac buttons, drawn sliders and switches, image views, and a link label today, with the loading and equalizer indicators coming in Phase 3. **SettingsWindow**: a System Settings window with a sidebar, search, history, and form views. **Shortcuts**: remappable shortcuts and their recorder pane. SettingsWindow and Shortcuts are macOS only. So is Controls, until its indicators join it in Phase 3. |
 | `system/` | **NowPlaying**, **AppOpening**, **Updates** (Sparkle). |
 | `dev/` | **DebugChannel**, **iOSDriver**. |
-| `third_party/` | TagLib, dr_mp3, dr_flac, dr_wav, r8brain-free-src, PINCache, PINOperation, ogg, vorbis, and Sparkle, each a piece of its own. |
+| `third_party/` | TagLib, dr_mp3, dr_flac, dr_wav, r8brain-free-src, PINCache, PINOperation, libogg, and libvorbis, each a piece of its own. Sparkle joins them with Updates. |
 
 ## How an app uses it
 
