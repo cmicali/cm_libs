@@ -377,8 +377,8 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 - every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. The checker reads the words macOS only at the end of a map row: such a piece has no iOS target, no iOS target lists its template, directly or through another template, it has no `iOS/` directory, its template need not exclude one, and its files import AppKit with no platform guard.
 - the map names only known pieces and has no cycle, counting every piece's edge to `core/Common`
-- each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows
-- every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.
+- each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows. A vendored piece's template may also search `third_party/` itself, since apps spell its headers with the library's directory, as `<ogg/ogg.h>`. A vendored piece has no platform halves.
+- every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. The checker's `SETTLED` table is the one exception: it names the header an app's build must find, for a spelling two vendored pieces answer. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.
 - no two first-party headers share a basename, since an app's headermap would pick one
 - every header is compiled by a source or test of its piece. A header-only piece imports its headers from a plain probe file in its tests, which its iOS target compiles too.
 - `Mac/` and `iOS/` are the only platform directories, and only at the top of a piece, where the template's exclude reaches them. A shared file imports AppKit or UIKit only under a platform guard. A half never imports the other platform's framework.
@@ -499,7 +499,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 
 In this order, each its own move:
 
-1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split.
+1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split. Done 2026-10-21: nine libraries moved with their history (this repo's #14), and Vibe compiles them through their templates (Vibe #364). Vibe's objects differ only in two `__FILE__` paths and the build's commit. Each library's notice now sits here, and Vibe's notices keep a row for each.
 2. `core/Common` alone, since `core/Graphics` moved on the shell track. Done 2026-10-21: its 24 files and Vibe's script moved with their history (this repo's #13), their tests run here, and Vibe compiles them through DSP's template (Vibe #363). The signposts and the work tally compile under the app's `VIBE_SIGNPOSTS`, since no header here may read `DEBUG`. The tree had named load timing here. It is the waveform decode's, so it stays in Vibe until WaveformLoading moves.
 3. `audio/AudioTypes`.
 4. `files/FileLoading` and `files/DiskCache`.
@@ -596,6 +596,7 @@ The cuts add these small types. Each replaces a dependency on an app class:
 - **A checkout without the submodule compiles nothing from here and fails late.** Every consumer's `make project`, benchmark worktrees, and CI checkouts must update it.
 - **YAML anchors do not cross `include:` files.** A consumer's own flag anchors cannot reach a template's entries. Every flag lives in its template.
 - **The headermap hides a crossed boundary.** In any project holding two pieces, an import by basename resolves across them. Only this repo's headermap-off bundles make the compiler refuse.
+- **TagLib and libvorbis both answer `<vorbis/vorbisfile.h>`.** TagLib keeps its own under `taglib/ogg`. An app's header search paths follow the order of its templates, so an app that takes both lists `VibeLibsVorbis` before `VibeLibsTaglib`. An app's headermap would also let libvorbis's `vorbisfile.h` answer for TagLib's by basename. So the vorbis and ogg templates add only their C files to an app's project.
 - **`xcodegen dump` keeps a target's templates as fields, not expanded.** It rewrites their paths relative to the app. A tool that builds a new target from a dumped one must copy `templates` and `templateAttributes`, or it builds without the pieces. Vibe's `perf.py` copies both.
 - **Vibe's analyzer gate drops findings by path substring** (`scripts/build/analyze.sh`). It drops `/ThirdParty/` for Vibe's own vendored code. Since Vibe #352, it also drops `/third_party/`, where vendored code sits here. A vendored library anywhere else would fail the gate.
 - **A queue, a player, or a cache that compares items by content merges duplicates.** Two entries for one file are two entries. Shared work matches by source key, and a persisted entry by disk key.

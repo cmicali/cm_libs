@@ -161,6 +161,15 @@ CASES = [
     ("a macOS-only piece importing AppKit with no guard",
      lambda r: (mac_only(r), append(r, SOURCE, "\n#import <AppKit/AppKit.h>\n")),
      None),
+    ("a first-party template searching third_party/",
+     lambda r: replace(r, "vibe-libs.yml", '"$(VIBE_LIBS_ROOT)/audio/DSP"]', '"$(VIBE_LIBS_ROOT)/audio/DSP", "$(VIBE_LIBS_ROOT)/third_party"]'),
+     "searches third_party, outside audio/DSP"),
+    ("a vendored piece including another through third_party/",
+     lambda r: append(r, "third_party/dr_flac/dr_flac.c", '\n#include "dr_mp3/dr_mp3.h"\n'),
+     "which the map does not allow third_party/dr_flac"),
+    ("a spelling two vendored pieces answer, unsettled",
+     lambda r: write(r, "third_party/taglib/ogg/ogg/ogg.h", "#pragma once\n"),
+     "ogg/ogg.h is ambiguous"),
 ]
 
 

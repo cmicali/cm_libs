@@ -2,7 +2,7 @@
 
 Guidance for any coding agent working in this repository.
 
-vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first five pieces are here**: `core/Common`, `core/Graphics`, `audio/DSP`, `ui/Controls`, and `ui/SettingsWindow`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
+vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first fourteen pieces are here**: `core/Common`, `core/Graphics`, `audio/DSP`, `ui/Controls`, `ui/SettingsWindow`, and nine vendored libraries under `third_party/`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
 
 ## Building
 
@@ -22,7 +22,7 @@ CI runs all five on every pull request.
 
 - **Its users are Vibe and another app, not the public, for now.** Each adds this repo as a git submodule at `vibe-libs/`, includes the shared XcodeGen spec `vibe-libs.yml`, and lists the pieces it wants as templates. There is no `Package.swift` for the apps. The plan says when that changes.
 - **The other app is closed source. Never name it** in this repo: not in code, comments, docs, commits, issues, pull requests, setting names, or template attributes. Call it "another app" when you must refer to it. Name a per-app switch by what it does, never by who uses it.
-- **The license is Apache 2.0** (`LICENSE`). Each library under `third_party/` keeps its own.
+- **The license is Apache 2.0** (`LICENSE`). Each library under `third_party/` keeps its own. `THIRD-PARTY-NOTICES.md` lists each one and the license it is used under. A library that joins or leaves gets a row there.
 
 ## Pieces
 
@@ -36,13 +36,13 @@ CI runs all five on every pull request.
 - **Pieces meet through values and blocks**, never through another piece's model class. Optional work is injected, never imported.
 - **A piece keeps the caller's objects.** It never copies or compares them by content, so two entries for one file stay two entries. Shared work matches by source key, the path and window. A persisted entry matches by disk key, which also names the file's version.
 - **A move changes nothing but the path.** No API, language, or platform change rides on it. A portable C or C++ rewrite is separate work with its own measurements.
-- **Third-party code is a piece of its own** under `third_party/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code.
+- **Third-party code is a piece of its own** under `third_party/`, with its compiler flags in its template. It may carry fixes of our own, and its `AGENTS.md` lists them. Do not restyle other authors' code. A vendored piece needs no platform halves and no probe. Its template may also search `third_party/` itself, since apps spell its headers with the library's directory, as `<ogg/ogg.h>`. Its tests call into it once, so a missing file or a broken link fails here.
 - **Platform halves live in `Mac/` and `iOS/` subdirectories.** A template excludes the other platform's with `${excludedPlatform}`, which each app sets in `templateAttributes`. A file outside those subdirectories must build on both. A macOS-only piece, marked in the plan's map, has no `iOS/` half, and no iOS target may list its template. It may keep its files in a `Mac/` half, so the shared files it gains later move nothing.
 - **No prefix header.** A file imports what it uses. The log, realtime, and signpost macros are in `core/Common/VibeMacros.h`. An app's own prefix header may import it, but no piece may rely on that.
 
 ## Names
 
-- **One prefix, `Vibe`, for new code and moved code alike.** Objective-C and C each have one global namespace, so a generic name can collide with another library's at run time. `CMM` was the prefix while the repo was called cm_libs. It was retired before the pilot merged: `CMMMacros.h` became `VibeMacros.h`, `CMM_ROOT` became `VIBE_LIBS_ROOT`, and a piece's template is `VibeLibs<piece>`.
+- **One prefix, `Vibe`, for new code and moved code alike.** Objective-C and C each have one global namespace, so a generic name can collide with another library's at run time. `CMM` was the prefix while the repo was called cm_libs. It was retired before the pilot merged: `CMMMacros.h` became `VibeMacros.h`, `CMM_ROOT` became `VIBE_LIBS_ROOT`, and a piece's template is `VibeLibs<piece>`. A vendored piece keeps its library's directory name, so its template raises each word's first letter: `dr_flac` is `VibeLibsDrFlac`.
 - **Code arriving from Vibe keeps its names.** A move is `git mv` and nothing else, so history, blame, and the performance proof survive. `make check-pieces` lists the classes with no prefix, so a collision in a consuming app can be checked. A rename of those, if ever wanted, is one scripted pull request of its own.
 
 ## How work moves between the repos

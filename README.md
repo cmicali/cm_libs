@@ -4,7 +4,7 @@ A toolbox of small libraries for macOS and iOS apps. Each library is a piece an 
 
 The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in Vibe that another app could use is a candidate. It moves when a second app needs it.
 
-**The first five pieces are here**: `core/Common`, with Vibe's macros, path and file helpers, disk key, and work lanes, `core/Graphics`, with Vibe's image, color, and font helpers, `audio/DSP`, with Vibe's varispeed, `ui/Controls`, with Vibe's drawn mac controls, and `ui/SettingsWindow`, with Vibe's settings window. The plan for the rest is [docs/plan.md](docs/plan.md).
+**The first fourteen pieces are here**: `core/Common`, with Vibe's macros, path and file helpers, disk key, and work lanes, `core/Graphics`, with Vibe's image, color, and font helpers, `audio/DSP`, with Vibe's varispeed, `ui/Controls`, with Vibe's drawn mac controls, `ui/SettingsWindow`, with Vibe's settings window, and the nine libraries Vibe vendored, each a piece under `third_party/`. The plan for the rest is [docs/plan.md](docs/plan.md).
 
 ## The pieces
 
@@ -26,4 +26,4 @@ An app adds this repo as a git submodule at `vibe-libs/`. Its XcodeGen `project.
 
 ## License
 
-Apache 2.0, in `LICENSE`. The libraries under `third_party/` keep their own licenses.
+Apache 2.0, in `LICENSE`. The libraries under `third_party/` keep their own licenses. [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) lists each one and the license it is used under.

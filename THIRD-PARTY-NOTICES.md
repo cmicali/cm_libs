@@ -1,0 +1,147 @@
+# Third-party notices
+
+vibe-libs is licensed under Apache 2.0 (see `LICENSE`). Each library under `third_party/` keeps its own license, beside its sources. An app that compiles a piece in carries that piece's notice.
+
+## Summary
+
+| Component | Location | Used under |
+| --- | --- | --- |
+| TagLib | `third_party/taglib/` | Mozilla Public License 1.1 (see the election below) |
+| UTF8-CPP | `third_party/taglib/toolkit/utf8-cpp.*` | Boost-style permissive |
+| PINCache | `third_party/PINCache/` | Apache License 2.0; modified |
+| PINOperation | `third_party/PINOperation/` | Apache License 2.0; modified |
+| r8brain-free-src | `third_party/r8brain/` | MIT |
+| PFFFT (double) | `third_party/r8brain/fft/` | FFTPACK (BSD-style) |
+| dr_mp3 | `third_party/dr_mp3/` | MIT No Attribution (or public domain, at the recipient's choice); modified |
+| dr_flac | `third_party/dr_flac/` | MIT No Attribution (or public domain, at the recipient's choice); modified |
+| dr_wav | `third_party/dr_wav/` | MIT No Attribution (or public domain, at the recipient's choice); modified |
+| libogg | `third_party/ogg/` | BSD 3-Clause |
+| libvorbis | `third_party/vorbis/` | BSD 3-Clause |
+
+## TagLib
+
+TagLib is **dual-licensed**: each source file offers the GNU Lesser General
+Public License 2.1 *or* the Mozilla Public License 1.1, at the recipient's
+choice. 172 of the 176 vendored source files carry both notices; the remaining
+four are `taglib_config.h`, `id3v2.h` (trivial configuration and umbrella
+headers with no license block of their own) and the two UTF8-CPP headers,
+which are separately licensed and covered below.
+
+**vibe-libs elects the Mozilla Public License 1.1.**
+
+Copyright (C) 2002-2008 Scott Wheeler and the TagLib contributors.
+License text: <https://www.mozilla.org/MPL/1.1/>
+
+MPL 1.1 §3.6 requires the license text to accompany the distribution. The full
+text is vendored at `third_party/taglib/LICENSE.MPL`.
+
+## UTF8-CPP
+
+`third_party/taglib/toolkit/utf8-cpp.checked.h` and `utf8-cpp.core.h` are
+not TagLib's own code and are not covered by TagLib's dual license. They carry
+a Boost-Software-License-style permissive grant requiring only that the
+copyright notice and license text be retained, which vendoring the files
+unmodified satisfies.
+
+Copyright 2006 Nemanja Trifunovic.
+
+## PINCache and PINOperation
+
+Copyright (c) 2015 Pinterest. All rights reserved.
+Copyright (c) 2013 Tumblr, Inc.
+
+Licensed under the Apache License, Version 2.0. The source copies include the full text at `third_party/PINCache/LICENSE.txt` and
+`third_party/PINOperation/LICENSE.txt`. vibe-libs modifies `PINCache/PINDiskCache.m` and
+`PINOperation/PINOperationQueue.m`. Each change is marked `Vibe:` in its file
+(each piece's `AGENTS.md`).
+
+## r8brain-free-src
+
+Sample rate converter designed by Aleksey Vaneev of Voxengo.
+
+Copyright (c) 2013-2026 Aleksey Vaneev. Licensed under the MIT License; the
+full text is vendored at `third_party/r8brain/LICENSE.txt` (upstream's `LICENSE`,
+renamed so the build leaves it out of the bundles). The author asks for the
+credit line above in the documentation of software that uses it.
+
+## PFFFT (double precision)
+
+`third_party/r8brain/fft/pffft_double.*`, `pffft_priv_impl.h` and
+`simd/` are the FFT r8brain-free-src runs on here (`R8B_PFFFT_DOUBLE`).
+
+Copyright (c) 2013 Julien Pommier. Copyright (c) 2020 Hayati Ayguen.
+Copyright (c) 2020 Dario Mambro. Based on FFTPACKv4 by Paul Swarztrauber,
+NCAR, released under the FFTPACKv5 license: redistribution in source and
+binary forms is permitted provided the copyright notices, the conditions and
+the disclaimer are retained (source) or reproduced in the documentation
+(binary), and the names of NCAR, UCAR and their contributors are not used to
+endorse the product. The full notice is at the head of
+`third_party/r8brain/fft/pffft_double.c`.
+
+## dr_mp3
+
+MPEG audio decoder by David Reid, based on minimp3 by Lion (lieff). Copyright
+2023 David Reid. Offered as public domain (the Unlicense) or under the MIT
+No Attribution license, at the recipient's choice; vibe-libs uses it under MIT
+No Attribution. Both texts are at the end of
+`third_party/dr_mp3/dr_mp3.h`. minimp3, the decoder it carries, is CC0.
+The vendored copy carries fixes of Vibe's own (`third_party/dr_mp3/AGENTS.md`),
+which that license permits without condition.
+
+## dr_flac
+
+FLAC audio decoder by David Reid. Copyright 2023 David Reid. Offered as
+public domain (the Unlicense) or under the MIT No Attribution license, at the
+recipient's choice; vibe-libs uses it under MIT No Attribution. Both texts are at
+the end of `third_party/dr_flac/dr_flac.h`. The vendored copy carries
+fixes of Vibe's own (`third_party/dr_flac/AGENTS.md`), which that license permits
+without condition.
+
+## dr_wav
+
+WAV and AIFF audio decoder by David Reid. Copyright 2023 David Reid. Offered
+as public domain (the Unlicense) or under the MIT No Attribution license, at
+the recipient's choice; vibe-libs uses it under MIT No Attribution. Both texts are
+at the end of `third_party/dr_wav/dr_wav.h`. The vendored copy carries
+fixes and additions of Vibe's own (`third_party/dr_wav/AGENTS.md`), which that
+license permits without condition.
+
+## libogg and libvorbis
+
+The Ogg page reader and the Vorbis decoder from the Xiph.Org Foundation.
+Copyright (c) 2002 (libogg) and 2002-2020 (libvorbis), Xiph.org Foundation.
+Licensed under the BSD 3-Clause license. The full texts are vendored at
+`third_party/ogg/LICENSE.txt` and `third_party/vorbis/LICENSE.txt`
+(upstream's `COPYING`, renamed so the build leaves them out of the bundles).
+Both are unmodified. The license, as libvorbis states it:
+
+```
+Copyright (c) 2002-2020 Xiph.org Foundation
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+- Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+- Neither the name of the Xiph.org Foundation nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
