@@ -296,9 +296,9 @@ A third app, a mac app that plays no audio, is the second consumer of Vibe's she
 | ui/SettingsWindow | `SettingsSidebarController` | 275 | two strings |
 | ui/SettingsWindow | `SettingsWindowController` | 773 | the list of nine panes, 34 strings, and the Themes and Audio panes by name |
 | core/Graphics, Mac/ | `Fonts` | 194 | `AppTheme`, for the five font slots and the theme push |
-| ui/Shortcuts | `ShortcutRules.h`, `SettingsShortcutsViewController` | 716 | nothing since cut 30 (Vibe #361). The keyboard-layout half it needs is still in Vibe's `MainMenuBuilder`. |
+| ui/Shortcuts | `ShortcutRules.h`, `SettingsShortcutsViewController` | 700, at `4fc7b2b6` | nothing since cut 30 (Vibe #361). The keyboard-layout half it needs is still in Vibe's `MainMenuBuilder`. |
 
-**What stays in Vibe:** `AppSettings` and `SettingsRules.h`, which are policy; every pane's content; `ArtworkImageView`; `PitchFaderView` and `PitchControlPanel` until seam 21; `MainMenuBuilder` and Vibe's command table; the About window; the iOS settings screens; and the theme record, its store, and the Themes pane.
+**What stays in Vibe:** `AppSettings` and `SettingsRules.h`, which are policy; every pane's content; `ArtworkImageView`; `PitchFaderView` and `PitchControlPanel` until seam 21; `MainMenuBuilder` without its keyboard-layout half (the shell track's step 6 moves that half); Vibe's command table; the About window; the iOS settings screens; and the theme record, its store, and the Themes pane.
 
 **The theme engine does not move.** `AppTheme` and its categories are about 3,500 lines, and the Themes pane 2,600 more. Its slots are Vibe's product: the waveform, the playlist, the transport buttons, and the window chrome. A theme piece needs a schema-driven record, which is a redesign, not a move, and no second app wants user themes. What is generic in it is small: the dark and light color-pair row, its seeding from the displayed fallback, and copy and paste of a color as hex. Those move into the form views, bound to a read block and a write block instead of a theme base (cut 29). A theme piece is reconsidered only when an app asks for user themes.
 
@@ -312,6 +312,7 @@ A third app, a mac app that plays no audio, is the second consumer of Vibe's she
 - **27. Fonts takes its slots from the app.** It keeps the face-and-size table keyed by an integer slot and the monospaced-digits rule. The slot enum, the five Vibe slots, and `applyThemeFonts:` move to Vibe, which pushes faces in.
 - **28. The shortcut encoding leaves the command table.** `ShortcutRules.h` splits: the key-code-or-character encoding, the modifier mask, and the matching rules move, and Vibe's commands and their defaults stay. The recorder pane takes rows of identifier, label, and default from the app.
 - **29. The color-pair row moves into the form views**, bound by blocks, as above.
+- **30. The Shortcuts pane takes its rows, strings, and store blocks** (Vibe #361).
 
 **Done when** this returns nothing in Vibe:
 
@@ -491,7 +492,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 3. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone. Done 2026-10-21: its 21 files moved with their history (this repo's #6), their tests run here, and Vibe compiles them through the template (Vibe #350).
 4. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window. Done 2026-10-21: its 12 files moved with their history (this repo's #9), their tests run here, and Vibe compiles them through the template (Vibe #354).
 5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests. Done 2026-10-21: its 13 files moved with their history (this repo's #11), and Vibe compiles them through the template (Vibe #356). Two of them came from Vibe's `Util/`, which the done-when grep does not search: `WindowAnimation.h` joined `ui/Controls`, since Vibe's player window reads it too, and `NSString+FormLabel` joined `core/Common`, since Vibe's iOS settings use it too. Vibe had no tests of these files, so their tests are new here.
-6. `ui/Shortcuts` after cut 28. The keyboard-layout half of Vibe's `MainMenuBuilder` moves with it, with its key names pushed in: `characterForKeyCode:`, `labelForKeyCode:`, `displayStringForShortcut:`, and the special-key names.
+6. `ui/Shortcuts` after cuts 28 and 30. The keyboard-layout half of Vibe's `MainMenuBuilder` moves with it, with its key names pushed in: `characterForKeyCode:`, `labelForKeyCode:`, `displayStringForShortcut:`, and the special-key names.
 
 **Done when** the minimal consumer opens a settings window of two panes with a color-pair row, a switch, and a slider, records a shortcut, and draws every control, with no string, setting, or type of Vibe's. Vibe's settings window, pitch panel, and About window are unchanged on screen. The drawn-control, symbol-button, and shortcut-rule tests pass from their new homes.
 
@@ -603,7 +604,7 @@ The cuts add these small types. Each replaces a dependency on an app class:
 
 ## Costs
 
-- **About thirty pieces in the end, about twenty for the first path.** Each is a maintenance choice: a template, a doc, isolated builds, and a row in the map. A piece needs a consumer that gains from taking it alone. The stacks keep a consumer's list short.
+- **43 pieces in the tree, 33 first-party and 10 vendored, and about 31 on the first path.** Each is a maintenance choice: a template, a doc, isolated builds, and a row in the map. A piece needs a consumer that gains from taking it alone. The stacks keep a consumer's list short.
 - **One copy of each thing that could drift.** Each vendored library's flags live in its template. Each piece's sources are listed once, in its template. The map is the plan's table. Each template's `templates:` list repeats part of it, and the checker fails when a template lists more than the map allows.
 - **Most engine changes also change app code.** Since 2026-04-01, 232 commits changed Vibe's engine, and 167 of them (72%) also changed Vibe's app code. After a move, each is a commit here, then a submodule bump. One editing session covers both through the submodule.
 - **Many changes span pieces.** 90 of those commits (39%) changed more than one of the old products. That is why this is one repo and not one per piece.
