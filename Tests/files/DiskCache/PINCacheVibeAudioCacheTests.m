@@ -24,8 +24,15 @@
     [super tearDown];
 }
 
+// TRAP: PINDiskCache sets each limit on its own queue, so a read right after
+// the store is made can still see the default.
 - (void)testAStoreUnderARootHasTheSharedLimits {
     PINCache *cache = [PINCache audioCacheWithName:@"limits" rootPath:_root];
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:VIBE_TEST_HANG_TIMEOUT];
+    while ((cache.diskCache.byteLimit != 1024u * 1024u * 1024u || cache.diskCache.ageLimit != 180.0 * 24 * 60 * 60)
+            && deadline.timeIntervalSinceNow > 0) {
+        [NSThread sleepForTimeInterval:0.01];
+    }
     XCTAssertEqual(cache.diskCache.byteLimit, 1024u * 1024u * 1024u);
     XCTAssertEqual(cache.diskCache.ageLimit, 180.0 * 24 * 60 * 60);
     XCTAssertTrue([cache.diskCache.cacheURL.path hasPrefix:_root], @"%@", cache.diskCache.cacheURL.path);

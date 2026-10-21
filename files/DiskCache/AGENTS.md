@@ -4,7 +4,7 @@ A bounded disk cache over PINCache. It depends on `third_party/PINCache` and on 
 
 ## The store
 
-**`audioCacheWithName:rootPath:` makes a store with the shared byte and age limits.** Each store may hold 1 GiB on disk. An entry untouched for 180 days ages out, since a changed file identity can orphan entries and nothing else would remove them. A nil root puts the store under the user's caches, and a root of the caller's puts it there instead, as a test does.
+**`audioCacheWithName:rootPath:` makes a store with the shared byte and age limits.** Each store may hold 1 GiB on disk. An entry untouched for 180 days ages out, since a changed file identity can orphan entries and nothing else would remove them. A nil root puts the store under the user's caches, and a root of the caller's puts it there instead, as a test does. **TRAP: PINDiskCache applies each limit on its own queue**, so a read right after the store is made can still see PINCache's defaults.
 
 **A store's user reads and writes `diskCache` directly, never the memory cache.** On macOS `PINMemoryCache` never evicts. Its cost limit needs a cost for each entry, a disk hit fills it again at cost 0, and its memory-pressure hooks are iOS only. So it would pin every entry ever loaded for the app's life.
 
