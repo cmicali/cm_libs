@@ -28,8 +28,9 @@
 
 - (void)testTheBuildTimeIsTheExecutablesModificationTime {
     NSString *built = NSBundle.mainBundle.vibeBuildTimeString;
+    // ZZZZZ prints Z for a zero offset, as on a runner in UTC.
     NSRegularExpression *shape = [NSRegularExpression
-            regularExpressionWithPattern:@"^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} [+-]\\d{2}:\\d{2}$"
+            regularExpressionWithPattern:@"^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} (Z|[+-]\\d{2}:\\d{2})$"
                                  options:0 error:NULL];
     XCTAssertEqual([shape numberOfMatchesInString:built options:0 range:NSMakeRange(0, built.length)], 1u,
                    @"%@", built);
