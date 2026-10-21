@@ -328,7 +328,7 @@ static void VibeResetScenarioLocked(void) {
                 // transfer reads as motionless. Only the first acquire for a
                 // path stamps it, so an overlapping one cannot make reported
                 // progress regress.
-                if (!sTransferStartedAt[path]) {
+                if (sTransferStartedAt[path] == nil) {
                     sTransferStartedAt[path] = @(CFAbsoluteTimeGetCurrent());
                 }
                 NSString *whose = role ?: @"unlabeled";
@@ -431,14 +431,14 @@ static void VibeResetScenarioLocked(void) {
         os_unfair_lock_lock(&sLock);
         BOOL mine = VibePathIsCloud(path, sPercent);
         NSNumber *startedAt = mine ? sTransferStartedAt[path] : nil;
-        NSTimeInterval total = startedAt
+        NSTimeInterval total = startedAt != nil
                 ? VibeTransferSecondsForPath(path, sBaseSeconds, sUniform) : 0;
         VibeFakeCloudProgressMode mode = sProgressMode;
         os_unfair_lock_unlock(&sLock);
         if (!mine) {
             return -1;
         }
-        if (!startedAt) {
+        if (startedAt == nil) {
             return 0;   // queued for the slot, or between transfers
         }
         NSTimeInterval elapsed = CFAbsoluteTimeGetCurrent() - startedAt.doubleValue;

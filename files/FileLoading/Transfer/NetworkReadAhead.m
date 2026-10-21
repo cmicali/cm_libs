@@ -72,7 +72,7 @@ BOOL VibeNetworkReadAheadApplies(NSURL *url, NSString **mount) {
     NSNumber *(^rule)(NSURL *) = sDebugMountRule;
     os_unfair_lock_unlock(&sDebugLock);
     NSNumber *forced = rule ? rule(url) : nil;
-    if (forced) {
+    if (forced != nil) {
         *mount = @"a mount the debug rule chose";
         return forced.boolValue;
     }
