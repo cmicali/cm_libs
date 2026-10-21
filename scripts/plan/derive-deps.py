@@ -60,6 +60,7 @@ PIECES = [
     ("files/FileLoading", "Vibe/Debug/Seams/AudioLoadingConfiguration+"),
     ("files/FileLoading", "Vibe/Debug/Seams/CloudFileMaterializer+"),
     ("files/FileLoading", "Vibe/Debug/Seams/DownloadProgressMonitor+"),
+    ("files/FileLoading", "Vibe/Debug/Seams/NetworkReadAhead+"),
     ("files/FileLoading", "Vibe/Debug/Seams/PlaceholderFiles+"),
     ("files/FileLoading", "Vibe/Debug/Simulators/VibeFakeCloud"),
     ("files/ShareLinks", "Vibe/Debug/Simulators/VibeFakeHTTP"),

@@ -55,6 +55,33 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/audio/DSP"]
 
+  # Claim/ decides which open runs, and Transfer/ moves the bytes. Each
+  # directory is searched, since the files name each other's headers alone.
+  # The seams and the fake cloud compile in every configuration. Each wraps
+  # its body in #if DEBUG, so a release build ships none of it. It lists
+  # AudioTypes for the extensions whose tags read by range.
+  VibeLibsFileLoading:
+    templates: [VibeLibsCommon, VibeLibsAudioTypes]
+    sources:
+      - path: files/FileLoading
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(VIBE_LIBS_ROOT)/files/FileLoading"
+          - "$(VIBE_LIBS_ROOT)/files/FileLoading/Claim"
+          - "$(VIBE_LIBS_ROOT)/files/FileLoading/Transfer"
+
+  VibeLibsDiskCache:
+    templates: [VibeLibsCommon, VibeLibsPINCache]
+    sources:
+      - path: files/DiskCache
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/files/DiskCache"]
+
   # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
   # so the shared files it gains later move nothing.
   VibeLibsControls:
