@@ -61,10 +61,11 @@ vibe-libs/
 ├── scripts/plan/derive-deps.py   re-derives the dependency map from Vibe's imports
 │
 ├── core/
-│   ├── Common ●         log, realtime-check and signpost macros; stall sampler, work tally,
+│   ├── Common ●○        log, realtime-check and signpost macros; stall sampler, work tally,
 │   │                    load timing; path spelling and comparison, file identity and emptiness;
 │   │                    the disk key from a file's attributes; fixed-slot work lanes; a weak
-│   │                    proxy; a display-paced update timer; build provenance and its script
+│   │                    proxy; a display-paced update timer; build provenance and its script;
+│   │                    the form label's colon rule, on the shell track
 │   └── Graphics ●○      image and color aliases, bounded image decode, hex, blend and OKLCH
 │                        colors, dominant color, blur, dark-mode helpers; Mac/ the typography
 │                        slots (Fonts), on the shell track
@@ -119,7 +120,8 @@ vibe-libs/
 │   │                    label; later the pitch fader
 │   ├── SettingsWindow ○ macOS only: the System Settings shape, a sidebar with search, back
 │   │                    and forward history, the pane base, and the form views: cards, rows,
-│   │                    captions, lists, color-pair wells, sliders with readouts
+│   │                    captions, lists, color-pair wells, sliders with readouts; the resize
+│   │                    timing an app's windows share; the walker's debug seam
 │   └── Shortcuts ○      macOS only: a shortcut as a key code or character with modifiers,
 │                        its matching, and the recorder pane over rows the app supplies
 │
@@ -138,7 +140,8 @@ vibe-libs/
 ├── third_party/         taglib/ ●  dr_mp3/ ●  dr_flac/ ●  dr_wav/ ●  r8brain/ ●  PINCache/ ●  PINOperation/ ●
 │                        ogg/ ●  vorbis/ ●  Sparkle/
 │
-└── Tests/               one directory per piece, mirroring the tree
+└── Tests/               one directory per piece, mirroring the tree, and Support/, the
+                         tests' shared helpers
 ```
 
 ### The dependency map

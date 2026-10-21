@@ -3,8 +3,10 @@
 //
 //  Plays a ramp through the varispeed at zero pitch and checks it comes back
 //  exactly, then renders off zero. Round-trips a color through its hex form.
-//  Draws each mac control into a bitmap with no window. Exits 0 when all
-//  four hold.
+//  Draws each mac control into a bitmap with no window. Builds a settings
+//  window of two panes without showing it, finds a color-pair row, a switch,
+//  and a slider in their panes, and picks the second pane in the sidebar.
+//  Exits 0 when all five hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -16,6 +18,31 @@
 #import "SymbolButton.h"
 #import "VibeDetentSlider.h"
 #import "VibeLinkLabel.h"
+#import "SettingsPanesWindowController.h"
+#import "SettingsPaneViewController.h"
+#import "SettingsSidebarController.h"
+
+// A pane whose sections a block builds, so main needs no pane classes.
+@interface ConsumerPane : SettingsPaneViewController
+@property (nonatomic, copy) NSArray<NSView *> *(^build)(ConsumerPane *pane);
+@end
+
+@implementation ConsumerPane
+- (void)loadView {
+    [self loadPaneWithSections:self.build(self)];
+}
+- (void)changed:(id)sender {
+}
+@end
+
+// How many views of a class sit under a view, the view included.
+static NSUInteger Count(NSView *view, Class kind) {
+    NSUInteger count = [view isKindOfClass:kind] ? 1 : 0;
+    for (NSView *child in view.subviews) {
+        count += Count(child, kind);
+    }
+    return count;
+}
 
 // Whether a view, drawn into a bitmap with no window, shows any pixel.
 static BOOL Draws(NSView *view) {
@@ -110,6 +137,51 @@ int main(void) {
             return 1;
         }
     }
+    NSMutableArray<NSColor *> *pair = [@[NSColor.blackColor, NSColor.whiteColor] mutableCopy];
+    ConsumerPane *look = [[ConsumerPane alloc] initWithEffectsSink:^(NSUInteger effects) {}];
+    look.build = ^NSArray<NSView *> *(ConsumerPane *pane) {
+        SettingsColorRow *colors = [SettingsColorRow rowWithCaptions:@[@"Dark", @"Light"]
+                supportsAlpha:NO
+                         read:^NSColor *(NSUInteger index) { return pair[index]; }
+                        write:^(NSUInteger index, NSColor *color) { pair[index] = color; }
+                      changed:^(BOOL continuous) {}];
+        return @[[SettingsSectionView sectionWithHeader:@"Look" rows:@[
+            [SettingsRowView rowWithTitle:@"Accent" control:colors],
+            [SettingsRowView rowWithTitle:@"Compact" control:[pane switchWithAction:@selector(changed:)]],
+        ]]];
+    };
+    ConsumerPane *sound = [[ConsumerPane alloc] initWithEffectsSink:^(NSUInteger effects) {}];
+    sound.build = ^NSArray<NSView *> *(ConsumerPane *pane) {
+        NSSlider *volume = nil;
+        NSTextField *readout = nil;
+        NSStackView *cluster = [pane detentSliderClusterWithDetent:0.5 min:0 max:1 action:@selector(changed:) width:160
+                                                            slider:&volume valueLabel:&readout];
+        return @[[SettingsSectionView sectionWithRows:@[[SettingsRowView rowWithTitle:@"Volume" control:cluster]]]];
+    };
+    SettingsPanesWindowController *settings = [[SettingsPanesWindowController alloc]
+            initWithPaneGroups:@[@[
+                [SettingsPanesWindowController paneItemWithViewController:look identifier:@"look"
+                                                                    label:@"Look" symbolName:@"paintbrush"],
+                [SettingsPanesWindowController paneItemWithViewController:sound identifier:@"sound"
+                                                                    label:@"Sound" symbolName:@"speaker.wave.2"],
+            ]]
+                     backTitle:@"Back" forwardTitle:@"Forward" undoTitle:@"Undo" redoTitle:@"Redo"
+             searchPlaceholder:@"Search" noResultsText:@"No Results"];
+    if (Count(look.view, SettingsColorRow.class) != 1 || Count(look.view, VibeSwitch.class) != 1
+            || Count(look.view, NSSlider.class) != 0 || Count(sound.view, NSSlider.class) != 1) {
+        fprintf(stderr, "consumer: the panes do not hold the color pair, the switch, and the slider\n");
+        return 1;
+    }
+    NSSplitViewController *split = (NSSplitViewController *)settings.window.contentViewController;
+    SettingsSidebarController *sidebar =
+            (SettingsSidebarController *)split.splitViewItems.firstObject.viewController;
+    [sidebar.tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:1] byExtendingSelection:NO];
+    if (![settings.selectedTabItem.identifier isEqual:@"sound"] || ![settings.window.title isEqual:@"Sound"]
+            || settings.window.isVisible) {
+        fprintf(stderr, "consumer: the sidebar did not select the second pane\n");
+        return 1;
+    }
+    [settings.window close];
     printf("consumer OK\n");
     return 0;
 }
