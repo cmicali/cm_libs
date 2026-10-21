@@ -2,11 +2,13 @@
 //  main.m
 //
 //  Plays a ramp through the varispeed at zero pitch and checks it comes back
-//  exactly, then renders off zero. Exits 0 when both hold.
+//  exactly, then renders off zero. Round-trips a color through its hex form.
+//  Exits 0 when all three hold.
 //
 
 #import <Foundation/Foundation.h>
 #import "AudioVarispeed.h"
+#import "PlatformColor.h"
 
 enum { kFrames = 512 };
 
@@ -58,6 +60,11 @@ int main(void) {
     VibeVarispeedFree(stage);
     if (!engaged) {
         fprintf(stderr, "consumer: the converter never joined\n");
+        return 1;
+    }
+    NSString *hex = VibeHexStringFromColor(VibeColorFromHexString(@"#12345678"));
+    if (![hex isEqualToString:@"#12345678"]) {
+        fprintf(stderr, "consumer: the color came back as %s\n", hex.UTF8String);
         return 1;
     }
     printf("consumer OK\n");

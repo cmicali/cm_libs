@@ -4,7 +4,7 @@ A toolbox of small libraries for macOS and iOS apps. Each library is a piece an 
 
 The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in Vibe that another app could use is a candidate. It moves when a second app needs it.
 
-**The first two pieces are here**: `core/Common`, with the realtime-effects brackets, and `audio/DSP`, with Vibe's varispeed. The plan for the rest is [docs/plan.md](docs/plan.md).
+**The first three pieces are here**: `core/Common`, with the realtime-effects brackets, `core/Graphics`, with Vibe's image, color, and font helpers, and `audio/DSP`, with Vibe's varispeed. The plan for the rest is [docs/plan.md](docs/plan.md).
 
 ## The pieces
 

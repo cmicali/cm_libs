@@ -56,6 +56,28 @@ targets:
     sources:
       - path: Tests/core/Common/CommonProbe.m
 
+  # core/Graphics, tested on macOS. Its tests are the Mac half's.
+  GraphicsTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsGraphics]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/core/Graphics
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # core/Graphics built for iOS: its shared files and its iOS half.
+  Graphics-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsGraphics]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # audio/DSP, tested on macOS. The tests' hang bound matches Vibe's.
   DSPTests:
     type: bundle.unit-test
@@ -85,7 +107,9 @@ schemes:
       targets:
         CommonTests: [test]
         Common-iOS: all
+        GraphicsTests: [test]
+        Graphics-iOS: all
         DSPTests: [test]
         DSP-iOS: all
     test:
-      targets: [CommonTests, DSPTests]
+      targets: [CommonTests, GraphicsTests, DSPTests]
