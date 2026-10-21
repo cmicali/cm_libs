@@ -1,6 +1,6 @@
 # vibe-libs: the plan
 
-**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, in review: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape. Wave 1 merged on 2026-10-21: `core/Graphics` moved (#6, Vibe #350), and seam 13 landed (Vibe #351).** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -82,11 +82,11 @@ vibe-libs/
 │
 ├── audio/
 │   ├── AudioTypes ●     the words every audio piece shares: file format identifiers, the
-│   │                    extensions the decoders open, the CUE window math, the musical key
+│   │                    extensions the decoders open, the CUE window math, the musical key,
+│   │                    and the playable-item protocol
 │   ├── DSP ●            varispeed, resampler, fades, FX math, FFT band math, analysis framing
 │   ├── Analysis ●       tempo and musical key from PCM
-│   ├── Decode ●         open a file or a frame window of it, and read PCM; the playable-item
-│   │                    protocol
+│   ├── Decode ●         open a file or a frame window of it, and read PCM
 │   ├── Meter ●          live band levels from inside a render, only while someone looks
 │   ├── FX ●             the DJ chain over Apple's audio units
 │   ├── OutputDevices ●  Mac/ device discovery, rates, hog mode, format rules, event log;
@@ -213,7 +213,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | the shortcut row: identifier, label, default | ui/Shortcuts | the app | none |
 | the typography slot table | core/Graphics | ui/Controls, ui/SettingsWindow, the app | none: both already depend on Graphics |
 
-**PlayQueue stays free of all of them.** Its entries are opaque objects, never the playable-item protocol. Declaring that protocol would pull Decode, FileLoading, and the decoders into a play-order list.
+**PlayQueue stays free of all of them.** Its entries are opaque objects, never the playable-item protocol. The queue needs only each entry's identity, so declaring that protocol would add an edge to AudioTypes for nothing.
 
 **Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
 
@@ -460,7 +460,7 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
   - **`replacementAtURL:`**, which mints the row that replaces another when a file is converted. The queue stops minting rows. Replacing one row takes the replacement object, already made by the app, which must be fresh, never one already in the queue. Replacing every row of a file takes a block that maps each outgoing entry to its replacement, since each row may be a different CUE window. Vibe makes each replacement with `replacementAtURL:`. The queue keeps what it owns: the indexes, both shuffle orders, and one observer event per replaced row.
 
   So the queue imports no protocol and no app API, and depends on nothing.
-- **22. Metadata installs results through a holder protocol of its own.** Today the loader reads an item's installed metadata, installs a result only if none is installed, and delivers only while that result is still installed. It does this through `AudioTrack (Internal)`'s `installMetadataIfUnresolved:` and `deliverIfMetadataStillInstalled:usingBlock:`. Metadata declares those three operations as its own protocol, and Vibe's row adopts it with the methods it has. The check and the install stay atomic in the object that holds the result, so a replaced item never shows a stale result. None of it goes into Decode's playable-item protocol, which stays free of metadata.
+- **22. Metadata installs results through a holder protocol of its own.** Today the loader reads an item's installed metadata, installs a result only if none is installed, and delivers only while that result is still installed. It does this through `AudioTrack (Internal)`'s `installMetadataIfUnresolved:` and `deliverIfMetadataStillInstalled:usingBlock:`. Metadata declares those three operations as its own protocol, and Vibe's row adopts it with the methods it has. The check and the install stay atomic in the object that holds the result, so a replaced item never shows a stale result. None of it goes into the playable-item protocol, which stays free of metadata.
 
 - **18. Playlists returns records.** Today the CUE and M3U readers return `AudioTrack` rows. They return plain records, and Vibe makes its rows from them.
 - **23. FolderScan reports each walked file to a handler.** Today the walk notes cover-art candidates itself, through Metadata's `FolderArtRules.h`. Metadata's folder art installs the handler instead, as FolderWalk's other launch-installed handlers already work.
@@ -495,7 +495,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 In this order, each its own move:
 
 1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split.
-2. `core/Common` and `core/Graphics`.
+2. `core/Common` alone, since `core/Graphics` moved on the shell track.
 3. `audio/AudioTypes`.
 4. `files/FileLoading` and `files/DiskCache`.
 5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
@@ -592,7 +592,7 @@ The cuts add these small types. Each replaces a dependency on an app class:
 - **YAML anchors do not cross `include:` files.** A consumer's own flag anchors cannot reach a template's entries. Every flag lives in its template.
 - **The headermap hides a crossed boundary.** In any project holding two pieces, an import by basename resolves across them. Only this repo's headermap-off bundles make the compiler refuse.
 - **`xcodegen dump` keeps a target's templates as fields, not expanded.** It rewrites their paths relative to the app. A tool that builds a new target from a dumped one must copy `templates` and `templateAttributes`, or it builds without the pieces. Vibe's `perf.py` copies both.
-- **Vibe's analyzer gate drops findings by the substring `/ThirdParty/`** (`scripts/build/analyze.sh`). Vendored code here sits under `third_party/`, so the gate must also drop `/third_party/` before Phase 3 lands, or it fails on TagLib's findings.
+- **Vibe's analyzer gate drops findings by path substring** (`scripts/build/analyze.sh`). It drops `/ThirdParty/` for Vibe's own vendored code. Since Vibe #352, it also drops `/third_party/`, where vendored code sits here. A vendored library anywhere else would fail the gate.
 - **A queue, a player, or a cache that compares items by content merges duplicates.** Two entries for one file are two entries. Shared work matches by source key, and a persisted entry by disk key.
 
 ## Costs
