@@ -102,6 +102,7 @@ targets:
       excludedPlatform: Mac
 
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
+  # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
     type: bundle.unit-test
     platform: macOS
@@ -114,6 +115,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
 
 schemes:
   vibe-libs:
