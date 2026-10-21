@@ -61,10 +61,11 @@ vibe-libs/
 ├── scripts/plan/derive-deps.py   re-derives the dependency map from Vibe's imports
 │
 ├── core/
-│   ├── Common ●         log, realtime-check and signpost macros; stall sampler, work tally,
+│   ├── Common ●○        log, realtime-check and signpost macros; stall sampler, work tally,
 │   │                    load timing; path spelling and comparison, file identity and emptiness;
 │   │                    the disk key from a file's attributes; fixed-slot work lanes; a weak
-│   │                    proxy; a display-paced update timer; build provenance and its script
+│   │                    proxy; a display-paced update timer; build provenance and its script;
+│   │                    the form label's colon rule, on the shell track
 │   └── Graphics ●○      image and color aliases, bounded image decode, hex, blend and OKLCH
 │                        colors, dominant color, blur, dark-mode helpers; Mac/ the typography
 │                        slots (Fonts), on the shell track
@@ -115,11 +116,13 @@ vibe-libs/
 │
 ├── ui/
 │   ├── Controls ●○      loading bar and pill, equalizer bars; Mac/ the symbol button, the drawn
-│   │                    slider and switch, the detent slider, the image views, and the link
-│   │                    label; later the pitch fader
+│   │                    slider and switch, the detent slider, the image views, the link
+│   │                    label, and the resize timing an app's windows share; later the pitch
+│   │                    fader
 │   ├── SettingsWindow ○ macOS only: the System Settings shape, a sidebar with search, back
 │   │                    and forward history, the pane base, and the form views: cards, rows,
-│   │                    captions, lists, color-pair wells, sliders with readouts
+│   │                    captions, lists, color-pair wells, sliders with readouts; the
+│   │                    walker's debug seam
 │   └── Shortcuts ○      macOS only: a shortcut as a key code or character with modifiers,
 │                        its matching, and the recorder pane over rows the app supplies
 │
@@ -138,7 +141,8 @@ vibe-libs/
 ├── third_party/         taglib/ ●  dr_mp3/ ●  dr_flac/ ●  dr_wav/ ●  r8brain/ ●  PINCache/ ●  PINOperation/ ●
 │                        ogg/ ●  vorbis/ ●  Sparkle/
 │
-└── Tests/               one directory per piece, mirroring the tree
+└── Tests/               one directory per piece, mirroring the tree, and Support/, the
+                         tests' shared helpers
 ```
 
 ### The dependency map
@@ -485,7 +489,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 2. The macOS-only rule in the checker and `project.yml`, with its failing cases. Done 2026-10-20: the checker reads the map's words, `project.yml` states the pattern a macOS-only piece's targets follow, and the checker's tests gain four failing cases and one passing one.
 3. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone. Done 2026-10-21: its 21 files moved with their history (this repo's #6), their tests run here, and Vibe compiles them through the template (Vibe #350).
 4. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window.
-5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests.
+5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests. Done 2026-10-21: its 13 files moved with their history (this repo's #11), and Vibe compiles them through the template (Vibe #356). Two of them came from Vibe's `Util/`, which the done-when grep does not search: `WindowAnimation.h` joined `ui/Controls`, since Vibe's player window reads it too, and `NSString+FormLabel` joined `core/Common`, since Vibe's iOS settings use it too. Vibe had no tests of these files, so their tests are new here.
 6. `ui/Shortcuts` after cut 28.
 
 **Done when** the minimal consumer opens a settings window of two panes with a color-pair row, a switch, and a slider, records a shortcut, and draws every control, with no string, setting, or type of Vibe's. Vibe's settings window, pitch panel, and About window are unchanged on screen. The drawn-control, symbol-button, and shortcut-rule tests pass from their new homes.

@@ -24,6 +24,8 @@ For each piece:
     directory first for a quoted one, then every piece's search paths, then
     a unique basename, as an app's headermap would. One that reaches two
     pieces fails. One that reaches a piece the map does not allow fails.
+    A test may also include a helper from Tests/Support, which every test
+    bundle searches. A piece's own file may not.
   - Mac/ and iOS/ are the only platform directories, and only at the top of
     a piece. A shared file imports AppKit or UIKit only under a platform
     guard.
@@ -50,6 +52,8 @@ MAC_FRAMEWORKS = ("AppKit", "Cocoa")
 IOS_FRAMEWORKS = ("UIKit",)
 INCLUDE = re.compile(r'^\s*#\s*(?:import|include)\s+([<"])([^>"]+)[>"]')
 CONDITION = re.compile(r"^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b(.*)")
+
+SUPPORT = os.path.join("Tests", "Support")   # the tests' shared helpers, in no piece
 
 root = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else ".")
 os.chdir(root)
@@ -264,6 +268,9 @@ def resolve(spelling, quoted, including):
         local = os.path.normpath(os.path.join(os.path.dirname(including), spelling))
         if os.path.isfile(local):
             return [local]
+        support = os.path.normpath(os.path.join(SUPPORT, spelling))
+        if including.startswith("Tests" + os.sep) and os.path.isfile(support):
+            return [support]
     found = []
     for directory, _ in search_roots:
         candidate = os.path.normpath(os.path.join(directory, spelling))
@@ -348,6 +355,8 @@ for piece in pieces:
                 elif not platform and not guarded_for(stack, wants):
                     fail(f"{f}:{number}: a shared file imports {spelling} with no platform guard")
             found = resolve(spelling, quoted, f)
+            if len(found) == 1 and inside(found[0], SUPPORT):
+                continue   # a test's shared helper
             owners = sorted({piece_of(p) or "outside every piece" for p in found})
             if len(owners) > 1:
                 fail(f"{f}:{number}: {spelling} is ambiguous, found in {', '.join(found)}")

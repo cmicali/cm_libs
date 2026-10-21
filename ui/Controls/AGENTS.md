@@ -1,6 +1,6 @@
 # ui/Controls
 
-Controls an app draws itself. It depends on `core/Graphics`. **Today it holds what Vibe moved here, and it is macOS only**: the symbol button, the drawn slider and switch, the detent slider, two image views, and the link label. They sit in its `Mac/` half. The loading and equalizer indicators, which both platforms draw, join it later as shared files. It gains an iOS target then.
+Controls an app draws itself. It depends on `core/Graphics`. **Today it holds what Vibe moved here, and it is macOS only**: the symbol button, the drawn slider and switch, the detent slider, two image views, the link label, and the window resize timing. They sit in its `Mac/` half. The loading and equalizer indicators, which both platforms draw, join it later as shared files. It gains an iOS target then.
 
 ## Mac/
 
@@ -37,6 +37,10 @@ With no link set it is an ordinary label. It is not focusable, not an accessibil
 
 **TRAP: a reused window (`releasedWhenClosed = NO`) keeps its first responder across a close.** A focused link would come back with its ring drawn on a window the user just opened. The window's owner clears it in `windowWillClose:` with `makeFirstResponder:nil`.
 
+### WindowAnimation.h
+
+`kWindowResizeAnimationDuration` is 0.12 s, the one timing for every resize an app performs itself. AppKit's default scales with the distance, which drags on big jumps. It sits here, the base mac UI piece, because an app's main window and SettingsWindow both read it. A window answers it from `animationResizeTime:`, or sets it as its animation context's duration.
+
 ## Tests
 
-`Tests/ui/Controls/Mac/` holds the drawn-control, symbol-button, and link-label tests. They run on macOS with no window server. A view renders into a bitmap (`DrawnViewTestSupport.h`), and the tests assert facts about the pixels. They never compare against a stored image, which breaks on every OS change. A deferred window is never key, so the fills drawn here are the not-key ones. NSApp is nil, so a sent action is not asserted. A dragging session and a key window need a window server, so the app checks them in its running build. `DrawnViewTestSupport.h` is a copy of Vibe's, whose other view tests keep using it.
+`Tests/ui/Controls/Mac/` holds the drawn-control, symbol-button, and link-label tests, and one that compiles `WindowAnimation.h`. They run on macOS with no window server. A view renders into a bitmap through `Tests/Support/DrawnViewTestSupport.h`, and the tests assert facts about the pixels. They never compare against a stored image, which breaks on every OS change. A deferred window is never key, so the fills drawn here are the not-key ones. NSApp is nil, so a sent action is not asserted. A dragging session and a key window need a window server, so the app checks them in its running build. `DrawnViewTestSupport.h` is shared with SettingsWindow's tests. Vibe keeps its own copy for its other view tests.

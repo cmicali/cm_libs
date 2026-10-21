@@ -2,13 +2,13 @@
 
 What every other piece may use, and nothing else. Every piece may import from it, so it depends on nothing.
 
-**Today it holds only `VibeMacros.h`, a header.** A file imports `VibeMacros.h` explicitly. No piece relies on a prefix header. An app's prefix header may import it too, as Vibe's does.
+**Today it holds `VibeMacros.h`, a header, and `NSString+FormLabel`.** A file imports `VibeMacros.h` explicitly. No piece relies on a prefix header. An app's prefix header may import it too, as Vibe's does.
 
 ## The realtime-effects brackets
 
 `VIBE_REALTIME_CHECKED_BEGIN`, `VIBE_REALTIME_UNCHECKED_BEGIN` and `VIBE_REALTIME_END`. Code between a checked bracket and its end compiles under `-Werror=function-effects`, so a `CA_REALTIME_API` function there cannot allocate, lock, log, dispatch or message. An unchecked bracket covers only the one-line shims around calls the checker cannot see, each documented at its site. This half is plain C, so a C file may use it.
 
-`Tests/core/Common/CommonProbe.m` compiles the header alone, with a function under the checked bracket. The macOS tests call it, and the iOS target compiles it. A new header here gets an import in the probe.
+`Tests/core/Common/CommonProbe.m` compiles the header alone, with a function under the checked bracket. The macOS tests call it, and the iOS target compiles it. A new header that no source here compiles gets an import in the probe.
 
 ## Logging
 
@@ -23,6 +23,10 @@ What every other piece may use, and nothing else. Every piece may import from it
 **TRAP: `VibeLogWants` and `VibeLogEmit` hold nothing but the `os_log` calls.** Every log site in every piece inlines them. With a stderr hook there, Vibe's metadata-scan benchmarks retired 2 to 3% more instructions, although they never log. The system's own switch costs the call sites nothing.
 
 **TRAP: `VibeMacros.h` has no `#if DEBUG` and names no app type.** Every piece and every app imports it, and a shipping header may not carry debug surface.
+
+## NSString+FormLabel
+
+`vibeFormLabel` drops a trailing form colon, so one localized string can serve a form row and a label that stands alone. One rule covers French's no-break space before the colon and CJK's fullwidth colon. SettingsWindow's rows and section headers use it, and so do an app's iOS screens that show the same strings. That is why it sits here and not in the macOS-only piece.
 
 ## Still in Vibe
 

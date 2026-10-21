@@ -102,6 +102,7 @@ targets:
       excludedPlatform: Mac
 
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
+  # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
     type: bundle.unit-test
     platform: macOS
@@ -114,6 +115,23 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+
+  # ui/SettingsWindow, tested on macOS. It is macOS only, so it has no iOS
+  # target. Its tests share the drawn-view support with Controls'.
+  SettingsWindowTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsSettingsWindow]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/ui/SettingsWindow
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
 
 schemes:
   vibe-libs:
@@ -126,5 +144,6 @@ schemes:
         DSPTests: [test]
         DSP-iOS: all
         ControlsTests: [test]
+        SettingsWindowTests: [test]
     test:
-      targets: [CommonTests, GraphicsTests, DSPTests, ControlsTests]
+      targets: [CommonTests, GraphicsTests, DSPTests, ControlsTests, SettingsWindowTests]

@@ -53,3 +53,15 @@ targetTemplates:
     settings:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/Controls/Mac"]
+
+  # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
+  # as Controls' do. It lists Common for NSString+FormLabel, the colon rule
+  # its rows share with an app's iOS screens.
+  VibeLibsSettingsWindow:
+    templates: [VibeLibsControls, VibeLibsCommon]
+    sources:
+      - path: ui/SettingsWindow
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/SettingsWindow/Mac"]
