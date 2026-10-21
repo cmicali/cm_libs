@@ -301,8 +301,6 @@ static const CGFloat kSettingsSidebarWidth = 200;
         window.titleVisibility = NSWindowTitleVisible;
         window.titlebarSeparatorStyle = NSTitlebarSeparatorStyleNone;
 
-        // After center, so a saved position wins.
-        self.windowFrameAutosaveName = @"SettingsWindow";
         _sidebar = sidebar;
         _backLocations = [NSMutableArray array];
         _forwardLocations = [NSMutableArray array];

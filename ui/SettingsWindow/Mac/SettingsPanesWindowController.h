@@ -25,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 // groups. Back and Forward name the navigation pill's segments, Undo and
 // Redo are the Edit menu's titles while the selected pane has nothing to
 // undo, and the last two are the sidebar's search field and its empty state.
+// The window saves no frame. An app that wants one sets
+// windowFrameAutosaveName right after init, before the window first shows.
 - (instancetype)initWithPaneGroups:(NSArray<NSArray<NSTabViewItem *> *> *)paneGroups
                          backTitle:(NSString *)backTitle forwardTitle:(NSString *)forwardTitle
                          undoTitle:(NSString *)undoTitle redoTitle:(NSString *)redoTitle

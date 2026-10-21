@@ -80,6 +80,11 @@
     XCTAssertFalse(_controller.window.isVisible);
 }
 
+- (void)testAWindowWithNoNameSavesNoFrame {
+    XCTAssertEqual(_controller.windowFrameAutosaveName.length, 0u);
+    XCTAssertEqual(_controller.window.frameAutosaveName.length, 0u);
+}
+
 - (void)testTheSidebarGroupsPanesWithASpacer {
     // General, the spacer before Sound's group, and Sound.
     XCTAssertEqual(self.sidebar.tableView.numberOfRows, 3);

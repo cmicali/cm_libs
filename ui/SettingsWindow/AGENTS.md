@@ -21,7 +21,7 @@ A settings window in the System Settings shape, for a mac app. It depends on `ui
 - **Back and Forward are System Settings' history** (`updateNavigation`). Every pane switch or page swap pushes the location it left and clears Forward. A location is a pane identifier, or the identifier and the page the pane reports through `currentPage`. The pill walks the history under `_restoringLocation`. That flag also keeps the switch's own refreshes from recording a half-applied state. `goToLocation:` sets the page through `showPage:` before selecting the pane. **A pane picked in the sidebar opens at its top** (`paneWillBecomeSelected:` shows page nil). Only Back and Forward reopen a page where it was left.
 - **Undo routes to the selected pane.** A pane that keeps its own `paneUndoManager` gets Edit > Undo while it is selected. A text field's own undo comes first.
 - Pane switches are immediate (`transitionOptions` is `None`). The default crossfade composites two section headers and reads as a flash.
-- The window saves its frame under the autosave name `SettingsWindow`, in the app's own defaults.
+- **An app names the window's frame autosave key**, through `NSWindowController`'s own `windowFrameAutosaveName`, right after init and before the window first shows. The window sets none itself, so a window with no name saves no frame.
 
 ## The form views
 
