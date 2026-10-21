@@ -90,7 +90,6 @@ PIECES = [
     ("audio/OutputDevices", "Vibe/Audio/iOS/"),
     ("audio/Decode", "Vibe/Audio/AudioFileHandle"),
     ("audio/AudioTypes", "Vibe/Audio/AudioFileFormat"),
-    ("audio/AudioTypes", "Vibe/Audio/PlaybackIntent"),
     ("audio/AudioTypes", "Vibe/Audio/VibePlayableItem"),
     ("audio/AudioTypes", "Vibe/Audio/CueWindowMath"),
     ("audio/AudioTypes", "Vibe/Common/PlayableExtensions"),

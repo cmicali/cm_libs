@@ -36,6 +36,16 @@ targetTemplates:
           - "$(VIBE_LIBS_ROOT)/core/Graphics/Mac"
           - "$(VIBE_LIBS_ROOT)/core/Graphics/iOS"
 
+  # The words every audio piece shares. Nothing here logs, so it lists no
+  # template, not even Common's.
+  VibeLibsAudioTypes:
+    sources:
+      - path: audio/AudioTypes
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/audio/AudioTypes"]
+
   VibeLibsDSP:
     templates: [VibeLibsCommon]
     sources:

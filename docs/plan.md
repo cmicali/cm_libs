@@ -502,7 +502,7 @@ In this order, each its own move:
 
 1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split. Done 2026-10-21: nine libraries moved with their history (this repo's #14), and Vibe compiles them through their templates (Vibe #364). Vibe's objects differ only in two `__FILE__` paths and the build's commit. Each library's notice now sits here, and Vibe's notices keep a row for each.
 2. `core/Common` alone, since `core/Graphics` moved on the shell track. Done 2026-10-21: its 24 files and Vibe's script moved with their history (this repo's #13), their tests run here, and Vibe compiles them through DSP's template (Vibe #363). The signposts and the work tally compile under the app's `VIBE_SIGNPOSTS`, since no header here may read `DEBUG`. The tree had named load timing here. It is the waveform decode's, so it stays in Vibe until WaveformLoading moves.
-3. `audio/AudioTypes`.
+3. `audio/AudioTypes`. Done 2026-10-21: its 7 files moved with their history (this repo's #16), their tests run here, and Vibe compiles them through the template (Vibe #368). It depends on nothing, not even `core/Common`, since nothing in it logs. The player's error codes and `PlaybackIntent.h` stay with the player, since no other piece uses them.
 4. `files/FileLoading` and `files/DiskCache`.
 5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
 6. `media/Tags`, `media/Metadata`, `media/PlayQueue`, `media/Playlists`, and `media/FolderScan`.

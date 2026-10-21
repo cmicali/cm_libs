@@ -4,7 +4,7 @@ A toolbox of small libraries for macOS and iOS apps. Each library is a piece an 
 
 The first pieces come from [Vibe](https://github.com/cmicali/vibe). Anything in Vibe that another app could use is a candidate. It moves when a second app needs it.
 
-**The first fifteen pieces are here**: `core/Common`, with Vibe's macros, path and file helpers, disk key, and work lanes, `core/Graphics`, with Vibe's image, color, and font helpers, `audio/DSP`, with Vibe's varispeed, `ui/Controls`, with Vibe's drawn mac controls, `ui/SettingsWindow`, with Vibe's settings window, `ui/Shortcuts`, with Vibe's remappable shortcuts and their pane, and the nine libraries Vibe vendored, each a piece under `third_party/`. The plan for the rest is [docs/plan.md](docs/plan.md).
+**The first sixteen pieces are here**: `core/Common`, with Vibe's macros, path and file helpers, disk key, and work lanes, `core/Graphics`, with Vibe's image, color, and font helpers, `audio/AudioTypes`, with Vibe's playable-item protocol, CUE window math, musical key, format names, and playable extensions, `audio/DSP`, with Vibe's varispeed, `ui/Controls`, with Vibe's drawn mac controls, `ui/SettingsWindow`, with Vibe's settings window, `ui/Shortcuts`, with Vibe's remappable shortcuts and their pane, and the nine libraries Vibe vendored, each a piece under `third_party/`. The plan for the rest is [docs/plan.md](docs/plan.md).
 
 ## The pieces
 
