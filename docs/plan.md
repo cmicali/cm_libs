@@ -499,7 +499,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 
 In this order, each its own move:
 
-1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split.
+1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split. Done 2026-10-21: nine libraries moved with their history (this repo's #14), and Vibe compiles them through their templates (Vibe #364). Vibe's objects differ only in two `__FILE__` paths and the build's commit. Each library's notice now sits here, and Vibe's notices keep a row for each.
 2. `core/Common` alone, since `core/Graphics` moved on the shell track.
 3. `audio/AudioTypes`.
 4. `files/FileLoading` and `files/DiskCache`.
