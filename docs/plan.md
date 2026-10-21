@@ -500,7 +500,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 In this order, each its own move:
 
 1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split.
-2. `core/Common` alone, since `core/Graphics` moved on the shell track.
+2. `core/Common` alone, since `core/Graphics` moved on the shell track. Done 2026-10-21: its 24 files and Vibe's script moved with their history (this repo's #13), their tests run here, and Vibe compiles them through DSP's template (Vibe #363). The signposts and the work tally compile under the app's `VIBE_SIGNPOSTS`, since no header here may read `DEBUG`. The tree had named load timing here. It is the waveform decode's, so it stays in Vibe until WaveformLoading moves.
 3. `audio/AudioTypes`.
 4. `files/FileLoading` and `files/DiskCache`.
 5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
