@@ -1,25 +1,26 @@
-"""Derive vibe-libs' dependency map from a Vibe tree's imports.
+"""Derive vibe-libs' dependency map from a Vibe checkout's imports.
 
 Usage: python3 -I scripts/plan/derive-deps.py <root> [--sites]
 
-<root> holds a Vibe checkout's Vibe/, Packages/, Tests/iOSDriver/ and
-project.yml, for example
-`git archive origin/main Vibe Packages Tests/iOSDriver project.yml` unpacked.
-Run it before the moves, and after each cut, and update the map in
+<root> is a Vibe checkout with its vibe-libs submodule checked out. The
+script reads its Vibe/, Packages/, Tests/iOSDriver/, vibe-libs/, and
+project.yml. Run it after each cut and each move, and update the map in
 docs/plan.md in the same change.
 
-Each source file is assigned to the piece the plan moves it into ("app" for
-code that stays in Vibe). Every #import and #include, quoted or angled, is
-resolved to a file in the tree, and the piece-to-piece edges are printed.
-With --sites it also prints the files behind each edge.
-
-<root> must also hold Vibe's project.yml, whose app header search paths
-the resolver follows.
+Each source file is assigned to a piece ("app" for code that stays in Vibe).
+A file under vibe-libs/ belongs to the piece its directory names,
+vibe-libs/<group>/<piece>/. A file still in Vibe belongs to the piece the
+plan moves it into, by the path prefixes below. Every #import and #include,
+quoted or angled, is resolved to a file in the tree, and the piece-to-piece
+edges are printed. With --sites it also prints the files behind each edge.
 
 Resolution follows the compiler, never the filesystem's order:
   1. A quoted include looks in the including file's own directory first.
-  2. Then both kinds look through the app's header search paths, in the
-     order project.yml lists them.
+  2. Then both kinds look through the macOS app's header search paths, in
+     the order its build has them: each template's paths, in the order the
+     app target lists its templates, a template's own templates first, and
+     then the target's own paths from project.yml's anchor. A template's
+     paths come from vibe-libs/vibe-libs.yml.
   3. Then, as Xcode's headermap does, a quoted include may match a header by
      its basename anywhere in the tree, but only if exactly one matches.
   4. An include listed in EXPLICIT resolves to the file named there.
@@ -37,18 +38,12 @@ root = sys.argv[1]
 show_sites = "--sites" in sys.argv
 inc = re.compile(r'^\s*#\s*(?:import|include)\s+([<"])([^>"]+)[>"]', re.M)
 
-# (piece, path prefix relative to root). First match wins.
+LIBS = "vibe-libs"
+GROUPS = ("core", "files", "audio", "media", "waveform", "ui", "system", "dev", "third_party")
+
+# Files still in Vibe: (piece, path prefix relative to root). First match wins.
 PIECES = [
-    # third_party: each vendored library
-    ("third_party/taglib", "Vibe/ThirdParty/taglib/"),
-    ("third_party/dr_mp3", "Vibe/ThirdParty/dr_mp3/"),
-    ("third_party/dr_flac", "Vibe/ThirdParty/dr_flac/"),
-    ("third_party/dr_wav", "Vibe/ThirdParty/dr_wav/"),
-    ("third_party/r8brain", "Vibe/ThirdParty/r8brain/"),
-    ("third_party/PINCache", "Vibe/ThirdParty/PINCache/"),
-    ("third_party/PINOperation", "Vibe/ThirdParty/PINOperation/"),
-    ("third_party/ogg", "Vibe/ThirdParty/ogg/"),
-    ("third_party/vorbis", "Vibe/ThirdParty/vorbis/"),
+    # third_party: Sparkle is still Vibe's
     ("third_party/Sparkle", "Vibe/ThirdParty/Sparkle/"),
     # debug seams and simulators go with the class they open
     ("audio/Player", "Vibe/Debug/Seams/AudioPlayer+"),
@@ -60,50 +55,26 @@ PIECES = [
     ("files/FileLoading", "Vibe/Debug/Seams/AudioLoadingConfiguration+"),
     ("files/FileLoading", "Vibe/Debug/Seams/CloudFileMaterializer+"),
     ("files/FileLoading", "Vibe/Debug/Seams/DownloadProgressMonitor+"),
+    ("files/FileLoading", "Vibe/Debug/Seams/NetworkReadAhead+"),
     ("files/FileLoading", "Vibe/Debug/Seams/PlaceholderFiles+"),
     ("files/FileLoading", "Vibe/Debug/Simulators/VibeFakeCloud"),
     ("files/ShareLinks", "Vibe/Debug/Simulators/VibeFakeHTTP"),
     ("media/Metadata", "Vibe/Debug/Seams/AudioTrackMetadata"),
     ("waveform/WaveformLoading", "Vibe/Debug/Seams/AudioWaveformCache+"),
     ("ui/Controls", "Vibe/Debug/Seams/EqualizerIndicatorView+"),
-    ("ui/SettingsWindow", "Vibe/Debug/Mac/Seams/SettingsFormViews+"),
-    ("core/Common", "Vibe/Debug/Oracles/VibeWorkTally"),
     ("waveform/WaveformLoading", "Vibe/Debug/Oracles/AudioLoadTiming"),
     ("dev/DebugChannel", "Vibe/Debug/Channel/"),
-    # core
-    ("core/Common", "Vibe/Util/HelperMacros"),
-    ("core/Common", "Vibe/Util/IntegerTokenRules"),
-    ("core/Common", "Vibe/Util/StallWatch"),
-    ("core/Common", "Vibe/Util/FilePaths"),
-    ("core/Common", "Vibe/Util/VibeWeakProxy"),
-    ("core/Common", "Vibe/Util/UIUpdate"),
-    ("core/Common", "Vibe/Util/Categories/NSURL+Emptiness"),
-    ("core/Common", "Vibe/Util/Categories/NSURL+FileIdentity"),
-    ("core/Common", "Vibe/Util/Categories/NSBundle+BuildInfo"),
-    ("core/Common", "Vibe/Util/Categories/NSString+FormLabel"),
-    ("core/Common", "Vibe/Loading/Claim/AudioWorkScheduler"),
-    ("core/Common", "Vibe/Loading/Claim/AudioWorkAdmissionRules"),
-    ("core/Graphics", "Vibe/Common/PlatformTypes"),
-    ("core/Graphics", "Vibe/Common/PlatformImage"),
-    ("core/Graphics", "Vibe/Common/PlatformColor"),
-    ("core/Graphics", "Vibe/Util/Mac/NSView+DarkMode"),
-    ("core/Graphics", "Vibe/Util/Mac/NSColor+OKLCH"),
-    ("core/Graphics", "Vibe/Util/Mac/NSImage+Util"),
-    ("core/Graphics", "Vibe/Util/iOS/UIView+DarkMode"),
-    ("core/Graphics", "Vibe/Util/iOS/UIImage+DominantColor"),
-    ("core/Graphics", "Vibe/Util/iOS/UIImage+Blur"),
     # files
     ("files/DiskCache", "Vibe/Audio/PINCache+VibeAudioCache"),
-    ("core/Common", "Vibe/Util/Categories/NSURL+Hash"),
     ("files/HTTP", "Vibe/Loading/Net/HTTPTransfer"),
     ("files/RemoteFiles", "Vibe/Loading/Net/RemotePlaceholderStore"),
+    ("files/RemoteFiles", "Vibe/Loading/Net/TailWindowMath"),
     ("app", "Vibe/Loading/Net/LinkStore"),
     ("files/ShareLinks", "Vibe/Loading/Net/"),
     ("app", "Vibe/Loading/iOS/"),
     ("files/FileLoading", "Vibe/Loading/"),
     ("files/SandboxAccess", "Vibe/Mac/App/FolderAccess"),
     # audio
-    ("audio/DSP", "Vibe/Audio/FX/AudioVarispeed"),
     ("audio/DSP", "Vibe/Audio/FX/AudioFXMath"),
     ("audio/DSP", "Vibe/Audio/FadeMath"),
     ("audio/DSP", "Vibe/Audio/AudioResampler"),
@@ -112,8 +83,6 @@ PIECES = [
     ("audio/FX", "Vibe/Audio/FX/"),
     ("audio/Analysis", "Vibe/Audio/Analysis/"),
     ("audio/AudioTypes", "Vibe/Audio/MusicalKey"),
-    ("audio/AudioTypes", "Vibe/Audio/CueWindowMath"),
-    ("audio/AudioTypes", "Vibe/Audio/VibePlayableItem"),
     ("audio/Meter", "Vibe/Audio/Levels/"),
     ("audio/Player", "Vibe/Audio/Mac/Devices/AudioPlayer+"),
     ("audio/OutputDevices", "Vibe/Audio/Mac/Devices/"),
@@ -121,8 +90,9 @@ PIECES = [
     ("audio/OutputDevices", "Vibe/Audio/iOS/"),
     ("audio/Decode", "Vibe/Audio/AudioFileHandle"),
     ("audio/AudioTypes", "Vibe/Audio/AudioFileFormat"),
+    ("audio/AudioTypes", "Vibe/Audio/VibePlayableItem"),
+    ("audio/AudioTypes", "Vibe/Audio/CueWindowMath"),
     ("audio/AudioTypes", "Vibe/Common/PlayableExtensions"),
-    ("app", "Vibe/Audio/AudioTrack"),
     # media
     ("media/Tags", "Vibe/Audio/Metadata/TagLibAudioFile"),
     ("media/Tags", "Vibe/Util/Categories/NSString+CPPStrings"),
@@ -140,17 +110,13 @@ PIECES = [
     ("app", "Vibe/Mac/Controls/ArtworkImageView"),
     ("ui/Controls", "Vibe/Mac/Controls/"),
     ("ui/Controls", "Vibe/Controls/"),
-    ("ui/Controls", "Vibe/Util/Mac/WindowAnimation"),
-    ("ui/SettingsWindow", "Vibe/Mac/Settings/SettingsFormViews"),
-    ("ui/SettingsWindow", "Vibe/Mac/Settings/SettingsPaneViewController"),
-    ("ui/SettingsWindow", "Vibe/Mac/Settings/SettingsSidebarController"),
-    ("ui/SettingsWindow", "Vibe/Mac/Settings/SettingsPanesWindowController"),
     ("system/NowPlaying", "Vibe/NowPlaying/"),
     ("system/AppOpening", "Vibe/Mac/App/OpenBurstCoalescer"),
     ("system/AppOpening", "Vibe/Mac/App/OpenRequestCoordinator"),
     ("media/PlayQueue", "Vibe/Playlist/Playlist."),
     ("media/PlayQueue", "Vibe/Common/RepeatMode"),
     ("media/Playlists", "Vibe/Playlist/PlaylistFile"),
+    ("media/Playlists", "Vibe/Playlist/PlaylistEntry"),
     ("media/FolderScan", "Vibe/Playlist/FolderWalk"),
     ("media/FolderScan", "Vibe/Common/FolderOpenSort"),
     ("media/FolderScan", "Vibe/iOS/Search/FileSearch"),
@@ -160,6 +126,9 @@ PIECES = [
 
 
 def piece_of(rel):
+    parts = rel.split("/")
+    if parts[0] == LIBS:
+        return "/".join(parts[1:3])
     for name, prefix in PIECES:
         if rel.startswith(prefix):
             return name
@@ -167,12 +136,15 @@ def piece_of(rel):
 
 
 SRC = (".h", ".hpp", ".hh", ".m", ".mm", ".c", ".cc", ".cpp", ".inc", ".tcc")
+tops = ["Vibe", "Packages", "Tests/iOSDriver"] + [f"{LIBS}/{g}" for g in GROUPS]
 files = []
-for top in ("Vibe", "Packages", "Tests/iOSDriver"):
+for top in tops:
     for dirpath, _, names in os.walk(os.path.join(root, top)):
         for n in names:
             if n.endswith(SRC):
                 files.append(os.path.relpath(os.path.join(dirpath, n), root))
+if not any(f.startswith(LIBS + "/") for f in files):
+    sys.exit(f"no sources under {LIBS}/: check out the submodule first")
 
 by_base = defaultdict(list)
 for f in files:
@@ -184,27 +156,90 @@ file_set = set(files)
 EXPLICIT = {}
 
 
-def search_paths():
-    """The app's HEADER_SEARCH_PATHS from project.yml, relative to root."""
-    paths, inside = [], False
+def yaml_list(lines, i, indent):
+    """The list at lines[i], inline or as a block of "- " items below it."""
+    head = lines[i].split(":", 1)[1].split("#")[0].strip()
+    if head.startswith("["):
+        return [v.strip().strip('"') for v in head.strip("[]").split(",") if v.strip()]
+    values = []
+    for line in lines[i + 1:]:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if len(line) - len(line.lstrip()) <= indent or not stripped.startswith("- "):
+            break
+        values.append(stripped[2:].split("#")[0].strip().strip('"'))
+    return values
+
+
+def read_templates():
+    """Each template's search paths and templates, from vibe-libs.yml."""
+    with open(os.path.join(root, LIBS, "vibe-libs.yml")) as fh:
+        lines = fh.read().splitlines()
+    templates, name = {}, None
+    for i, line in enumerate(lines):
+        m = re.match(r"^  ([A-Za-z][A-Za-z0-9_]*):\s*$", line)
+        if m:
+            name = m.group(1)
+            templates[name] = {"templates": [], "paths": []}
+            continue
+        if not name:
+            continue
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip())
+        if indent == 4 and stripped.startswith("templates:"):
+            templates[name]["templates"] = yaml_list(lines, i, indent)
+        elif stripped.startswith("HEADER_SEARCH_PATHS:"):
+            for value in yaml_list(lines, i, indent):
+                if value.startswith("$(VIBE_LIBS_ROOT)/"):
+                    templates[name]["paths"].append(LIBS + "/" + value[len("$(VIBE_LIBS_ROOT)/"):])
+    return templates
+
+
+def app_target():
+    """The macOS app target's templates and its anchored search paths."""
     with open(os.path.join(root, "project.yml")) as fh:
-        for line in fh:
-            if "HEADER_SEARCH_PATHS: &vibe-header-search-paths" in line:
-                inside = True
-                continue
-            if not inside:
-                continue
-            stripped = line.strip()
-            if stripped.startswith("#") or not stripped:
-                continue
-            if not stripped.startswith("- "):
-                break
-            value = stripped[2:].split("#")[0].strip().strip('"')
-            if value.startswith("$(SRCROOT)/"):
-                paths.append(value[len("$(SRCROOT)/"):])
+        lines = fh.read().splitlines()
+    listed, paths, target = [], [], None
+    for i, line in enumerate(lines):
+        m = re.match(r"^  ([A-Za-z][A-Za-z0-9_]*):\s*$", line)
+        if m:
+            target = m.group(1)
+        if target == "Vibe" and line.startswith("    templates:"):
+            joined, j = line.split("#")[0], i
+            while "]" not in joined:
+                j += 1
+                joined += lines[j].split("#")[0]
+            listed = [v.strip() for v in joined.split("[", 1)[1].split("]")[0].split(",") if v.strip()]
+        if "HEADER_SEARCH_PATHS: &vibe-header-search-paths" in line:
+            for value in yaml_list(lines, i, len(line) - len(line.lstrip())):
+                if value.startswith("$(SRCROOT)/"):
+                    paths.append(value[len("$(SRCROOT)/"):])
+    if not listed:
+        sys.exit("no templates on the Vibe target in project.yml")
     if not paths:
         sys.exit("no app header search paths found in project.yml")
-    return paths
+    return listed, paths
+
+
+def search_paths():
+    templates = read_templates()
+    listed, own = app_target()
+    order, seen = [], set()
+
+    def visit(name):
+        if name in seen:
+            return
+        seen.add(name)
+        if name not in templates:
+            sys.exit(f"template {name} is not in {LIBS}/vibe-libs.yml")
+        for dep in templates[name]["templates"]:
+            visit(dep)
+        order.extend(templates[name]["paths"])
+
+    for name in listed:
+        visit(name)
+    return order + own
 
 
 SEARCH = search_paths()

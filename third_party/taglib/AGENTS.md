@@ -10,7 +10,8 @@ Only the formats Vibe plays: `mpeg/` and ID3, `mp4/`, `flac/`, `riff/`, and `ogg
 
 Four packaging edits:
 
-- `toolkit/tlist.h` and `toolkit/tmap.h` carry their `.tcc` files, pasted in where each was included.
+- `toolkit/tlist.h` carries its `.tcc` file, pasted in where it was included.
+- `toolkit/tmap.h` carries its `.tcc` file the same way.
 - `toolkit/tstring.cpp` includes `utf8-cpp.checked.h` for `<utf8.h>`.
 - `taglib_config.h` defines `TAGLIB_WITH_APE`. Without it, `MPEG::File` compiles its APE reading out (Vibe's `testMP3WithAnAPETag`).
 
