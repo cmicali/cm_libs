@@ -7,11 +7,13 @@
 //  window of two panes without showing it, finds a color-pair row, a switch,
 //  and a slider in their panes, and picks the second pane in the sidebar.
 //  Keys a temporary file by its size, time and path, and keys it anew once it
-//  changes. Exits 0 when all six hold.
+//  changes. Turns a CUE window into a file's frames. Exits 0 when all seven
+//  hold.
 //
 
 #import <Foundation/Foundation.h>
 #import "AudioVarispeed.h"
+#import "CueWindowMath.h"
 #import "NSURL+Hash.h"
 #import "PlatformColor.h"
 #import "CrossfadingImageView.h"
@@ -193,6 +195,11 @@ int main(void) {
     [NSFileManager.defaultManager removeItemAtURL:file error:NULL];
     if (![key hasPrefix:@"3-"] || ![changed hasPrefix:@"4-"] || file.cacheKey) {
         fprintf(stderr, "consumer: the disk keys were %s, then %s\n", key.UTF8String, changed.UTF8String);
+        return 1;
+    }
+    NSRange window = VibeCueWindow(75, 150, 48000, 480000, NO);
+    if (!NSEqualRanges(window, NSMakeRange(48000, 48000))) {
+        fprintf(stderr, "consumer: the window is %s\n", NSStringFromRange(window).UTF8String);
         return 1;
     }
     printf("consumer OK\n");

@@ -89,6 +89,30 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # audio/AudioTypes, tested on macOS.
+  AudioTypesTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsAudioTypes]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/AudioTypes
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # audio/AudioTypes built for iOS, with its probe of the header-only files.
+  AudioTypes-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsAudioTypes]
+    templateAttributes:
+      excludedPlatform: Mac
+    sources:
+      - path: Tests/audio/AudioTypes/AudioTypesProbe.m
+
   # audio/DSP, tested on macOS. The tests' hang bound matches Vibe's.
   DSPTests:
     type: bundle.unit-test
@@ -299,6 +323,8 @@ schemes:
         Common-iOS: all
         GraphicsTests: [test]
         Graphics-iOS: all
+        AudioTypesTests: [test]
+        AudioTypes-iOS: all
         DSPTests: [test]
         DSP-iOS: all
         ControlsTests: [test]
@@ -322,6 +348,6 @@ schemes:
         VorbisTests: [test]
         Vorbis-iOS: all
     test:
-      targets: [CommonTests, GraphicsTests, DSPTests, ControlsTests, SettingsWindowTests, TaglibTests,
+      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, ControlsTests, SettingsWindowTests, TaglibTests,
                 PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests,
                 OggTests, VorbisTests]

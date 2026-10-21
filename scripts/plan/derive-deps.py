@@ -112,6 +112,8 @@ PIECES = [
     ("audio/FX", "Vibe/Audio/FX/"),
     ("audio/Analysis", "Vibe/Audio/Analysis/"),
     ("audio/AudioTypes", "Vibe/Audio/MusicalKey"),
+    ("audio/AudioTypes", "Vibe/Audio/CueWindowMath"),
+    ("audio/AudioTypes", "Vibe/Audio/VibePlayableItem"),
     ("audio/Meter", "Vibe/Audio/Levels/"),
     ("audio/Player", "Vibe/Audio/Mac/Devices/AudioPlayer+"),
     ("audio/OutputDevices", "Vibe/Audio/Mac/Devices/"),
@@ -119,7 +121,6 @@ PIECES = [
     ("audio/OutputDevices", "Vibe/Audio/iOS/"),
     ("audio/Decode", "Vibe/Audio/AudioFileHandle"),
     ("audio/AudioTypes", "Vibe/Audio/AudioFileFormat"),
-    ("audio/AudioTypes", "Vibe/Audio/PlaybackIntent"),
     ("audio/AudioTypes", "Vibe/Common/PlayableExtensions"),
     ("app", "Vibe/Audio/AudioTrack"),
     # media
