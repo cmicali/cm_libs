@@ -29,7 +29,7 @@ targets:
   Consumer:
     type: tool
     platform: macOS
-    templates: [VibeLibsDSP, VibeLibsGraphics, VibeLibsControls, VibeLibsSettingsWindow]
+    templates: [VibeLibsDSP, VibeLibsGraphics, VibeLibsControls, VibeLibsSettingsWindow, VibeLibsShortcuts]
     templateAttributes:
       excludedPlatform: iOS
     sources:

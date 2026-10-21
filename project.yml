@@ -144,6 +144,20 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
 
+  # ui/Shortcuts, tested on macOS. It is macOS only, so it has no iOS target.
+  ShortcutsTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsShortcuts]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/ui/Shortcuts
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
   # third_party/: each library's tests build it alone and call into it once,
   # so a missing file or a broken link fails here. Each iOS target builds the
   # library for the simulator. None of them excludes a platform half.
@@ -303,6 +317,7 @@ schemes:
         DSP-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
+        ShortcutsTests: [test]
         TaglibTests: [test]
         Taglib-iOS: all
         PINCacheTests: [test]
@@ -322,6 +337,6 @@ schemes:
         VorbisTests: [test]
         Vorbis-iOS: all
     test:
-      targets: [CommonTests, GraphicsTests, DSPTests, ControlsTests, SettingsWindowTests, TaglibTests,
-                PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests,
-                OggTests, VorbisTests]
+      targets: [CommonTests, GraphicsTests, DSPTests, ControlsTests, SettingsWindowTests, ShortcutsTests,
+                TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests,
+                DrWavTests, OggTests, VorbisTests]

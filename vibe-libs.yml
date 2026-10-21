@@ -68,6 +68,18 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/SettingsWindow/Mac"]
 
+  # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
+  # as SettingsWindow's do. The layout's lookup links Carbon, which an
+  # import of <Carbon/Carbon.h> brings in by itself.
+  VibeLibsShortcuts:
+    templates: [VibeLibsSettingsWindow]
+    sources:
+      - path: ui/Shortcuts
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/Shortcuts/Mac"]
+
   # ---- third_party/: other authors' code, one piece per library ----
   #
   # Each template carries the compiler flags its library builds with, so an
