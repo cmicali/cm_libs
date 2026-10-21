@@ -202,7 +202,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 
 | New type | Owned by | Used by | Edge it adds |
 | --- | --- | --- | --- |
-| the playable-item protocol | audio/Decode | audio/Player, media/Metadata, waveform/WaveformLoading; adopted by the app's entries | none: each user already depends on Decode |
+| the playable-item protocol | audio/AudioTypes | audio/Player, media/Metadata, waveform/WaveformLoading; adopted by the app's entries | none: each user already depends on AudioTypes |
 | Metadata's holder protocol | media/Metadata | adopted by the app's entries | none |
 | the handle protocol of FileLoading | files/FileLoading | adopted by audio/Decode's file handle | none: Decode already depends on FileLoading |
 | a waveform decode's observer | waveform/WaveformLoading | the app, which attaches audio/Analysis | none: the app joins them |
@@ -385,7 +385,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `vibe-libs.yml` from two directories up, sets `VIBE_LIBS_ROOT`, lists a template, builds with no prefix header and no headermap, and runs. It grows into the consumer the end of Phase 3 asks for.
 
-CI runs `make check-pieces`, `make test`, `make build-ios`, and `make consumer`. `make analyze CONFIG=Release` joins when the first piece with more than the varispeed moves. Until then Vibe's own analyzer run covers the varispeed, since Vibe compiles it. GitHub Actions is free for a public repo, macOS runners included.
+CI runs `make check-pieces`, `make test`, `make build-ios`, `make consumer`, and `make analyze`. `make analyze` joined on 2026-10-21, after `core/Graphics` moved. It runs clang's static analyzer over every piece's macOS test bundle in Release. It fails on any finding outside `third_party/`. GitHub Actions is free for a public repo, macOS runners included.
 
 ## The work, in order
 
@@ -437,7 +437,7 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 
 **The seams between pieces:**
 
-- **13. The playable-item protocol.** A small protocol gives an item's file, frame window, source key, and disk key. Only the pieces that read a file take it: the player, Metadata, and WaveformLoading. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. They take `id` of the protocol and hand back the same object. The queue takes any object (seam 19). The CUE window math goes to AudioTypes, so Playlists and FolderScan need no Decode for it.
+- **13. The playable-item protocol.** A small protocol gives an item's file, frame window, source key, and disk key. Only the pieces that read a file take it: the player, Metadata, and WaveformLoading. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. They take `id` of the protocol and hand back the same object. The queue takes any object (seam 19). The CUE window math goes to AudioTypes, so Playlists and FolderScan need no Decode for it. The seam landed on 2026-10-21 (Vibe #351).
 - **14. `AudioFileOpenRules.h` splits.** It holds the open's delivery states, path spelling, and the network mount's read-ahead rules, and four areas import it. Each part goes to the piece that owns it.
 - **15. The file loader stops naming the audio file handle.** Its opener is already a block. The handle it serves becomes a small protocol for interrupting reads and holding a stream. It no longer calls into `AudioTrack` to forget memoized cache keys. It bumps the generation on `NSURL (Hash)` instead. A memo stamped below it is stale (Vibe #351).
 
@@ -483,8 +483,8 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 
 1. The prefix rename, on the pilot's branches before they merge (Decided).
 2. The macOS-only rule in the checker and `project.yml`, with its failing cases. Done 2026-10-20: the checker reads the map's words, `project.yml` states the pattern a macOS-only piece's targets follow, and the checker's tests gain four failing cases and one passing one.
-3. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window.
-4. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone.
+3. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone. Done 2026-10-21: its 21 files moved with their history (this repo's #6), their tests run here, and Vibe compiles them through the template (Vibe #350).
+4. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window.
 5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests.
 6. `ui/Shortcuts` after cut 28.
 
