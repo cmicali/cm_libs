@@ -9,12 +9,16 @@
 //  the third, the Shortcuts pane over two commands of its own, it records a
 //  shortcut from a key event sent through NSApp. Keys a temporary file by its
 //  size, time and path, and keys it anew once it changes. Turns a CUE window
-//  into a file's frames. Exits 0 when all eight hold.
+//  into a file's frames. Opens a temporary file through the file loader, with
+//  a handle of its own. Roots a disk cache in a temporary directory and reads
+//  its usage back. Exits 0 when all ten hold.
 //
 
 #import <Foundation/Foundation.h>
+#import "AudioFileMaterializationCoordinator.h"
 #import "AudioVarispeed.h"
 #import "CueWindowMath.h"
+#import "PINCache+VibeAudioCache.h"
 #import "NSURL+Hash.h"
 #import "PlatformColor.h"
 #import "CrossfadingImageView.h"
@@ -41,6 +45,26 @@
 - (void)changed:(id)sender {
 }
 @end
+
+// The handle the file loader serves. It reads no stream, so it ignores the
+// hold.
+@interface ConsumerFile : NSObject <ServedFileHandle>
+@property (nonatomic, strong) NSURL *url;
+@end
+
+@implementation ConsumerFile
+- (void)holdStream {
+}
+@end
+
+// Runs main's loop until done says so, for at most ten seconds.
+static BOOL Settles(BOOL (^done)(void)) {
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:10];
+    while (!done() && deadline.timeIntervalSinceNow > 0) {
+        [NSRunLoop.mainRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+    }
+    return done();
+}
 
 // The first view of a class under a view that passes a test, the view included.
 static __kindof NSView *Find(NSView *view, Class kind, BOOL (^match)(id view)) {
@@ -275,6 +299,48 @@ int main(void) {
     NSRange window = VibeCueWindow(75, 150, 48000, 480000, NO);
     if (!NSEqualRanges(window, NSMakeRange(48000, 48000))) {
         fprintf(stderr, "consumer: the window is %s\n", NSStringFromRange(window).UTF8String);
+        return 1;
+    }
+    NSURL *directory = [NSURL fileURLWithPath:[NSTemporaryDirectory()
+            stringByAppendingPathComponent:NSUUID.UUID.UUIDString] isDirectory:YES];
+    [NSFileManager.defaultManager createDirectoryAtURL:directory withIntermediateDirectories:YES
+                                            attributes:nil error:NULL];
+    NSURL *track = [directory URLByAppendingPathComponent:@"track.bin"];
+    [[NSData dataWithBytes:"bytes" length:5] writeToURL:track atomically:YES];
+    __block ConsumerFile *served = nil;
+    __block NSError *openError = nil;
+    __block BOOL opened = NO;
+    [AudioFileMaterializationCoordinator.sharedCoordinator openURL:track
+            purpose:VibeAudioFileOpenPurposePlayback
+             opener:^id<ServedFileHandle>(NSURL *url, BOOL (^interrupted)(void), NSError **error) {
+        ConsumerFile *file = [[ConsumerFile alloc] init];
+        file.url = url;
+        return file;
+    } completionQueue:dispatch_get_main_queue() onDataless:nil
+         completion:^(id<ServedFileHandle> file, NSError *error, NSTimeInterval elapsed) {
+        served = (ConsumerFile *)file;
+        openError = error;
+        opened = YES;
+    }];
+    if (!Settles(^BOOL { return opened; }) || ![served.url isEqual:track]) {
+        fprintf(stderr, "consumer: the loader served %s (%s)\n", served.url.path.UTF8String,
+                openError.localizedDescription.UTF8String);
+        return 1;
+    }
+    PINCache *cache = [PINCache audioCacheWithName:@"consumer" rootPath:directory.path];
+    [cache.diskCache setObject:@"entry" forKey:@"key"];
+    __block NSUInteger entries = 0;
+    __block BOOL counted = NO;
+    [cache audioDiskUsageWithCompletion:^(NSUInteger fileCount, unsigned long long totalBytes) {
+        entries = fileCount;
+        counted = YES;
+    }];
+    BOOL cached = Settles(^BOOL { return counted; }) && entries == 1
+            && [cache.diskCache.cacheURL.path hasPrefix:directory.path]
+            && [(NSString *)[cache.diskCache objectForKey:@"key"] isEqual:@"entry"];
+    [NSFileManager.defaultManager removeItemAtURL:directory error:NULL];
+    if (!cached) {
+        fprintf(stderr, "consumer: the disk cache holds %lu entries\n", (unsigned long)entries);
         return 1;
     }
     printf("consumer OK\n");

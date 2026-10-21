@@ -136,6 +136,65 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # files/FileLoading, tested on macOS. The tests drive the seams and the fake
+  # cloud, which compile only under DEBUG, so the bundle defines it in every
+  # configuration, the analyzer's Release build included. The coordinator's
+  # tests take their provider operations and served handle from Tests/Support.
+  # Verbose logging is on, as in Vibe's tests. The hang and gate bounds match
+  # Vibe's.
+  FileLoadingTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsFileLoading]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/files/FileLoading
+        excludes: ["**/*.md"]
+      - path: Tests/Support/MaterializationTestFakes.m
+      - path: Tests/Support/VibeTestServedFile.m
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "DEBUG=1"
+          - "VIBE_VERBOSE_LOGGING=1"
+          - "VIBE_TEST_HANG_TIMEOUT=10"
+          - "VIBE_TEST_GATE_TIMEOUT=30"
+
+  # files/FileLoading built for iOS, so an AppKit leak fails here.
+  FileLoading-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsFileLoading]
+    templateAttributes:
+      excludedPlatform: Mac
+
+  # files/DiskCache, tested on macOS, over stores in a temporary directory.
+  DiskCacheTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsDiskCache]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/files/DiskCache
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "VIBE_TEST_HANG_TIMEOUT=10"]
+
+  # files/DiskCache built for iOS.
+  DiskCache-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsDiskCache]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
@@ -341,6 +400,10 @@ schemes:
         AudioTypes-iOS: all
         DSPTests: [test]
         DSP-iOS: all
+        FileLoadingTests: [test]
+        FileLoading-iOS: all
+        DiskCacheTests: [test]
+        DiskCache-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -363,6 +426,6 @@ schemes:
         VorbisTests: [test]
         Vorbis-iOS: all
     test:
-      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, ControlsTests, SettingsWindowTests,
-                ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests,
-                DrFlacTests, DrWavTests, OggTests, VorbisTests]
+      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, FileLoadingTests, DiskCacheTests,
+                ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
+                R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
