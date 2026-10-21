@@ -1,6 +1,6 @@
 # vibe-libs: the plan
 
-**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, merged on 2026-10-20: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape. Wave 1 merged on 2026-10-21: `core/Graphics` moved (#6, Vibe #350), and seam 13 landed (Vibe #351). Waves 2 and 3 merged on 2026-10-21: `ui/Controls` and `ui/SettingsWindow` moved (#9, #11), and seams 14 to 18, the queue half of 19, 22, and 23 landed (Vibe #353 to #359).** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, merged on 2026-10-20: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape. Wave 1 merged on 2026-10-21: `core/Graphics` moved (#6, Vibe #350), and seam 13 landed (Vibe #351). Waves 2 and 3 merged on 2026-10-21: `ui/Controls` and `ui/SettingsWindow` moved (#9, #11), and seams 14 to 18, the queue half of 19, 22, and 23 landed (Vibe #353 to #359). Wave 4 merged on 2026-10-21 with Phase 3 steps 1 and 2, cut 30, and the waveform version check (Vibe #361 to #364, this repo's #13 and #14).** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -38,7 +38,7 @@ Its users are Vibe and another app. Both add it as a git submodule.
 3. **A piece's code lives with the piece that reaches into it.** The morph engine is used by the renderers, so it sits with the styles. The device categories on `AudioPlayer` read the player's private state, so they sit in `Player/Mac` and `Player/iOS`. The device and session classes they call do not, so those are their own piece.
 4. **Pieces hold the caller's objects, never another piece's model class.** A playable item is any object that adopts a small protocol giving its file, its frame window, its source key, and its disk key. Vibe's `AudioTrack` adopts it. The player, the caches, and the queue keep the caller's object and hand the same one back. A piece that writes results into an item declares a protocol of its own for that, as Metadata does (seam 22). Four identities stay separate:
    - **Source identity** is the source key: the file's path and its window. It names the same stretch of audio, so shared work and claims match on it. It does not change when the file's contents do, so it cannot tell a late result from an old version.
-   - **Version identity** is the disk key: DiskCache's `cacheKey` of the file's size, modification time, and resolved path, with the window appended for a waveform. It names one version of the file, so persisted entries match on it. An item may memoize it. Each memo is stamped with a generation kept on the disk key's own category, `NSURL (Hash)`. When a download installs a new version, FileLoading bumps the generation. Every older memo then computes the key again.
+   - **Version identity** is the disk key: DiskCache's `cacheKey` of the file's size, modification time, and resolved path, with the window appended for a waveform. It names one version of the file, so persisted entries match on it. An item may memoize it. Each memo is stamped with a generation kept on the disk key's own category, `NSURL (Hash)`. When a download installs a new version, FileLoading bumps the generation. Every older memo then computes the key again. The waveform cache checks the version at a decode's completion (Vibe #362). The metadata loader's check is in progress.
    - **Entry identity** is the caller's object. Two entries for the same file are two entries.
    - **Submission identity** is the player's own counter for each play. It decides which settlement is current.
 
@@ -58,7 +58,7 @@ vibe-libs/
 ├── vibe-libs.yml        the shared spec: one targetTemplate per piece, plus stack templates
 ├── project.yml          this repo's own project: one headermap-off test bundle per piece
 ├── Makefile  .github/workflows/ci.yml  scripts/checks/check-pieces.py
-├── scripts/plan/derive-deps.py   re-derives the dependency map from Vibe's imports
+├── scripts/plan/derive-deps.py   re-derives the dependency map from a Vibe checkout's imports
 │
 ├── core/
 │   ├── Common ●○        log, realtime-check and signpost macros; stall sampler, work tally;
@@ -147,7 +147,7 @@ vibe-libs/
 
 ### The dependency map
 
-Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in Vibe's tree at `6cb717e0`, with each file assigned to the piece it moves into (`scripts/plan/derive-deps.py`). The script resolves an include as the compiler does: a quoted include in its own directory first, then the app's header search paths from `project.yml`, in order, then a unique basename. **A collision those rules cannot settle fails the script** until an explicit mapping names the header the build uses, so no edge comes from the filesystem's order. TagLib's `<vorbisfile.h>`, for one, is TagLib's own Ogg Vorbis header, which the `taglib/ogg/vorbis` search path finds, not libvorbis's. The table is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.py` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change. The script reads only Vibe's tree, so an edge into a piece that has moved here vanishes from its output. Before the next re-derive, it must read `vibe-libs/` too. Each cut records the script's output and the Vibe commit it ran on. **The script reads includes, not symbols, and it is no list of sources.** So the map also changes when a declaration moves between headers, even when no include goes away.
+Each piece may import only these, besides `core/Common`, which every piece may use. The map is derived from every quoted and angled include in a Vibe checkout at `4fc7b2b6`, its `vibe-libs/` submodule included (`scripts/plan/derive-deps.py`). A file here belongs to the piece its directory names. A file still in Vibe is assigned to the piece it moves into. The script resolves an include as the compiler does: a quoted include in its own directory first, then the macOS app's header search paths in its build's order, then a unique basename. Those paths are its templates' from `vibe-libs.yml`, then its own from `project.yml`. **A collision those rules cannot settle fails the script** until an explicit mapping names the header the build uses, so no edge comes from the filesystem's order. TagLib's `<vorbisfile.h>`, for one, is TagLib's own Ogg Vorbis header, which the `taglib/ogg/vorbis` search path finds, not libvorbis's. The table is the map after the planned cuts. **The template for a piece is written from this map, and `check-pieces.py` fails on any edge missing from it.** Rerun the script after each cut, and update the map in the same change. The script reads `vibe-libs/` too, so an edge into a piece that has moved here stays in its output. Each cut records the script's output and the Vibe commit it ran on. **The script reads includes, not symbols, and it is no list of sources.** So the map also changes when a declaration moves between headers, even when no include goes away.
 
 | Piece | Depends on |
 | --- | --- |
@@ -296,7 +296,7 @@ A third app, a mac app that plays no audio, is the second consumer of Vibe's she
 | ui/SettingsWindow | `SettingsSidebarController` | 275 | two strings |
 | ui/SettingsWindow | `SettingsWindowController` | 773 | the list of nine panes, 34 strings, and the Themes and Audio panes by name |
 | core/Graphics, Mac/ | `Fonts` | 194 | `AppTheme`, for the five font slots and the theme push |
-| ui/Shortcuts | `ShortcutRules.h`, `SettingsShortcutsViewController` | 716 | Vibe's command table, its menu rules, transport math, settings, and strings |
+| ui/Shortcuts | `ShortcutRules.h`, `SettingsShortcutsViewController` | 716 | nothing since cut 30 (Vibe #361). The keyboard-layout half it needs is still in Vibe's `MainMenuBuilder`. |
 
 **What stays in Vibe:** `AppSettings` and `SettingsRules.h`, which are policy; every pane's content; `ArtworkImageView`; `PitchFaderView` and `PitchControlPanel` until seam 21; `MainMenuBuilder` and Vibe's command table; the About window; the iOS settings screens; and the theme record, its store, and the Themes pane.
 
@@ -316,11 +316,11 @@ A third app, a mac app that plays no audio, is the second consumer of Vibe's she
 **Done when** this returns nothing in Vibe:
 
 ```
-grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|MainPlayerController\|MenuValidationRules\|Formatters' \
+grep -rln 'AppSettings\|AppTheme\|VibeStrings.h\|MainPlayerController\|MenuValidationRules\|Formatters\|MainMenuBuilder\|MenuShortcutRules' \
   Vibe/Mac/Menu/ShortcutRules.h Vibe/Mac/Settings/SettingsShortcutsViewController.*
 ```
 
-The rest of the shell's generic files now live here. The drawn controls and the symbol button are in `ui/Controls/Mac/`. `Fonts` is in `core/Graphics/Mac/`. The form views, the pane base, the sidebar, and the generic window are in `ui/SettingsWindow/Mac/`. The grep no longer names them.
+The rest of the shell's generic files now live here. The drawn controls and the symbol button are in `ui/Controls/Mac/`. `Fonts` is in `core/Graphics/Mac/`. The form views, the pane base, the sidebar, and the generic window are in `ui/SettingsWindow/Mac/`. The grep no longer names them. It names only the Shortcuts pane's files and `ShortcutRules.h`. They are the last of the table's files left in Vibe.
 
 ## How an app uses a piece
 
@@ -491,7 +491,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 3. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone. Done 2026-10-21: its 21 files moved with their history (this repo's #6), their tests run here, and Vibe compiles them through the template (Vibe #350).
 4. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window. Done 2026-10-21: its 12 files moved with their history (this repo's #9), their tests run here, and Vibe compiles them through the template (Vibe #354).
 5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests. Done 2026-10-21: its 13 files moved with their history (this repo's #11), and Vibe compiles them through the template (Vibe #356). Two of them came from Vibe's `Util/`, which the done-when grep does not search: `WindowAnimation.h` joined `ui/Controls`, since Vibe's player window reads it too, and `NSString+FormLabel` joined `core/Common`, since Vibe's iOS settings use it too. Vibe had no tests of these files, so their tests are new here.
-6. `ui/Shortcuts` after cut 28.
+6. `ui/Shortcuts` after cut 28. The keyboard-layout half of Vibe's `MainMenuBuilder` moves with it, with its key names pushed in: `characterForKeyCode:`, `labelForKeyCode:`, `displayStringForShortcut:`, and the special-key names.
 
 **Done when** the minimal consumer opens a settings window of two panes with a color-pair row, a switch, and a slider, records a shortcut, and draws every control, with no string, setting, or type of Vibe's. Vibe's settings window, pitch panel, and About window are unchanged on screen. The drawn-control, symbol-button, and shortcut-rule tests pass from their new homes.
 
