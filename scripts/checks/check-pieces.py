@@ -440,7 +440,8 @@ for path in walk("."):
         text = open(path, errors="replace").read()
     except (IsADirectoryError, PermissionError):
         continue
-    if re.search(r"vibe[ ._-]?pro", text, re.I):
+    # "Probe" is a word, not the name: VibeProbeCallKey is a test's helper.
+    if re.search(r"vibe[ ._-]?pro(?!be)", text, re.I):
         fail(f"{path}: names the other app")
 
 unprefixed = sorted({m for piece in pieces if first_party(piece) for f in walk(piece) if f.endswith(HEADER)
