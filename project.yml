@@ -32,7 +32,9 @@ settings:
 # plan's map, has the test bundle alone: no <piece>-iOS target, and no iOS
 # target lists its template, directly or through another template.
 targets:
-  # core/Common is only headers. Its tests compile them alone.
+  # core/Common, tested on macOS. Verbose logging and the signposts are on, as
+  # in Vibe's Debug builds, so the stall sampler and the work tally compile and
+  # run. The hang bounds match Vibe's.
   CommonTests:
     type: bundle.unit-test
     platform: macOS
@@ -45,8 +47,14 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        GCC_PREPROCESSOR_DEFINITIONS: &common-definitions
+          - "$(inherited)"
+          - "VIBE_VERBOSE_LOGGING=1"
+          - "VIBE_SIGNPOSTS=1"
+          - "VIBE_TEST_HANG_TIMEOUT=10"
+          - "VIBE_TEST_GATE_TIMEOUT=30"
 
-  # core/Common built for iOS, through its probe.
+  # core/Common built for iOS, with its probe of the header-only files.
   Common-iOS:
     type: library.static
     platform: iOS
@@ -55,6 +63,9 @@ targets:
       excludedPlatform: Mac
     sources:
       - path: Tests/core/Common/CommonProbe.m
+    settings:
+      base:
+        GCC_PREPROCESSOR_DEFINITIONS: *common-definitions
 
   # core/Graphics, tested on macOS. Its tests are the Mac half's.
   GraphicsTests:

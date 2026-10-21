@@ -6,11 +6,13 @@
 //  Draws each mac control into a bitmap with no window. Builds a settings
 //  window of two panes without showing it, finds a color-pair row, a switch,
 //  and a slider in their panes, and picks the second pane in the sidebar.
-//  Exits 0 when all five hold.
+//  Keys a temporary file by its size, time and path, and keys it anew once it
+//  changes. Exits 0 when all six hold.
 //
 
 #import <Foundation/Foundation.h>
 #import "AudioVarispeed.h"
+#import "NSURL+Hash.h"
 #import "PlatformColor.h"
 #import "CrossfadingImageView.h"
 #import "DrawnControls.h"
@@ -182,6 +184,17 @@ int main(void) {
         return 1;
     }
     [settings.window close];
+    NSURL *file = [NSURL fileURLWithPath:[NSTemporaryDirectory()
+            stringByAppendingPathComponent:NSUUID.UUID.UUIDString]];
+    [[NSData dataWithBytes:"one" length:3] writeToURL:file atomically:YES];
+    NSString *key = file.cacheKey;
+    [[NSData dataWithBytes:"four" length:4] writeToURL:file atomically:YES];
+    NSString *changed = file.cacheKey;
+    [NSFileManager.defaultManager removeItemAtURL:file error:NULL];
+    if (![key hasPrefix:@"3-"] || ![changed hasPrefix:@"4-"] || file.cacheKey) {
+        fprintf(stderr, "consumer: the disk keys were %s, then %s\n", key.UTF8String, changed.UTF8String);
+        return 1;
+    }
     printf("consumer OK\n");
     return 0;
 }

@@ -27,6 +27,8 @@ For each piece:
     a unique basename, as an app's headermap would. One that reaches two
     pieces fails, unless SETTLED names the header an app's build must find.
     One that reaches a piece the map does not allow fails.
+    A header an app may supply, included only under __has_include of its
+    own name, may reach nothing.
     A test may also include a helper from Tests/Support, which every test
     bundle searches. A piece's own file may not.
   - Mac/ and iOS/ are the only platform directories, and only at the top of
@@ -338,6 +340,12 @@ def guarded_for(stack, platform):
     return False
 
 
+def optional(stack, spelling):
+    """Whether an include under `stack` compiles only when its header exists."""
+    asks = re.compile(r"__has_include\s*\(\s*[<\"]" + re.escape(spelling) + r"[>\"]\s*\)")
+    return any(asks.search(condition) and not in_else for condition, in_else in stack)
+
+
 def platform_of(path, piece):
     relative = os.path.relpath(path, os.path.join("Tests", piece) if path.startswith("Tests" + os.sep) else piece)
     top = relative.split(os.sep)[0]
@@ -383,7 +391,7 @@ for piece in pieces:
                 fail(f"{f}:{number}: {spelling} is ambiguous, found in {', '.join(found)}")
                 continue
             if not found:
-                if quoted and first_party(piece):
+                if quoted and first_party(piece) and not optional(stack, spelling):
                     fail(f"{f}:{number}: \"{spelling}\" is in no piece; an isolated build cannot find it")
                 continue
             owner = owners[0]

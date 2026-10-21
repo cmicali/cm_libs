@@ -61,11 +61,11 @@ vibe-libs/
 ├── scripts/plan/derive-deps.py   re-derives the dependency map from Vibe's imports
 │
 ├── core/
-│   ├── Common ●○        log, realtime-check and signpost macros; stall sampler, work tally,
-│   │                    load timing; path spelling and comparison, file identity and emptiness;
-│   │                    the disk key from a file's attributes; fixed-slot work lanes; a weak
-│   │                    proxy; a display-paced update timer; build provenance and its script;
-│   │                    the form label's colon rule, on the shell track
+│   ├── Common ●○        log, realtime-check and signpost macros; stall sampler, work tally;
+│   │                    path spelling and comparison, file identity and emptiness; the disk
+│   │                    key from a file's attributes; fixed-slot work lanes; a weak proxy; a
+│   │                    display-paced update timer; helper macros; build provenance and its
+│   │                    script; the form label's colon rule, on the shell track
 │   └── Graphics ●○      image and color aliases, bounded image decode, hex, blend and OKLCH
 │                        colors, dominant color, blur, dark-mode helpers; Mac/ the typography
 │                        slots (Fonts), on the shell track
@@ -329,7 +329,7 @@ The rest of the shell's generic files now live here. The drawn controls and the 
 - The app's repo has this repo as a submodule at `vibe-libs/`, pinned to a commit. The app's `make project` runs `git submodule update --init --recursive` before it generates, so a fresh clone or a worktree works.
 - The app's `project.yml` has `include: [vibe-libs/vibe-libs.yml]`. Each app target lists the pieces or stacks it wants under `templates:`. It sets `templateAttributes: {excludedPlatform: iOS}` on macOS, or `Mac` on iOS.
 - The pieces' files compile as the app's own sources. Each vendored library keeps its own compiler flags in its template.
-- The spec reads one project setting, the verbose-logging switch. Vibe maps it from its beta switch, and test targets set it to 1.
+- The spec reads two project settings, the verbose-logging switch and the signposts switch. Vibe maps the first from its beta switch and sets the second in its Debug configuration. Test targets set both to 1.
 - The log subsystem is the main bundle's identifier, so each app logs under its own name.
 
 ### Why compile in, and not link
@@ -500,7 +500,7 @@ The shell pieces touch none of the first path's files, so they move while Phase 
 In this order, each its own move:
 
 1. `third_party/`, except Sparkle. Vibe's binary is unchanged after. The third-party notices split. Done 2026-10-21: nine libraries moved with their history (this repo's #14), and Vibe compiles them through their templates (Vibe #364). Vibe's objects differ only in two `__FILE__` paths and the build's commit. Each library's notice now sits here, and Vibe's notices keep a row for each.
-2. `core/Common` alone, since `core/Graphics` moved on the shell track.
+2. `core/Common` alone, since `core/Graphics` moved on the shell track. Done 2026-10-21: its 24 files and Vibe's script moved with their history (this repo's #13), their tests run here, and Vibe compiles them through DSP's template (Vibe #363). The signposts and the work tally compile under the app's `VIBE_SIGNPOSTS`, since no header here may read `DEBUG`. The tree had named load timing here. It is the waveform decode's, so it stays in Vibe until WaveformLoading moves.
 3. `audio/AudioTypes`.
 4. `files/FileLoading` and `files/DiskCache`.
 5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
