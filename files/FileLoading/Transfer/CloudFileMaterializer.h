@@ -70,8 +70,8 @@ typedef CloudFileAvailability *_Nullable (^CloudFileRemoteAvailability)(NSURL *u
                  read:(nullable CloudFileRemoteRead)read
          availability:(nullable CloudFileRemoteAvailability)availability;
 
-// The read of the backend holding url, nil under no root. AudioTrackMetadata's
-// parse reads a remote placeholder through it.
+// The read of the backend holding url, nil under no root. The app's tag parse
+// reads a remote placeholder through it.
 + (nullable CloudFileRemoteRead)remoteReadForURL:(NSURL *)url;
 
 // AudioFileHandle opens a file being streamed through it; nil, and nothing
