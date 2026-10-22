@@ -16,7 +16,8 @@ concurrency:
 jobs:
   pieces:
     runs-on: macos-26
-    timeout-minutes: 30
+    # Builds, tests, and analyzes every piece in one job. The limit grows with the piece count.
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v7
