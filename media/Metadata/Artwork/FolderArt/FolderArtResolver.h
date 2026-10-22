@@ -4,7 +4,7 @@
 //
 // The cover beside an audio file with absent or undecodable art, consulted by
 // AudioTrackArtwork. Per directory, lazy, never on the scan's path and never
-// persisted; the cost rules are FolderArt/AGENTS.md's.
+// persisted; the cost rules are the piece's AGENTS.md's, Folder art.
 //
 
 #import <Foundation/Foundation.h>

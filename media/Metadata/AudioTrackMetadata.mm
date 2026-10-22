@@ -392,7 +392,7 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
     }
 }
 
-// CoreAudio's facts for a file TagLib cannot read (Audio/Metadata/AGENTS.md).
+// CoreAudio's facts for a file TagLib cannot read (AGENTS.md).
 - (void)loadCoreAudioFactsFromURL:(NSURL *)url {
     // The parser open playback makes for a file its own decoders refuse.
     // TRAP: the handle closes the parser when released, which ARC may do
