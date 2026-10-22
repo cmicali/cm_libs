@@ -19,13 +19,18 @@
 //  opens it through the audio file handle, and reads its frames back exactly.
 //  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
 //  would. Tags a WAV through TagLib, and reads its title and its picture back
-//  through the tag wrapper, the picture by range (Tags.mm). Queues plain URLs,
+//  through the tag wrapper, the picture by range (Tags.mm). Roots a metadata
+//  cache of its own, loads a tagged WAV through it into a holder of its own,
+//  and reads its title, its picture's bytes, and its row thumbnail back
+//  (Metadata.mm). Queues plain URLs,
 //  two of them for one file, and walks what follows each track's end under
 //  repeat and shuffle. Writes an M3U, reads it back, and reads a small CUE
-//  sheet. Summarizes a tone and draws it (Waveform.mm). Draws the tone in
-//  every waveform style and reads back that each drew (WaveformStyles.mm).
-//  Plays another WAV of a ramp through a player on the manual render pump,
-//  and reads every frame back exactly. Exits 0 when all twenty hold.
+//  sheet. Walks a folder of two tracks and an M3U in each folder order, and
+//  opens the M3U in its own order. Summarizes a tone and draws it
+//  (Waveform.mm). Draws the tone in every waveform style and reads back that
+//  each drew (WaveformStyles.mm). Plays another WAV of a ramp through a player
+//  on the manual render pump, and reads every frame back exactly. Exits 0
+//  when all twenty-two hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -47,6 +52,7 @@
 #import "PlaylistFile.h"
 #import "CrossfadingImageView.h"
 #import "DrawnControls.h"
+#import "FolderWalk.h"
 #import "ScaledImageView.h"
 #import "SymbolButton.h"
 #import "VibeDetentSlider.h"
@@ -59,6 +65,8 @@
 
 // Tags.mm's check, in Objective-C++, since the wrapper's header is C++.
 FOUNDATION_EXTERN BOOL ConsumerReadsTags(void);
+// Metadata.mm's check, since TagLib's writer is C++.
+FOUNDATION_EXTERN BOOL ConsumerLoadsMetadata(void);
 // Waveform.mm's check, since the waveform's headers are C++.
 FOUNDATION_EXTERN BOOL ConsumerWaveformHolds(void);
 // WaveformStyles.mm's check, since the renderers' headers are C++.
@@ -313,6 +321,64 @@ static BOOL PlaylistsRoundTrip(void) {
     if (!sheetRead || !listRead) {
         fprintf(stderr, "consumer: the sheet read %lu entries, and the M3U %lu (%s)\n",
                 (unsigned long)cueEntries.count, (unsigned long)read.count, error.localizedDescription.UTF8String);
+        return NO;
+    }
+    return YES;
+}
+
+// A folder of two tracks and an M3U, walked in each order. The walk drops the
+// M3U, since it would double the tracks, and the newer track leads under
+// newest first. Opened alone, the M3U keeps its own order under any sort.
+static BOOL FolderScanWalksATree(void) {
+    NSURL *directory = [NSURL fileURLWithPath:[NSTemporaryDirectory()
+            stringByAppendingPathComponent:NSUUID.UUID.UUIDString] isDirectory:YES];
+    NSURL *album = [directory URLByAppendingPathComponent:@"album" isDirectory:YES];
+    [NSFileManager.defaultManager createDirectoryAtURL:album withIntermediateDirectories:YES
+                                            attributes:nil error:NULL];
+    NSURL *second = [album URLByAppendingPathComponent:@"Track 2.mp3"];
+    NSURL *tenth = [album URLByAppendingPathComponent:@"Track 10.flac"];
+    NSURL *list = [album URLByAppendingPathComponent:@"set.m3u"];
+    [[NSData dataWithBytes:"two" length:3] writeToURL:second atomically:YES];
+    [[NSData dataWithBytes:"ten" length:3] writeToURL:tenth atomically:YES];
+    [[@"Track 10.flac\nTrack 2.mp3\n" dataUsingEncoding:NSUTF8StringEncoding] writeToURL:list atomically:YES];
+    [NSFileManager.defaultManager setAttributes:@{NSFileModificationDate: [NSDate dateWithTimeIntervalSinceNow:-60]}
+                                   ofItemAtPath:second.path error:NULL];
+    [NSFileManager.defaultManager setAttributes:@{NSFileModificationDate: [NSDate dateWithTimeIntervalSinceNow:-30]}
+                                   ofItemAtPath:tenth.path error:NULL];
+
+    NSArray<NSString *> * (^walk)(NSURL *, VibeFolderOpenSort, NSUInteger *) =
+            ^NSArray<NSString *> *(NSURL *url, VibeFolderOpenSort sort, NSUInteger *folders) {
+        __block NSArray<PlaylistEntry *> *found = nil;
+        __block NSUInteger count = 0;
+        [FolderWalk expandAndFilterList:@[url] sortedBy:sort
+                             completion:^(NSArray<PlaylistEntry *> *entries, NSUInteger folderCount) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                count = folderCount;
+                found = entries;
+            });
+        }];
+        if (!Settles(^BOOL { return found != nil; })) {
+            return nil;
+        }
+        *folders = count;
+        return [found valueForKeyPath:@"url.lastPathComponent"];
+    };
+    NSUInteger byNameFolders = 0, newestFolders = 0, receivedFolders = 0, listFolders = 9;
+    NSArray<NSString *> *byName = walk(album, VibeFolderOpenSortName, &byNameFolders);
+    NSArray<NSString *> *newest = walk(album, VibeFolderOpenSortNewestFirst, &newestFolders);
+    NSArray<NSString *> *received = walk(album, VibeFolderOpenSortAsReceived, &receivedFolders);
+    NSArray<NSString *> *listed = walk(list, VibeFolderOpenSortName, &listFolders);
+    [NSFileManager.defaultManager removeItemAtURL:directory error:NULL];
+    NSArray<NSString *> *numeric = @[@"Track 2.mp3", @"Track 10.flac"];
+    NSArray<NSString *> *reversed = @[@"Track 10.flac", @"Track 2.mp3"];
+    BOOL walked = [byName isEqual:numeric] && [newest isEqual:reversed]
+            && [[NSSet setWithArray:received ?: @[]] isEqual:[NSSet setWithArray:numeric]] && received.count == 2
+            && byNameFolders == 1 && newestFolders == 1 && receivedFolders == 1
+            && [listed isEqual:reversed] && listFolders == 0;
+    if (!walked) {
+        fprintf(stderr, "consumer: the walk listed %s by name, %s newest first, %s as received, and %s from the M3U\n",
+                byName.description.UTF8String, newest.description.UTF8String, received.description.UTF8String,
+                listed.description.UTF8String);
         return NO;
     }
     return YES;
@@ -747,7 +813,8 @@ int main(void) {
         fprintf(stderr, "consumer: the click track's tempo is %.2f\n", tempo);
         return 1;
     }
-    if (!ConsumerReadsTags() || !QueueWalksItsSuccessors() || !PlaylistsRoundTrip()) {
+    if (!ConsumerReadsTags() || !ConsumerLoadsMetadata() || !QueueWalksItsSuccessors() || !PlaylistsRoundTrip() ||
+        !FolderScanWalksATree()) {
         return 1;
     }
     if (!ConsumerWaveformHolds()) {
