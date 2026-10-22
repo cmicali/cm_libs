@@ -110,8 +110,8 @@ static int VibeCaptureStack(thread_t thread, uintptr_t *pcs) {
     return count;
 }
 
-// Vibe's own frames (image 0, stripped in a release) print as offsets for the
-// archived dSYM. A run of one frame collapses to one entry, so a recursive
+// The app's own frames (image 0, stripped in a release) print as offsets for
+// the archived dSYM. A run of one frame collapses to one entry, so a recursive
 // pass cannot crowd out the frames that started it.
 static NSArray<NSString *> *VibeDescribeStack(const uintptr_t *pcs, int length) {
     NSMutableArray<NSString *> *frames = [NSMutableArray array];
