@@ -18,9 +18,11 @@
 //  so, only when the HAL cannot read its device list. Writes a WAV of a ramp,
 //  opens it through the audio file handle, and reads its frames back exactly.
 //  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
-//  would. Queues plain URLs, two of them for one file, and walks what follows
-//  each track's end under repeat and shuffle. Writes an M3U, reads it back,
-//  and reads a small CUE sheet. Exits 0 when all sixteen hold.
+//  would. Tags a WAV through TagLib, and reads its title and its picture back
+//  through the tag wrapper, the picture by range (Tags.mm). Queues plain URLs,
+//  two of them for one file, and walks what follows each track's end under
+//  repeat and shuffle. Writes an M3U, reads it back, and reads a small CUE
+//  sheet. Exits 0 when all seventeen hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -50,6 +52,9 @@
 #import "SettingsShortcutsViewController.h"
 #import "SettingsSidebarController.h"
 #import "ShortcutLayout.h"
+
+// Tags.mm's check, in Objective-C++, since the wrapper's header is C++.
+FOUNDATION_EXTERN BOOL ConsumerReadsTags(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -620,7 +625,7 @@ int main(void) {
         fprintf(stderr, "consumer: the click track's tempo is %.2f\n", tempo);
         return 1;
     }
-    if (!QueueWalksItsSuccessors() || !PlaylistsRoundTrip()) {
+    if (!ConsumerReadsTags() || !QueueWalksItsSuccessors() || !PlaylistsRoundTrip()) {
         return 1;
     }
     printf("consumer OK\n");

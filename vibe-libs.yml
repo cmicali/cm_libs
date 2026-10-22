@@ -157,6 +157,25 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/audio/Decode"]
 
+  # TagLib's fields and embedded art bytes. It lists AudioTypes for the
+  # format names and Common for the log macros. Its one source is
+  # Objective-C++, which Xcode builds with -fno-cxx-modules, so its import of
+  # Foundation links nothing on its own. It passes a linker flag, as Analysis
+  # does for Accelerate.
+  #
+  # TRAP: an app that also takes VibeLibsVorbis or VibeLibsDecode lists this
+  # template after them, as it would VibeLibsTaglib. taglib/ogg holds TagLib's
+  # own vorbis/vorbisfile.h, and the first search path wins.
+  VibeLibsTags:
+    templates: [VibeLibsCommon, VibeLibsAudioTypes, VibeLibsTaglib]
+    sources:
+      - path: media/Tags
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/Tags"]
+        OTHER_LDFLAGS: ["$(inherited)", "-framework", "Foundation"]
+
   # The play queue over an app's own entries. It reads an entry only through
   # the key blocks the app passes, so it lists no template. Nothing here logs.
   VibeLibsPlayQueue:
@@ -226,8 +245,9 @@ targetTemplates:
   # A subset of TagLib 2.3.2. Its files include each other by name, so every
   # directory that holds its headers is searched.
   #
-  # TRAP: an app that also takes VibeLibsVorbis lists it first. taglib/ogg
-  # holds TagLib's own vorbis/vorbisfile.h, and the first search path wins.
+  # TRAP: an app that also takes VibeLibsVorbis lists it before this template
+  # and before VibeLibsTags. taglib/ogg holds TagLib's own
+  # vorbis/vorbisfile.h, and the first search path wins.
   VibeLibsTaglib:
     sources:
       - path: third_party/taglib
