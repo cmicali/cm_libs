@@ -47,7 +47,6 @@ PIECES = [
     ("third_party/Sparkle", "Vibe/ThirdParty/Sparkle/"),
     # debug seams and simulators go with the class they open
     ("files/ShareLinks", "Vibe/Debug/Simulators/VibeFakeHTTP"),
-    ("media/Metadata", "Vibe/Debug/Seams/AudioTrackMetadata"),
     ("waveform/WaveformLoading", "Vibe/Debug/Seams/AudioWaveformCache+"),
     ("ui/Controls", "Vibe/Debug/Seams/EqualizerIndicatorView+"),
     ("waveform/WaveformLoading", "Vibe/Debug/Oracles/AudioLoadTiming"),
@@ -60,8 +59,6 @@ PIECES = [
     ("app", "Vibe/Loading/iOS/"),
     ("files/SandboxAccess", "Vibe/Mac/App/FolderAccess"),
     # media
-    ("media/Tags", "Vibe/Util/Categories/NSString+CPPStrings"),
-    ("media/Metadata", "Vibe/Audio/Metadata/"),
     # waveform
     ("waveform/WaveformLoading", "Vibe/Audio/Waveform/"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/Renderers/"),
