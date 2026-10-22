@@ -22,7 +22,8 @@
 //  through the tag wrapper, the picture by range (Tags.mm). Queues plain URLs,
 //  two of them for one file, and walks what follows each track's end under
 //  repeat and shuffle. Writes an M3U, reads it back, and reads a small CUE
-//  sheet. Exits 0 when all seventeen hold.
+//  sheet. Summarizes a tone and draws it (Waveform.mm). Exits 0 when all
+//  eighteen hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -55,6 +56,8 @@
 
 // Tags.mm's check, in Objective-C++, since the wrapper's header is C++.
 FOUNDATION_EXTERN BOOL ConsumerReadsTags(void);
+// Waveform.mm's check, since the waveform's headers are C++.
+FOUNDATION_EXTERN BOOL ConsumerWaveformHolds(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -626,6 +629,9 @@ int main(void) {
         return 1;
     }
     if (!ConsumerReadsTags() || !QueueWalksItsSuccessors() || !PlaylistsRoundTrip()) {
+        return 1;
+    }
+    if (!ConsumerWaveformHolds()) {
         return 1;
     }
     printf("consumer OK\n");

@@ -414,6 +414,29 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # waveform/Waveform, tested on macOS: the summary's builder, reads, deep
+  # zoom, and archive, and the raster's steps and coverage.
+  WaveformTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsWaveform]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/waveform/Waveform
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # waveform/Waveform built for iOS, where an app's scrubber draws with it.
+  Waveform-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsWaveform]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
@@ -639,6 +662,8 @@ schemes:
         PlayQueue-iOS: all
         PlaylistsTests: [test]
         Playlists-iOS: all
+        WaveformTests: [test]
+        Waveform-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -663,6 +688,6 @@ schemes:
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, TagsTests,
-                PlayQueueTests, PlaylistsTests, ControlsTests, SettingsWindowTests, ShortcutsTests,
-                TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests,
-                DrWavTests, OggTests, VorbisTests]
+                PlayQueueTests, PlaylistsTests, WaveformTests, ControlsTests, SettingsWindowTests,
+                ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests,
+                DrFlacTests, DrWavTests, OggTests, VorbisTests]

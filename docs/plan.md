@@ -107,9 +107,9 @@ vibe-libs/
 │   └── FolderScan ●     walk folders and links into files and CUE rows, and search file names
 │
 ├── waveform/
-│   ├── Waveform ●       WaveformCore/: the summary, pyramid, deep zoom, raster, and archive,
-│   │                    C++ with its own Package.swift; beside it, in Objective-C++, the
-│   │                    AudioWaveform name, the mono mix, and CodableAudioWaveform
+│   ├── Waveform ●       the summary, pyramid, deep zoom, raster, and archive, in C++;
+│   │                    beside them, in Objective-C++, the AudioWaveform name, the mono
+│   │                    mix, and CodableAudioWaveform
 │   ├── WaveformStyles ● each style's look: its columns, levels, colors, zoom math, and the
 │   │                    morph engine that eases between them
 │   ├── WaveformLoading ● a file decoded into a summary, with observers on the same pass,
@@ -279,7 +279,7 @@ The catalog scan is new behavior in FolderScan. It lands after FolderScan's move
 
 - **`Player` holds the master bus and the device categories.** The master bus composes the varispeed, the FX, and the meter. The categories read the player's private state.
 - **`WaveformStyles` holds the morph engine.** The renderers drive it directly.
-- **`waveform/Waveform` keeps the C++ package whole, and its Darwin part beside it.** The `WaveformCore/` directory, its `Package.swift`, and its tests move unchanged. `AudioWaveform.h` and `.mm`, with `CodableAudioWaveform`, sit beside it in the same piece, outside the package directory. The wrapper is more than the cache's entry: both views hold it, the style registry draws from it, and the widget publisher bakes it. With it in WaveformLoading, drawing would depend on Decode and FileLoading.
+- **`waveform/Waveform` holds Vibe's C++ engine, and its Darwin part beside it.** The C++ came from Vibe's `Packages/WaveformCore` with its tests. Its headers sit beside its sources, and its `Package.swift` did not move. `AudioWaveform.h` and `.mm`, with `CodableAudioWaveform`, are to sit beside the C++ in the same piece. The wrapper is more than the cache's entry: both views hold it, the style registry draws from it, and the widget publisher bakes it. With it in WaveformLoading, drawing would depend on Decode and FileLoading.
 - **WaveformLoading's decodes do not go through FileLoading's claims.** The loader opens its own handle. So FileLoading's foreground rule, which yields background downloads to the open the user waits on, never stops a waveform decode of a local file. An app that analyzes many files schedules that itself (below).
 - **Artwork is inside `Metadata`.** The art is found during the tag parse and cached beside the tags. Nothing uses one without the other.
 
@@ -358,19 +358,19 @@ Vibe's audio, render, and signal-quality suites keep running against the moved c
 
 **The build audit, before a move deletes Vibe's source entries.** The pilot moved one plain source pair. Later pieces bring C++, platform categories, framework links, resources, third-party include collisions, and flags per configuration. So each move compares what every affected target compiles, before and after:
 
-- The compile inputs and their flags, for the macOS app in Debug, Release, and AppStore, the iOS app, the widget extension, the host-less tests, the render tests, WaveformCore's own tests, and the benchmark tool `perf.py` generates.
+- The compile inputs and their flags, for the macOS app in Debug, Release, and AppStore, the iOS app, the widget extension, the host-less tests, the render tests, the waveform engine's tests, and the benchmark tool `perf.py` generates.
 - A file the move promises unchanged is compared byte for byte.
 - The source list changes only by the moved files' paths.
 - Every affected target builds and passes, the x86_64 slice included. No Intel benchmarks are added.
 - The widget extension compiles no engine code, but the iOS app's widget publisher draws with the waveform wrapper and renderers. So after the waveform moves, the app must publish the same widget images.
-- WaveformCore's package keeps its owner and a path check. `perf.py` still builds old refs, whose package sits at Vibe's `Packages/WaveformCore`.
+- `perf.py` still builds old refs, whose waveform engine sits at Vibe's `Packages/WaveformCore`. So its check for the engine's headers searches there and in `vibe-libs/`.
 
 Preparing sources and changing behavior get separate evidence.
 
 ### When to switch shapes
 
 - **To static library targets**, when the test targets no longer compile production sources and two consumer targets in one project make the double compile cost real time. The template becomes `type: library.static`, apps change `templates:` to `dependencies:`, and every app and test target gets `OTHER_LDFLAGS: -ObjC`. **TRAP: without `-ObjC`, a static library silently drops category-only objects**, such as the cache-key category and every debug seam.
-- **To a Swift package**, only for outside users. Measure the decoders without `-O3` first. Add whole-file `#if TARGET_OS_OSX` guards to the platform halves, since a package compiles every file on every platform. Keep C++ out of public headers. Tag `0.x` until the API settles. `WaveformCore` keeps its own `Package.swift` throughout.
+- **To a Swift package**, only for outside users. Measure the decoders without `-O3` first. Add whole-file `#if TARGET_OS_OSX` guards to the platform halves, since a package compiles every file on every platform. Keep C++ out of public headers. Tag `0.x` until the API settles. The waveform engine's `Package.swift` did not move with the engine, so a package for it starts here.
 
 ## The boundary check
 
@@ -519,6 +519,8 @@ In this order, each its own move:
    - PlayQueue: its 3 files moved with their history (this repo's #30), their tests run here, and Vibe compiles them through the template. `RepeatMode.h` came with the queue, and Vibe's settings kept the modes' stored identifiers. It depends on nothing. Its tests run over rows of their own, since the queue reads an entry only through its key blocks.
    - Playlists: its 6 files moved with their history (this repo's #30), their tests run here, and Vibe compiles them through the template. It depends on AudioTypes and `core/Common`. Its tests read and write entries. Vibe keeps its rows made from entries, the session mirror, and the folder walk, which moves as FolderScan.
 7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. Controls' map row then drops macOS only, and the piece gains an iOS target. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
+   - Waveform: the 6 files of Vibe's `Packages/WaveformCore` moved with their history (this repo's #31), their tests run here, and Vibe compiles them through the template. The headers left the package's `include/`, since every consumer spells them by basename. `Package.swift` did not move, so `swift test` for this code ended with the move. The template links Accelerate and `libcompression` through linker flags, since its sources are all C++. Vibe's `AudioWaveform.h`, with `CodableAudioWaveform`, stays in Vibe for now.
+   - WaveformStyles, WaveformLoading, WaveformView, and Controls' indicators remain.
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file.
 9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move.
 
