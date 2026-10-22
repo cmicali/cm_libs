@@ -1,8 +1,8 @@
 //
 //  WaveformSummaryTests.mm
-//  VibeTests
+//  vibe-libs
 //
-//  WaveformCore's summary: the builder, the exact column reads, the loudest
+//  The waveform summary: the builder, the exact column reads, the loudest
 //  windows, the tent, the references and the archive.
 //
 
@@ -506,7 +506,7 @@ static const double kHitLevel = std::sqrt((1 + 2 * kQuietLevel * kQuietLevel) / 
     XCTAssertEqual(bands[0], 0);
 }
 
-// The widget bakes off main while a view reads on main, and the first tent
+// One reader may draw off main while a view reads on main. The first tent
 // read builds the running sums. Each round races a fresh summary's build.
 - (void)testTheTentIsTheSameOnEveryThread {
     auto make = [] {

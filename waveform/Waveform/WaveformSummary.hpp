@@ -1,6 +1,6 @@
 //
 //  WaveformSummary.hpp
-//  WaveformCore
+//  vibe-libs
 //
 //  A waveform summary: a mono mix's peaks and energy per bin, on a grid of
 //  absolute time, the reads every display is drawn from, and its archive.

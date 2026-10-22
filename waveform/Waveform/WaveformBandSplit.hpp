@@ -1,6 +1,6 @@
 //
 //  WaveformBandSplit.hpp
-//  WaveformCore
+//  vibe-libs
 //
 
 #pragma once
