@@ -232,8 +232,8 @@ static const double kSliderStep = 0.05;
 }
 
 // TRAP: the release sends the action even when the value did not move: the
-// volume control's drag hold is cleared only by an action whose current event
-// is the mouse-up (MainPlayerContentView.volumeSliderDidMove).
+// app's volume control clears its drag hold only on an action whose current
+// event is the mouse-up.
 - (void)mouseUp:(NSEvent *)event {
     if (_tracking) {
         _tracking = NO;
