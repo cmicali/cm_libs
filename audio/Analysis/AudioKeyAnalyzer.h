@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithSampleRate:(double)sampleRate;
 
-// Mono float32; see AudioWaveformMonoMix. Any frame count per call.
+// Mono float32, such as a waveform loader's mono mix. Any frame count per call.
 - (void)appendMonoSamples:(const float *)samples frameCount:(NSUInteger)frameCount;
 
 // The estimated key, or VibeMusicalKeyNone if undetectable. Call it once,
@@ -37,8 +37,8 @@ NS_ASSUME_NONNULL_BEGIN
 // analyzed content from equal temperament, in cents. A track produced at
 // A=440 sits near 0; a large offset means the chroma is being folded onto the
 // wrong semitones and the key estimate is unreliable. Measured before
-// deciding whether per-track tuning correction is worth building — see
-// Audio/Analysis/AGENTS.md.
+// deciding whether per-track tuning correction is worth building — see this
+// piece's AGENTS.md.
 @property (readonly) double tuningCents;
 
 @end
