@@ -2,10 +2,10 @@
 //  PINCache+VibeAudioCache.h
 //  Vibe
 //
-//  The disk-cache policy shared by the two PINDiskCache-backed stores,
-//  AudioTrackMetadataCache and AudioWaveformCache. One home stops the policies
-//  drifting: both key off the same file identity, through NSURL+Hash, and their
-//  entries should live and die on the same terms.
+//  The disk-cache policy shared by the app's PINDiskCache-backed stores, such
+//  as its tag cache and its waveform cache. One home stops the policies
+//  drifting: each keys off the same file identity, through NSURL+Hash, and
+//  their entries should live and die on the same terms.
 //
 
 #import <Foundation/Foundation.h>
