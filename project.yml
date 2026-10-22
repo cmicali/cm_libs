@@ -475,6 +475,44 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # waveform/WaveformLoading, tested on macOS. The tests drive the loader's
+  # and the cache's seams, the read-ahead's seam, and the coordinator's test
+  # seams, which compile only under DEBUG, so the bundle defines it in every
+  # configuration, the analyzer's Release build included. They write their
+  # own files. The test track, the file fixtures, and the read-ahead script
+  # come from Tests/Support. Verbose logging is on, as in Vibe's tests. The
+  # hang and gate bounds match Vibe's.
+  WaveformLoadingTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsWaveformLoading]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/waveform/WaveformLoading
+        excludes: ["**/*.md"]
+      - path: Tests/Support/VibeTestTrack.m
+      - path: Tests/Support/VibeReadAheadScript.m
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "DEBUG=1"
+          - "VIBE_VERBOSE_LOGGING=1"
+          - "VIBE_TEST_HANG_TIMEOUT=10"
+          - "VIBE_TEST_GATE_TIMEOUT=30"
+
+  # waveform/WaveformLoading built for iOS, where an app's scrubber loads
+  # waveforms through it.
+  WaveformLoading-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsWaveformLoading]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
@@ -704,6 +742,8 @@ schemes:
         Playlists-iOS: all
         WaveformTests: [test]
         Waveform-iOS: all
+        WaveformLoadingTests: [test]
+        WaveformLoading-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -728,6 +768,6 @@ schemes:
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, TagsTests,
-                PlayQueueTests, PlaylistsTests, WaveformTests, ControlsTests, SettingsWindowTests,
+                PlayQueueTests, PlaylistsTests, WaveformTests, WaveformLoadingTests, ControlsTests, SettingsWindowTests,
                 ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests,
                 DrFlacTests, DrWavTests, OggTests, VorbisTests]

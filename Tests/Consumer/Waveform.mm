@@ -4,11 +4,13 @@
 //  Summarizes a second of a 1 kHz tone at half scale, fed in blocks as a
 //  decode would. Reads its peaks and level back, round-trips it through the
 //  archive and through the cache entry an app files, and draws it 64 pixels
-//  wide as a coverage mask.
+//  wide as a coverage mask. Writes the tone as a WAV, loads it into a summary
+//  through the waveform loader, and reads its length and peaks back.
 //
 
 #import <Foundation/Foundation.h>
 #import "AudioWaveform.h"
+#import "AudioWaveformLoader.h"
 
 #include <algorithm>
 #include <cmath>
@@ -19,6 +21,7 @@
 #include "WaveformSummary.hpp"
 
 extern "C" BOOL ConsumerWaveformHolds(void);
+extern "C" BOOL ConsumerLoadsAWaveform(void);
 
 BOOL ConsumerWaveformHolds(void) {
     const double rate = 44100;
@@ -89,6 +92,45 @@ BOOL ConsumerWaveformHolds(void) {
             fprintf(stderr, "consumer: pixel column %d draws %08x at its edge and %08x at its centre\n", x, edge, centre);
             return NO;
         }
+    }
+    return YES;
+}
+
+// A second of the tone as a 16-bit mono WAV, its bytes written here, loaded
+// through the loader as an app's cache would load it.
+BOOL ConsumerLoadsAWaveform(void) {
+    const uint32_t rate = 44100;
+    const uint32_t frames = 44100;
+    NSMutableData *wav = [NSMutableData dataWithBytes:"RIFF" length:4];
+    uint32_t chunk = 36 + frames * 2, fmtSize = 16, byteRate = rate * 2, dataSize = frames * 2;
+    uint16_t pcm = 1, channels = 1, align = 2, bits = 16;
+    [wav appendBytes:&chunk length:4];
+    [wav appendBytes:"WAVEfmt " length:8];
+    [wav appendBytes:&fmtSize length:4];
+    [wav appendBytes:&pcm length:2];
+    [wav appendBytes:&channels length:2];
+    [wav appendBytes:&rate length:4];
+    [wav appendBytes:&byteRate length:4];
+    [wav appendBytes:&align length:2];
+    [wav appendBytes:&bits length:2];
+    [wav appendBytes:"data" length:4];
+    [wav appendBytes:&dataSize length:4];
+    for (uint32_t i = 0; i < frames; i++) {
+        int16_t sample = int16_t(std::lround(16384 * std::sin(2 * M_PI * 1000 * double(i) / rate)));
+        [wav appendBytes:&sample length:sizeof sample];
+    }
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:
+                      [NSUUID.UUID.UUIDString stringByAppendingPathExtension:@"wav"]];
+    [wav writeToFile:path atomically:YES];
+    CodableAudioWaveform *loaded = [[[AudioWaveformLoader alloc] init] load:path];
+    [NSFileManager.defaultManager removeItemAtPath:path error:NULL];
+    AudioWaveform *summary = loaded.waveform;
+    wavecore::Column whole = summary ? summary->column(0, double(frames)) : wavecore::Column();
+    if (!summary || !summary->isComplete() || summary->totalFrames() != frames || summary->sampleRate() != rate
+            || std::fabs(whole.hi - 0.5f) > 0.002f || std::fabs(whole.lo + 0.5f) > 0.002f) {
+        fprintf(stderr, "consumer: the loader read %lld frames, %.4f to %.4f\n",
+                summary ? (long long)summary->totalFrames() : -1LL, whole.lo, whole.hi);
+        return NO;
     }
     return YES;
 }

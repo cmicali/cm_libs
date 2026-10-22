@@ -48,9 +48,7 @@ PIECES = [
     # debug seams and simulators go with the class they open
     ("files/ShareLinks", "Vibe/Debug/Simulators/VibeFakeHTTP"),
     ("media/Metadata", "Vibe/Debug/Seams/AudioTrackMetadata"),
-    ("waveform/WaveformLoading", "Vibe/Debug/Seams/AudioWaveformCache+"),
     ("ui/Controls", "Vibe/Debug/Seams/EqualizerIndicatorView+"),
-    ("waveform/WaveformLoading", "Vibe/Debug/Oracles/AudioLoadTiming"),
     ("dev/DebugChannel", "Vibe/Debug/Channel/"),
     # files
     ("files/HTTP", "Vibe/Loading/Net/HTTPTransfer"),
@@ -63,7 +61,6 @@ PIECES = [
     ("media/Tags", "Vibe/Util/Categories/NSString+CPPStrings"),
     ("media/Metadata", "Vibe/Audio/Metadata/"),
     # waveform
-    ("waveform/WaveformLoading", "Vibe/Audio/Waveform/"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/Renderers/"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformTheme"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformZoomMath"),

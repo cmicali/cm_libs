@@ -250,6 +250,25 @@ targetTemplates:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/waveform/Waveform"]
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "Accelerate", "-lcompression"]
 
+  # A file decoded into a waveform summary, with observers on the same pass,
+  # cached on disk and shared between requests. It opens files through
+  # Decode's handle and FileLoading's materializer, reads the CUE window math
+  # and the playable-item protocol from AudioTypes, and files entries through
+  # DiskCache and PINCache. Its seams compile in every configuration. Each
+  # wraps its body in #if DEBUG, so a release build ships none of it.
+  #
+  # TRAP: an app that also takes VibeLibsTaglib lists this template first, as
+  # it would VibeLibsDecode, which this one lists.
+  VibeLibsWaveformLoading:
+    templates: [VibeLibsCommon, VibeLibsWaveform, VibeLibsAudioTypes, VibeLibsDecode, VibeLibsDiskCache,
+                VibeLibsFileLoading, VibeLibsPINCache]
+    sources:
+      - path: waveform/WaveformLoading
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/waveform/WaveformLoading"]
+
   # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
   # so the shared files it gains later move nothing.
   VibeLibsControls:
