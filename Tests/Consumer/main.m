@@ -16,10 +16,13 @@
 //  its usage back. Lists the output devices through the device manager and
 //  prints the default one's name, changing nothing. Writes a WAV of a ramp,
 //  opens it through the audio file handle, and reads its frames back exactly.
-//  Exits 0 when all thirteen hold.
+//  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
+//  would. Exits 0 when all fourteen hold.
 //
 
 #import <Foundation/Foundation.h>
+#import <math.h>
+#import "AudioBPMAnalyzer.h"
 #import "AudioFileHandle.h"
 #import "AudioFileMaterializationCoordinator.h"
 #import "AudioDeviceManager.h"
@@ -67,6 +70,26 @@
 @end
 
 // Runs main's loop until done says so, for at most ten seconds.
+// Thirty seconds of the analyzer tests' click track: a short decaying burst
+// on each beat over a quiet tone. Fed in 4096-frame blocks.
+static float ClickTrackTempo(double bpm) {
+    const double rate = 44100.0;
+    const size_t total = (size_t)(rate * 30.0);
+    const double period = 60.0 / bpm * rate;
+    float *audio = malloc(total * sizeof(float));
+    for (size_t i = 0; i < total; i++) {
+        double sinceBeat = fmod((double)i, period);
+        double click = exp(-sinceBeat / 200.0) * sin((double)i * 0.7);
+        audio[i] = (float)(0.9 * click + 0.05 * sin((double)i * 0.03));
+    }
+    AudioBPMAnalyzer *analyzer = [[AudioBPMAnalyzer alloc] initWithSampleRate:rate];
+    for (size_t offset = 0; offset < total; offset += 4096) {
+        [analyzer appendMonoSamples:audio + offset frameCount:MIN((size_t)4096, total - offset)];
+    }
+    free(audio);
+    return [analyzer finish];
+}
+
 static BOOL Settles(BOOL (^done)(void)) {
     NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:10];
     while (!done() && deadline.timeIntervalSinceNow > 0) {
@@ -476,6 +499,11 @@ int main(void) {
     if (!read) {
         fprintf(stderr, "consumer: the handle read %u frames (%s)\n", frames.frameLength,
                 readError.localizedDescription.UTF8String);
+        return 1;
+    }
+    float tempo = ClickTrackTempo(128.0);
+    if (fabsf(tempo - 128.0f) > 1.0f) {
+        fprintf(stderr, "consumer: the click track's tempo is %.2f\n", tempo);
         return 1;
     }
     printf("consumer OK\n");

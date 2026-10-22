@@ -77,7 +77,6 @@ PIECES = [
     # audio
     ("audio/DSP", "Vibe/Audio/FadeMath"),
     ("audio/DSP", "Vibe/Audio/AudioResampler"),
-    ("audio/DSP", "Vibe/Audio/Analysis/AnalysisFramerMath"),
     ("audio/FX", "Vibe/Audio/FX/"),
     ("audio/Analysis", "Vibe/Audio/Analysis/"),
     ("audio/AudioTypes", "Vibe/Audio/MusicalKey"),

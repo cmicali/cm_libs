@@ -136,6 +136,30 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # audio/Analysis, tested on macOS: the framer, and both analyzers over
+  # synthesized clicks and chords.
+  AnalysisTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsAnalysis]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/Analysis
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # audio/Analysis built for iOS. Key analysis is an app's choice per
+  # platform, so the piece builds on both.
+  Analysis-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsAnalysis]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # audio/OutputDevices, tested on macOS. The bundle compiles the Mac half. The
   # iOS half's rules are header-only and Foundation-only, so their tests run
   # here too. Verbose logging is on, as in Vibe's tests, so the HAL event log
@@ -518,6 +542,8 @@ schemes:
         AudioTypes-iOS: all
         DSPTests: [test]
         DSP-iOS: all
+        AnalysisTests: [test]
+        Analysis-iOS: all
         OutputDevicesTests: [test]
         OutputDevices-iOS: all
         FXTests: [test]
@@ -552,6 +578,7 @@ schemes:
         VorbisTests: [test]
         Vorbis-iOS: all
     test:
-      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, OutputDevicesTests, FXTests, MeterTests,
-                FileLoadingTests, DiskCacheTests, DecodeTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
+      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
+                FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, ControlsTests,
+                SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
                 R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
