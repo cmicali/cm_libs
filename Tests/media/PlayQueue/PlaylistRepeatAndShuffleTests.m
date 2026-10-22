@@ -401,9 +401,9 @@ static void AssertPermutation(Playlist *playlist, NSArray<TestRow *> *walk) {
     XCTAssertTrue([rest containsObject:incoming]);
 }
 
-// At a cycle's last entry under Repeat All the gapless splice is armed on the
-// next cycle's first; a convert swap anywhere must not reshuffle that cycle out
-// from under it, and swapping the armed row itself hands its slot on.
+// At a cycle's last entry under Repeat All, a gapless splice is armed on the
+// next cycle's first. A file's replacement anywhere must not reshuffle that
+// cycle out from under it. Replacing the armed row itself hands its slot on.
 - (void)testTheConvertSwapKeepsTheNextCycleTheSpliceArmedOn {
     for (uint64_t seed = 1; seed <= 20; seed++) {
         Playlist *playlist = ShuffledPlaylist(6, seed);

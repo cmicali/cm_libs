@@ -1,6 +1,6 @@
 //
 //  RepeatMode.h
-//  Vibe
+//  vibe-libs
 //
 //  What follows the end of a track or of the playlist. Its own header because
 //  Playlist takes it as a model property and may not import a setting. An app
