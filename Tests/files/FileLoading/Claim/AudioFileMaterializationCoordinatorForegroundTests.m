@@ -1,6 +1,7 @@
 
 #import "AudioFileMaterializationCoordinatorTestCase.h"
 #import "CloudTransferRegistry.h"
+#import "VibeTestNegativeWindow.h"
 
 @interface AudioFileMaterializationCoordinatorForegroundTests : AudioFileMaterializationCoordinatorTestCase
 @end
@@ -239,7 +240,7 @@
     }]);
     XCTAssertFalse(refreshOperation.started,
                    @"a refresh with no waiters must never enter its operation");
-    [self waitForExpectations:@[cancelledSilent] timeout:0.1];
+    [self waitForExpectations:@[cancelledSilent] timeout:kVibeTestNegativeWindow];
 }
 
 - (void)testForegroundRiseDuringRefreshYieldsFreshDatalessMetadata {

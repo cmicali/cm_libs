@@ -1,7 +1,7 @@
 //
-// The resampler alone: its length, its gain, and what it refuses. Vibe holds
-// its quality to its bounds through its voice bus, at every rate pair its
-// player meets (Vibe's ResamplerQualityTests).
+// The resampler alone: its length, its gain, and what it refuses. A player's
+// quality tests hold its quality to its bounds through the player's voice bus,
+// at every rate pair the player meets.
 //
 
 #import <XCTest/XCTest.h>

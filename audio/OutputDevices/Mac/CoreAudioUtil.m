@@ -18,7 +18,7 @@ static _Atomic int VibeOverdueReads;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         // No QoS of its own: a read runs at its caller's, which waits for it.
-        queue = dispatch_queue_create("com.commonwealthrecordings.Vibe.halReads", DISPATCH_QUEUE_SERIAL);
+        queue = dispatch_queue_create("vibe-libs.outputdevices.halreads", DISPATCH_QUEUE_SERIAL);
     });
     dispatch_semaphore_t done = dispatch_semaphore_create(0);
     dispatch_async(queue, ^{

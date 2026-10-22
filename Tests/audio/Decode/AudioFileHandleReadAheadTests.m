@@ -8,6 +8,7 @@
 //
 
 #import "AudioFileHandleStreamingTestCase.h"
+#import "VibeTestNegativeWindow.h"
 
 @interface AudioFileHandleReadAheadTests : AudioFileHandleStreamingTestCase
 @end
@@ -210,7 +211,7 @@ static AVAudioFramePosition VibeFrameInBlock(uint64_t index) {
     [script releaseStalls];
     XCTAssertTrue([self eventually:^BOOL { return handle.bytesWritten == 3 * block; }],
                   @"the read in flight lands: %llu", handle.bytesWritten);
-    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.3]];
+    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:kVibeTestNegativeWindow]];
     XCTAssertEqual(handle.bytesWritten, 3 * block, @"nothing more while interrupted");
     [handle allowReads];
     uint64_t size = [NSData dataWithContentsOfURL:source].length;
@@ -369,8 +370,8 @@ static AVAudioFramePosition VibeFrameInBlock(uint64_t index) {
         waitError = openError;
         dispatch_semaphore_signal(waitedReturned);
     });
-    XCTAssertNotEqual(dispatch_semaphore_wait(waitedReturned, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC))), 0,
-                      @"the ninth waits");
+    dispatch_time_t window = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kVibeTestNegativeWindow * NSEC_PER_SEC));
+    XCTAssertNotEqual(dispatch_semaphore_wait(waitedReturned, window), 0, @"the ninth waits");
     XCTAssertEqual(AudioFileHandle.debugLiveReadAheads, 8, @"no thread made while it waits");
     XCTAssertNotNil([[AudioFileHandle alloc] initForReading:url error:NULL], @"the direct road never waits");
 
@@ -540,7 +541,7 @@ static AVAudioFramePosition VibeFrameInBlock(uint64_t index) {
     // Opened while the first is busy. It is no play yet, and fetches its floor.
     AudioFileHandle *second = [self openAtTheFloor:[self hiresWAVNamed:@"second.wav"]];
     [second holdStream];
-    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.3]];
+    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:kVibeTestNegativeWindow]];
     XCTAssertEqual([script readsOf:@"second.wav" at:32 * block], 0u, @"held back while the first fetches");
     [script releaseStalls];
     XCTAssertTrue([self eventually:^BOOL { return [script readsOf:@"second.wav" at:40 * block] == 1; }]);
@@ -557,7 +558,7 @@ static AVAudioFramePosition VibeFrameInBlock(uint64_t index) {
         __unused AudioFileHandle *first = [self busyPlayNamed:@"first.wav"];
         second = [self openAtTheFloor:[self hiresWAVNamed:@"second.wav"]];
         [second holdStream];
-        [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.3]];
+        [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:kVibeTestNegativeWindow]];
         XCTAssertEqual([script readsOf:@"second.wav" at:32 * block], 0u, @"held back while the first fetches");
     }
     XCTAssertEqual(AudioFileHandle.debugOrphanedReadAheads, 1, @"the first's thread is still in its read");
@@ -580,7 +581,7 @@ static AVAudioFramePosition VibeFrameInBlock(uint64_t index) {
     XCTAssertTrue([self await:done], @"the read never waits for the first");
     [self assertPCM:pcm equals:[self referenceOf:source from:frame frames:4096] context:@"held back"];
     XCTAssertEqual([script readsOf:@"second.wav" at:40 * block], 1u);
-    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.3]];
+    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:kVibeTestNegativeWindow]];
     XCTAssertEqual([script readsOf:@"second.wav" at:41 * block], 0u, @"nothing ahead of the read");
 }
 

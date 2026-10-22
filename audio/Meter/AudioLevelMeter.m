@@ -419,7 +419,7 @@ static double VibeLevelMeterSampleSeconds(VibeLevelMeter *meter, const AudioTime
     }
     return @{@"status": @"snapshot busy", @"request": @(request)};
 #else
-    return @{@"status": @"beta instrumentation disabled"};
+    return @{@"status": @"verbose logging off"};
 #endif
 }
 
