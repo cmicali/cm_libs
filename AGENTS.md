@@ -2,7 +2,7 @@
 
 Guidance for any coding agent working in this repository.
 
-vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first nineteen pieces are here**: `core/Common`, `core/Graphics`, `files/FileLoading`, `files/DiskCache`, `audio/AudioTypes`, `audio/DSP`, `audio/OutputDevices`, `ui/Controls`, `ui/SettingsWindow`, `ui/Shortcuts`, and nine vendored libraries under `third_party/`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
+vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first twenty-one pieces are here**: `core/Common`, `core/Graphics`, `files/FileLoading`, `files/DiskCache`, `audio/AudioTypes`, `audio/DSP`, `audio/OutputDevices`, `audio/FX`, `audio/Meter`, `ui/Controls`, `ui/SettingsWindow`, `ui/Shortcuts`, and nine vendored libraries under `third_party/`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
 
 ## Building
 
