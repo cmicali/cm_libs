@@ -221,24 +221,30 @@ targetTemplates:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/Playlists"]
 
   # The waveform engine, in C++17, so an app builds C++ as C++17 or later.
-  # Nothing here logs, so it lists no template.
-  # Its summary and band split are a decode's work per sample, and its raster
-  # every picture's. So they are optimized in every configuration, as the
-  # decoders are, and a Debug build loads and draws as a shipped one does.
+  # Beside it, in Objective-C++, AudioWaveform.mm names the summary for an
+  # app and archives it as a cache entry. It lists Common for that file's log.
+  # The C++ summary and band split are a decode's work per sample, and its
+  # raster every picture's. So they are optimized in every configuration, as
+  # the decoders are, and a Debug build loads and draws as a shipped one does.
   # -O3, because -Os vectorizes none of its loops. Measured in Vibe, it cut a
   # cache read's CPU by a third and 3-Band's load frames by a quarter, for
-  # 16 KB of code. Every picture stayed byte for byte the same.
+  # 16 KB of code. Every picture stayed byte for byte the same. The cache
+  # entry takes the target's own flags, as it did in Vibe.
   #
   # TRAP: it links Accelerate and libcompression itself. Its sources are all
-  # C++, which Xcode builds with -fno-cxx-modules, so their framework imports
-  # link nothing on their own. It passes linker flags, not sdk dependencies,
-  # since XcodeGen refuses a target that lists the same sdk twice, and an app
-  # may list Accelerate too.
+  # C++ or Objective-C++, which Xcode builds with -fno-cxx-modules, so their
+  # framework imports link nothing on their own. It passes linker flags, not
+  # sdk dependencies, since XcodeGen refuses a target that lists the same sdk
+  # twice, and an app may list Accelerate too.
   VibeLibsWaveform:
+    templates: [VibeLibsCommon]
     sources:
       - path: waveform/Waveform
-        excludes: ["**/*.md", "${excludedPlatform}/**"]
+        excludes: ["**/*.md", "${excludedPlatform}/**", "**/*.mm"]
         compilerFlags: ["-O3"]
+      - path: waveform/Waveform
+        includes: ["**/*.mm"]
+        excludes: ["${excludedPlatform}/**"]
     settings:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/waveform/Waveform"]

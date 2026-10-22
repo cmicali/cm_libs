@@ -1,12 +1,12 @@
 # waveform/Waveform
 
-The waveform engine: the summary of an audio stream, the reads every display is drawn from, the raster that draws them, and the archive. It is plain C++17 over Accelerate and Compression. It depends on no other piece, and nothing here logs. **Today it holds what Vibe moved here** from its `Packages/WaveformCore`: `WaveformSummary`, `WaveformBandSplit`, and `WaveformRaster`. It names no app type. The rest of the waveform pieces follow in Phase 3's step 7 (`docs/plan.md`).
+The waveform engine: the summary of an audio stream, the reads every display is drawn from, the raster that draws them, and the archive. The engine is plain C++17 over Accelerate and Compression: `WaveformSummary`, `WaveformBandSplit`, and `WaveformRaster`, which were Vibe's `Packages/WaveformCore`. Beside it, in Objective-C++, `AudioWaveform.h` names the summary for an app, mixes a decode's channels to mono, and archives the summary as a cache entry. It names no app type. It depends on `core/Common` alone, for that file's log. The rest of the waveform pieces follow in Phase 3's step 7 (`docs/plan.md`).
 
-The headers sit beside the sources, and each states its contract. The namespace is `wavecore`, a name no variable takes, so a local `waveform` cannot shadow it. In Vibe the summary is `AudioWaveform`, a name Vibe gives it in its own `AudioWaveform.h`.
+The headers sit beside the sources, and each states its contract. The namespace is `wavecore`, a name no variable takes, so a local `waveform` cannot shadow it. `AudioWaveform` is the summary's name outside the engine.
 
 ## How an app uses it
 
-List `VibeLibsWaveform`. The template compiles the sources at `-O3` in every configuration, searches the headers, and links Accelerate and `libcompression`. The headers are C++, so only C++ and Objective-C++ can include them. **The app builds C++ as C++17 or later.** XcodeGen's default is gnu++14, where `std::clamp` is missing and the sources fail to compile.
+List `VibeLibsWaveform`. The template compiles the C++ sources at `-O3` in every configuration, searches the headers, and links Accelerate and `libcompression`. `AudioWaveform.mm` takes the target's own flags. The headers are C++, so only C++ and Objective-C++ can include them. **The app builds C++ as C++17 or later.** XcodeGen's default is gnu++14, where `std::clamp` is missing and the sources fail to compile.
 
 ```cpp
 #include "WaveformSummary.hpp"
@@ -71,9 +71,21 @@ Rows are written from the top with a signed stride. So a caller whose layer show
 
 **LZFSE is Apple's, from the system's Compression library, chosen by measurement.** zstd, lz4, brotli, and zlib-ng were each built and run on the archive's own planes, before they were split, from real tracks: a 24-s loop up to a 66-minute mix. Every codec landed between 0.70 and 0.90 of the raw size, because the peaks are close to noise. zstd at level 19, its window capped so the compressor stays near 5 MB, was 2.4 to 4.5% smaller than LZFSE and decoded faster. But it adds about 420 KB of code to each app. LZMA and brotli at their highest levels were 2% smaller again, but decoded 5 to 35 times slower. lz4 and zlib-ng were larger than LZFSE. LZFSE decodes a typical track's archive in about 0.2 ms with no third-party code. The codec is one call in each direction if the trade changes.
 
+## The name, the mono mix, and the cache entry
+
+`AudioWaveform.h` is the Objective-C++ face of the engine.
+
+- **`AudioWaveform`** is `wavecore::Summary` under the name an app's code uses.
+- **`AudioWaveformMonoMix`** averages a decode's interleaved channels into one. The summary and every analyzer on the same pass read that one mix. Mono input comes back as the buffer itself, with no copy.
+- **`CodableAudioWaveform`** is the cache entry. It owns the summary, and it carries the results of the observers that rode the summary's decode, by identifier.
+
+**The entry keeps the summary's own archive under the `summary` key**, beside the results. Only a complete summary is filed, and an incomplete one is refused on read. **The entry describes itself.** Its results are one dictionary from identifier to result, under the `results` key. That dictionary is an archive of its own, written with secure coding and read with an allow list of the property-list classes. So a reader needs no list of names, and an entry holds only what its decode ran. Results that will not read reject the entry, as a bad summary does. The entry checks only that a result is a property list. What a value means is its observer's to read.
+
+**`kCodableAudioWaveformVersion` is the entry's format**, 7 today. It is encoded in every entry, and a cache may name its store after it, so both move together. An entry of another version is refused. Format 6 named a tempo and a key in fields of their own, so a format 6 entry is a miss like any older one. **An observer is versioned by its identifier, never by this number.** A changed algorithm takes a new identifier, and old entries then lack its result.
+
 ## Tests
 
-`Tests/waveform/Waveform/` holds the summary's tests and the raster's, which came from Vibe with the code. They cover the bin sizes, the builder against a summary built whole, the snapshots, exact columns at every range, the loudest windows, the tent, deep zoom's reads and the blocks a read lacks, the archive's round trip and its refusals, and the raster's steps, shares, coverage, and paint. The minimal consumer summarizes a tone and draws it, as an app would.
+`Tests/waveform/Waveform/` holds the summary's tests and the raster's, which came from Vibe with the code. They cover the bin sizes, the builder against a summary built whole, the snapshots, exact columns at every range, the loudest windows, the tent, deep zoom's reads and the blocks a read lacks, the archive's round trip and its refusals, and the raster's steps, shares, coverage, and paint. `AudioWaveformMonoMixTests` and `CodableAudioWaveformTests` came from Vibe with `AudioWaveform.h`. They cover the mix's pass-through and its average of two or more channels, and the entry's round trip, its refusals, and the results it files. The minimal consumer summarizes a tone, files it as a cache entry, and draws it, as an app would.
 
 `swift test` ran these tests in Vibe while the code was a Swift package. That ended with the move. They run here, in `WaveformTests`.
 
