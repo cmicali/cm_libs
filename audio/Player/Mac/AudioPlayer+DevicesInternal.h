@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+DevicesInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The macOS player's private device surface: the output-device ivars, and
 //  the queue-side methods of (DevicesInternal) and (BitPerfectInternal) that
@@ -175,7 +175,7 @@ static const NSTimeInterval kDeviceReadWaitSeconds = 0.5;
 - (void)acquireExclusiveOutputOnQueue;
 - (void)releaseExclusiveOutputOnQueue;
 
-// Computes the report from its owners and publishes the copy the shell
+// Computes the report from its owners and publishes the copy the app
 // reads, announcing it to the delegate when it differs. Its edges are
 // refreshOutputAudioActiveOnQueue (every state publication and voice end),
 // the end of a device switch, the two hog edges, the mode toggle, a

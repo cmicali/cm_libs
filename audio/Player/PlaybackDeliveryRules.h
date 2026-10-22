@@ -1,6 +1,6 @@
 //
 //  PlaybackDeliveryRules.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Foundation/Foundation.h>
@@ -9,8 +9,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Previous moves to the previous row. On the first row it restarts the
-// loaded track instead. Both shells' Previous, the mac's menu item and the
-// system's Previous command use this, so they agree. The current track is
+// loaded track instead. Every Previous an app offers should use this, the
+// system's Previous command included, so they agree. The current track is
 // read too: stop is asynchronous, so a publish right after a close still
 // reads a player that is not stopped.
 static inline BOOL VibePlaybackPreviousIsAvailable(BOOL hasPreviousTrack, BOOL hasCurrentTrack,
@@ -26,9 +26,9 @@ static inline BOOL VibePlaybackSeekSettlementIsCurrent(
     return soughtTrack ? soughtTrack == playlistTrack : playerIsStopped;
 }
 
-// The shell defers its metadata sweep until playback settles, with a fallback
-// timer. Consume the pending work once, regardless of which arrives first;
-// an older timer must not consume a newer open/append's pending sweep.
+// An app may defer its metadata sweep until playback settles, with a fallback
+// timer. Consume the pending work once, whichever arrives first. An older
+// timer must not consume a newer open's or append's pending sweep.
 static inline BOOL VibePlaybackConsumePendingMetadataLoad(
         BOOL *pending, NSUInteger capturedMetadataLoadGeneration,
         NSUInteger currentMetadataLoadGeneration) {

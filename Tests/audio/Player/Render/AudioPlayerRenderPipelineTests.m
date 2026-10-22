@@ -37,7 +37,7 @@
     NSData *rest=[reference subdataWithRange:NSMakeRange(72000*8,24000*8)];
     [self assertReference:rest capture:[self renderSeconds:0.6] skip:0 tolerance:0];
 }
-// Every way an effect is engaged — the mac's keys, the boost, the pad's cutoff
+// Every way an effect is engaged — the toggles, the boost, a pad's cutoff
 // and sends, an off landing mid-sweep, a drag — rests once released, and at
 // rest the file replays exactly with no unit rendered. A low kill parked at the
 // floor instead of rested is a resonant high-pass still lifting the sub-bass.
@@ -57,7 +57,7 @@
         @"low kill boosted": ^(AudioFX *fx) { fx.lowKillBoostActive = NO; fx.lowKillEnabled = NO; },
         @"reverb": ^(AudioFX *fx) { fx.reverbSendEnabled = NO; },
         @"delays": ^(AudioFX *fx) { fx.delaySendEnabled = NO; fx.shortDelaySendEnabled = NO; },
-        // PlaybackController's lift: the corner, off on both axes.
+        // A pad's lift: the corner, off on both axes.
         @"pad corner": ^(AudioFX *fx) {
             fx.lowKillCutoffHz = VibeFXPadLowCutHz(0); fx.reverbSendLevel = VibeFXPadReverbLevel(0); fx.delaySendLevel = VibeFXPadDelayLevel(0);
         },
@@ -257,7 +257,7 @@
     NSUInteger refusals = [_player.debugRenderCounts[@"renderRefusals"] unsignedIntegerValue];
     @autoreleasepool { [self render:256]; } // the render left; the drain after this one runs the parked teardowns
     XCTAssertEqual([_player.debugRenderCounts[@"renderLeaveWork"] unsignedIntegerValue], 0u);
-    // The beta signal probe's poll holds the old meter until its next 100 ms
+    // The verbose-logging signal probe's poll holds the old meter until its next 100 ms
     // tick of the pump's clock finds it removed; nothing else may.
     @autoreleasepool { [self render:9600]; }
     XCTAssertNil(tap, @"the meter outlived the render it waited for");
@@ -329,7 +329,7 @@
     AudioDevice *a = [[AudioDevice alloc] initWithName:@"A" uid:@"a" deviceId:1 isSystemDefault:YES transportType:kAudioDeviceTransportTypeVirtual];
     AudioDevice *b = [[AudioDevice alloc] initWithName:@"B" uid:@"b" deviceId:2 isSystemDefault:NO transportType:kAudioDeviceTransportTypeVirtual];
     AudioDeviceManager *devices = [[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[a, b]; } retryScheduler:nil];
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method method = class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance));
     IMP replacement = imp_implementationWithBlock(^AudioDeviceManager *(id cls) { return devices; });
     IMP original = method_setImplementation(method, replacement);
@@ -391,7 +391,7 @@
     // Replace only the device I/O boundaries; the real rebuild and PCM path run.
     // The bind retry is the one timer among them: two real seconds out, it
     // reports an unpublished default again, into the replay of a run that slow.
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(systemDefaultOutputDeviceID)),

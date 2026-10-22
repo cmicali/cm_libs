@@ -1,8 +1,8 @@
 //
 //  AudioVoiceBus.h
-//  Vibe
+//  vibe-libs
 //
-//  Vibe's own playback core: decode, ring, gain and mix, feeding the render
+//  The player's own playback core: decode, ring, gain and mix, feeding the render
 //  pipeline. A VOICE is one file being rendered — a decoder filling a
 //  ring buffer, a gain with at most one pending ramp, an optional queued
 //  successor file that continues gaplessly at the boundary. The bus mixes

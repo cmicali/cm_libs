@@ -1,6 +1,6 @@
 //
 //  AudioVoiceBusRender.m
-//  Vibe
+//  vibe-libs
 //
 //  The audio thread's side of the bus: VibeVoiceBusRender and its mix
 //  helpers. Plain C over the mix (AudioVoiceBusInternal.h).

@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+Pipeline.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioPlayer+Pipeline.h"
@@ -541,7 +541,7 @@ static const NSTimeInterval kSlowOutputStartLogThresholdSeconds = 0.25;
     if (![self renderingOnQueue]) {
         // TRAP: only the manual pump may start without an output unit;
         // otherwise Playing and didStartPlaying: publish with no callback to
-        // advance the voice, and the shell gets neither audio nor an error.
+        // advance the voice, and the delegate gets neither audio nor an error.
         atomic_store_explicit(&_masterBus->volumeSnap, 1, memory_order_release);
         atomic_store_explicit(&_masterBus->gate, 1, memory_order_seq_cst);
         NSError *error = nil;
@@ -615,8 +615,8 @@ static const NSTimeInterval kSlowOutputStartLogThresholdSeconds = 0.25;
             return;
         }
         [strongSelf stopOutputOnQueue];
-        // On iOS the release returns with the unit's stop landed, which is
-        // what lets the shell release the session on the edge below.
+        // On iOS the release returns with the unit's stop landed. That lets
+        // the app release the session on the edge below.
         [strongSelf releaseIdleOutputUnitOnQueue];
         [strongSelf publishOutputIdleOnQueue:YES];
     }];

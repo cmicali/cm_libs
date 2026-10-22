@@ -1,6 +1,6 @@
 //
 //  PlaylistFileTests.m
-//  VibeTests
+//  vibe-libs
 //
 
 #import <XCTest/XCTest.h>
@@ -698,7 +698,7 @@ static NSURL *Directory(NSString *path) {
 
 #pragma mark - entriesInM3UData:
 
-// The session mirror's read: nothing is stat'd.
+// An app's own saved list reads with nothing stat'd.
 - (void)testM3UDataWrittenAbsoluteReadsBackThroughRowsInM3UData {
     NSArray<NSString *> *paths = @[@"/Music/A/x.mp3", @"/Music/A/disc2/y.flac", @"/Music/A/#1 hit.mp3",
                                    @"/Music/A/ z.wav", @"/Music/A/a\nb.mp3", @"/Música/Jóga 🎧.mp3"];
@@ -727,7 +727,7 @@ static NSURL *Directory(NSString *path) {
 
 #pragma mark - Cue rows in M3U
 
-// VLC's window for other players, then Vibe's own line, before the path.
+// VLC's window for other players, then the #VIBE-CUE line, before the path.
 - (void)testACueRowIsWrittenWithItsWindowAndItsVibeLine {
     PlaylistEntry *row = CueRowAt(@"/Music/mix.flac", 4500, 9000, @"Two", @"DJ", @"/Music/mix.cue", 2);
     NSString *text = M3UText(@[row], nil);

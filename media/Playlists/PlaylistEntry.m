@@ -1,6 +1,6 @@
 //
 //  PlaylistEntry.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlaylistEntry.h"

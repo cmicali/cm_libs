@@ -1,6 +1,6 @@
 //
 //  WaveformRaster.hpp
-//  WaveformCore
+//  vibe-libs
 //
 //  Drawing a summary's columns onto device pixels: the zoom steps they are
 //  read at, the window of columns a view needs, and exact coverage of one

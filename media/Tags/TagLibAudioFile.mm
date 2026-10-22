@@ -1,6 +1,6 @@
 //
 //  TagLibAudioFile.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "TagLibAudioFile.h"
@@ -30,7 +30,8 @@ namespace {
 #if !defined(NDEBUG)
 
 // TagLib's listener writes to std::cerr unsynchronized, so two workers race
-// on the stream (TSan). App-side so a re-copy of TagLib cannot drop it.
+// on the stream (TSan). The fix lives here, outside TagLib's copy, so a
+// re-copy of TagLib cannot drop it.
 // Release never gets here: NDEBUG makes TagLib::debug() a no-op.
 class VibeTagLibDebugListener : public TagLib::DebugListener {
 public:
@@ -46,9 +47,9 @@ public:
 // A file read through the caller's byte-range reader. The parse fetches the
 // blocks TagLib reads instead of the whole file. A remote reader's server must
 // honor ranges to avoid skipped bytes. Fetched in aligned blocks, one request per run of missing blocks, cached for
-// the stream's life. TRAP: a failed fetch THROWS, and loadFromURL:'s barrier
-// turns that into a failed parse; returning short would let TagLib build a
-// tag from bytes that were never read.
+// the stream's life. TRAP: a failed fetch THROWS. The caller's try around
+// its reads turns that into a failed parse. Returning short would let TagLib
+// build a tag from bytes that were never read.
 class VibeRangedStream : public TagLib::IOStream {
 public:
     VibeRangedStream(NSURL *url, VibeTagByteRangeRead read, TagLib::offset_t length)
@@ -186,9 +187,9 @@ TagLibAudioFile::TagLibAudioFile(const char *path, bool readProperties, VibeTagB
 }
 
 // TRAP: FLAC::File takes a stream with "fLaC" anywhere near its start,
-// which FLAC in Ogg carries in its first page. Playback refuses that
-// file at the parser open (AudioFileHandle.m), so it must never parse as
-// FLAC here: it is a failed parse, as its play is.
+// which FLAC in Ogg carries in its first page. audio/Decode's handle refuses
+// that file at the parser open (AudioFileHandle.m). So it must never parse as
+// FLAC here. It is a failed parse, as its play is.
 bool TagLibAudioFile::isOgg(TagLib::IOStream *stream) {
     return TagLib::Utils::readHeader(stream, 4, false).startsWith("OggS");
 }
