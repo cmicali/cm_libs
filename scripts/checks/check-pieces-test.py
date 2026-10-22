@@ -45,25 +45,32 @@ def replace(root, path, old, new):
 HEADER = "core/Common/VibeMacros.h"
 SOURCE = "audio/DSP/AudioVarispeed.m"
 OTHER_APP = "vibe" + " " + "pro"
+# The macOS-only cases make audio/Meter macOS only, since no piece depends on
+# it. A piece another piece's iOS target reaches would fail on that target.
+METER_SOURCE = "audio/Meter/AudioLevelMeter.m"
+METER_ROW = "| audio/Meter | nothing |"
 DSP_ROW = "| audio/DSP | third_party/r8brain |"
-DSP_IOS = """  # audio/DSP built for iOS, so an AppKit leak fails here.
-  DSP-iOS:
+METER_IOS = """  # audio/Meter built for iOS, with its probe of the render seam, which only
+  # tests import.
+  Meter-iOS:
     type: library.static
     platform: iOS
-    templates: [VibeLibsDSP]
+    templates: [VibeLibsMeter]
     templateAttributes:
       excludedPlatform: Mac
+    sources:
+      - path: Tests/audio/Meter/MeterProbe.m
 
 """
 COMMON_IOS_TEMPLATES = "    templates: [VibeLibsCommon]\n    templateAttributes:\n      excludedPlatform: Mac"
 
 
 def mac_only(root):
-    """audio/DSP becomes macOS only, the way a shell piece arrives: the map
+    """audio/Meter becomes macOS only, the way a shell piece arrives: the map
     row says so, and the piece has no iOS target."""
-    replace(root, "docs/plan.md", DSP_ROW, "| audio/DSP | third_party/r8brain, macOS only |")
-    replace(root, "project.yml", DSP_IOS, "")
-    replace(root, "project.yml", "        DSP-iOS: all\n", "")
+    replace(root, "docs/plan.md", METER_ROW, "| audio/Meter | nothing, macOS only |")
+    replace(root, "project.yml", METER_IOS, "")
+    replace(root, "project.yml", "        Meter-iOS: all\n", "")
 
 
 def ios_target_listing(root, listed):
@@ -146,23 +153,23 @@ CASES = [
      lambda r: append(r, "README.md", "\nVibeProbe\n"),
      None),
     ("a macOS-only piece given an iOS target",
-     lambda r: replace(r, "docs/plan.md", DSP_ROW, "| audio/DSP | third_party/r8brain, macOS only |"),
-     "DSP-iOS builds for iOS and lists VibeLibsDSP, but audio/DSP is macOS only"),
+     lambda r: replace(r, "docs/plan.md", METER_ROW, "| audio/Meter | nothing, macOS only |"),
+     "Meter-iOS builds for iOS and lists VibeLibsMeter, but audio/Meter is macOS only"),
     ("an iOS target listing a macOS-only template",
-     lambda r: ios_target_listing(r, "VibeLibsDSP"),
-     "Common-iOS builds for iOS and lists VibeLibsDSP, but audio/DSP is macOS only"),
+     lambda r: ios_target_listing(r, "VibeLibsMeter"),
+     "Common-iOS builds for iOS and lists VibeLibsMeter, but audio/Meter is macOS only"),
     ("an iOS target reaching a macOS-only template through a stack",
-     lambda r: (append(r, "vibe-libs.yml", "\n  VibeLibsShell:\n    templates: [VibeLibsDSP]\n"),
+     lambda r: (append(r, "vibe-libs.yml", "\n  VibeLibsShell:\n    templates: [VibeLibsMeter]\n"),
                 ios_target_listing(r, "VibeLibsShell")),
-     "Common-iOS builds for iOS and reaches VibeLibsDSP through VibeLibsShell, but audio/DSP is macOS only"),
+     "Common-iOS builds for iOS and reaches VibeLibsMeter through VibeLibsShell, but audio/Meter is macOS only"),
     ("a macOS-only piece with an iOS/ half",
-     lambda r: (mac_only(r), write(r, "audio/DSP/iOS/Thing.m", "int VibeThing(void) { return 0; }\n")),
-     "audio/DSP is macOS only and has no iOS/ half"),
+     lambda r: (mac_only(r), write(r, "audio/Meter/iOS/Thing.m", "int VibeThing(void) { return 0; }\n")),
+     "audio/Meter is macOS only and has no iOS/ half"),
     ("a macOS-only piece with a Mac/ half",
-     lambda r: (mac_only(r), write(r, "audio/DSP/Mac/Thing.m", "int VibeThing(void) { return 0; }\n")),
+     lambda r: (mac_only(r), write(r, "audio/Meter/Mac/Thing.m", "int VibeThing(void) { return 0; }\n")),
      None),
     ("a macOS-only piece importing AppKit with no guard",
-     lambda r: (mac_only(r), append(r, SOURCE, "\n#import <AppKit/AppKit.h>\n")),
+     lambda r: (mac_only(r), append(r, METER_SOURCE, "\n#import <AppKit/AppKit.h>\n")),
      None),
     ("a first-party template searching third_party/",
      lambda r: replace(r, "vibe-libs.yml", '"$(VIBE_LIBS_ROOT)/audio/DSP"]', '"$(VIBE_LIBS_ROOT)/audio/DSP", "$(VIBE_LIBS_ROOT)/third_party"]'),

@@ -136,6 +136,88 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # audio/OutputDevices, tested on macOS. The bundle compiles the Mac half. The
+  # iOS half's rules are header-only and Foundation-only, so their tests run
+  # here too. Verbose logging is on, as in Vibe's tests, so the HAL event log
+  # compiles and its listener is tested. The hang and gate bounds match Vibe's.
+  OutputDevicesTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsOutputDevices]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/OutputDevices
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "VIBE_VERBOSE_LOGGING=1"
+          - "VIBE_TEST_HANG_TIMEOUT=10"
+          - "VIBE_TEST_GATE_TIMEOUT=30"
+
+  # audio/OutputDevices built for iOS: its iOS half, the audio session.
+  OutputDevices-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsOutputDevices]
+    templateAttributes:
+      excludedPlatform: Mac
+
+  # audio/FX, tested on macOS. The chain's render tests stay in Vibe until its
+  # player moves, since they run over the player's manual render pump.
+  FXTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsFX]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/FX
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # audio/FX built for iOS, with its probe of the seam, which only tests import.
+  FX-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsFX]
+    templateAttributes:
+      excludedPlatform: Mac
+    sources:
+      - path: Tests/audio/FX/FXProbe.m
+
+  # audio/Meter, tested on macOS. Verbose logging is on, as in Vibe's tests,
+  # so the meter's signal probe compiles here. The iOS build compiles it off.
+  MeterTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsMeter]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/Meter
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "VIBE_VERBOSE_LOGGING=1"]
+
+  # audio/Meter built for iOS, with its probe of the render seam, which only
+  # tests import.
+  Meter-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsMeter]
+    templateAttributes:
+      excludedPlatform: Mac
+    sources:
+      - path: Tests/audio/Meter/MeterProbe.m
+
   # files/FileLoading, tested on macOS. The tests drive the seams and the fake
   # cloud, which compile only under DEBUG, so the bundle defines it in every
   # configuration, the analyzer's Release build included. The coordinator's
@@ -436,6 +518,12 @@ schemes:
         AudioTypes-iOS: all
         DSPTests: [test]
         DSP-iOS: all
+        OutputDevicesTests: [test]
+        OutputDevices-iOS: all
+        FXTests: [test]
+        FX-iOS: all
+        MeterTests: [test]
+        Meter-iOS: all
         FileLoadingTests: [test]
         FileLoading-iOS: all
         DiskCacheTests: [test]
@@ -464,6 +552,6 @@ schemes:
         VorbisTests: [test]
         Vorbis-iOS: all
     test:
-      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, FileLoadingTests, DiskCacheTests, DecodeTests,
-                ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
+      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, OutputDevicesTests, FXTests, MeterTests,
+                FileLoadingTests, DiskCacheTests, DecodeTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
                 R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
