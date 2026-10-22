@@ -130,10 +130,10 @@ allowed = {}
 mac_only = set()   # the pieces whose row ends in "macOS only"
 every_other_third_party = None
 for name, deps in re.findall(r"^\| (.+?) \| (.+?) \|$", section.group(1) if section else "", re.M):
-    named = re.findall(r"\b[a-z_]+/[A-Za-z_]+\b", deps)
+    named = re.findall(r"\b[a-z_]+/[A-Za-z0-9_]+\b", deps)
     if name == "every other third_party piece":
         every_other_third_party = set(named)
-    elif re.fullmatch(r"[a-z_]+/[A-Za-z_]+", name):
+    elif re.fullmatch(r"[a-z_]+/[A-Za-z0-9_]+", name):
         allowed[name] = set(named)
         if re.search(r"\bmacOS only\s*$", deps):
             mac_only.add(name)
