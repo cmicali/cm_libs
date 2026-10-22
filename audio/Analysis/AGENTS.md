@@ -1,6 +1,6 @@
 # audio/Analysis
 
-Tempo and musical key from mono PCM. It depends on `audio/AudioTypes`, for the key, and on `audio/DSP`, for the stream framer both analyzers run behind. **Today it holds what Vibe moved here**: `AudioBPMAnalyzer` and `AudioKeyAnalyzer`, in Objective-C++ over Accelerate. Nothing here logs.
+Tempo and musical key from mono PCM. It depends on `audio/AudioTypes` alone, for the key. **Today it holds what Vibe moved here**: `AudioBPMAnalyzer` and `AudioKeyAnalyzer`, in Objective-C++ over Accelerate, and `AnalysisFramerMath.h`, the stream framer both run behind. Nothing here logs.
 
 ## How an app uses it
 
@@ -56,7 +56,11 @@ Four measured rules hold the current floor:
 
 ## The framing guarantee
 
-**The block sizes an app feeds never reach a result.** Both analyzers frame the stream through `VibeAnalysisFrameStream`, in DSP's `AnalysisFramerMath.h`, which owns that guarantee and its precondition (`audio/DSP/AGENTS.md`). A file's tempo therefore does not depend on its codec's packet size.
+**The block sizes an app feeds never reach a result.** So a file's tempo and key do not depend on its codec's packet size. `VibeAnalysisFrameStream`, in `AnalysisFramerMath.h`, is the one home of that guarantee. It frames a mono stream into fixed windows at a fixed hop, and calls its block once per complete frame. It splices only the frames that straddle a buffer boundary, into a carry the caller owns. Every later frame is read in place from the caller's buffer, so a block is never copied whole. The carry stays under one frame, and the owner reserves twice the frame so the splice never reallocates. It is a C++ template, so only Objective-C++ and C++ can include it.
+
+**TRAP: `0 < hopSize <= frameSize` is a precondition of the arithmetic.** Past it, a short buffer wraps `frameCount - base` into a huge resize and an overread, and a zero hop never advances. Both analyzers satisfy it. The guard returns nothing instead, so a future caller gets no frames rather than undefined behavior.
+
+**The framer stays here, not in `audio/DSP`.** The analyzers are its only users. In DSP it would make this piece depend on DSP, and so on r8brain, for nothing.
 
 ## Measuring
 
@@ -72,4 +76,4 @@ For key: narrowing the chroma band; restricting to spectral peaks, since the run
 
 ## Tests
 
-`Tests/audio/Analysis/` holds Vibe's tests of both analyzers. They feed synthesized click tracks and chords in arbitrary block sizes, so they pin the framing guarantee end to end. They also check the tempo at 96 and 192 kHz, and that a short or empty input finds nothing. The minimal consumer finds a click track's tempo, as an app would.
+`Tests/audio/Analysis/` holds Vibe's tests of both analyzers and of the framer. The analyzers' tests feed synthesized click tracks and chords in arbitrary block sizes, so they pin the framing guarantee end to end. `AnalysisFramerMathTests` pins the framer's arithmetic at block sizes a decoder is unlikely to produce but a caller may, and at the edges of its precondition. They also check the tempo at 96 and 192 kHz, and that a short or empty input finds nothing. The minimal consumer finds a click track's tempo, as an app would.

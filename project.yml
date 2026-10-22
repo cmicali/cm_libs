@@ -136,7 +136,8 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
-  # audio/Analysis, tested on macOS, over synthesized clicks and chords.
+  # audio/Analysis, tested on macOS: the framer, and both analyzers over
+  # synthesized clicks and chords.
   AnalysisTests:
     type: bundle.unit-test
     platform: macOS

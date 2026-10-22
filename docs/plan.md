@@ -86,8 +86,8 @@ vibe-libs/
 │   ├── AudioTypes ●     the words every audio piece shares: file format identifiers, the
 │   │                    extensions the decoders open, the CUE window math, the musical key,
 │   │                    and the playable-item protocol
-│   ├── DSP ●            varispeed, resampler, fades, FX math, FFT band math, analysis framing
-│   ├── Analysis ●       tempo and musical key from PCM
+│   ├── DSP ●            varispeed, resampler, fades, FX math, FFT band math
+│   ├── Analysis ●       tempo and musical key from PCM, and the framing they share
 │   ├── Decode ●         open a file or a frame window of it, and read PCM
 │   ├── Meter ●          live band levels from inside a render, only while someone looks
 │   ├── FX ●             the DJ chain over Apple's audio units
@@ -163,7 +163,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | files/SandboxAccess | nothing, macOS only |
 | audio/AudioTypes | nothing |
 | audio/DSP | third_party/r8brain |
-| audio/Analysis | audio/AudioTypes, audio/DSP |
+| audio/Analysis | audio/AudioTypes |
 | audio/Decode | files/FileLoading, third_party/dr_mp3, third_party/dr_flac, third_party/dr_wav, third_party/vorbis |
 | audio/Meter | audio/DSP |
 | audio/FX | audio/DSP |
