@@ -727,7 +727,7 @@ static NSData *VibeWithTrailingTag(NSData *file, NSString *extension, uint32_t l
             [file writeTo:file.blockedEnd + 4000];
         }
         if (blocked) {
-            blocked = [self awaitBlock:file];
+            (void)[self awaitBlock:file];
         }
         [file.availability finishWithError:transferError];
         [self waitForExpectations:@[returned] timeout:VIBE_TEST_HANG_TIMEOUT];
@@ -1159,6 +1159,7 @@ static NSData *VibeWithTrailingTag(NSData *file, NSString *extension, uint32_t l
     @autoreleasepool {
         handle = [self deliver:file purpose:VibeAudioFileOpenPurposePlayback];
     }
+    XCTAssertNotNil(handle);
     XCTAssertTrue([self running:YES]);
     handle = nil;
     XCTAssertTrue([self eventually:^BOOL { return atomic_load(&self->_fetchCancels) == 1 && [self running:NO]; }]);
@@ -1173,6 +1174,8 @@ static NSData *VibeWithTrailingTag(NSData *file, NSString *extension, uint32_t l
         playback = [self deliver:file purpose:VibeAudioFileOpenPurposePlayback];
         prefetch = [self deliver:file purpose:VibeAudioFileOpenPurposePrefetch];
     }
+    XCTAssertNotNil(playback);
+    XCTAssertNotNil(prefetch);
     playback = nil;
     [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.2]];
     XCTAssertEqual(atomic_load(&_fetchCancels), 0u);
