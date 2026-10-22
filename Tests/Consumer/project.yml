@@ -29,8 +29,8 @@ targets:
   Consumer:
     type: tool
     platform: macOS
-    templates: [VibeLibsAudioTypes, VibeLibsDSP, VibeLibsFileLoading, VibeLibsDiskCache, VibeLibsGraphics,
-                VibeLibsControls, VibeLibsSettingsWindow, VibeLibsShortcuts]
+    templates: [VibeLibsAudioTypes, VibeLibsDSP, VibeLibsFileLoading, VibeLibsDecode, VibeLibsDiskCache,
+                VibeLibsGraphics, VibeLibsControls, VibeLibsSettingsWindow, VibeLibsShortcuts]
     templateAttributes:
       excludedPlatform: iOS
     sources:

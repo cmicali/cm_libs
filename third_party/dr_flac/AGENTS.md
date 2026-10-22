@@ -1,6 +1,6 @@
 # third_party/dr_flac
 
-dr_flac from [dr_libs](https://github.com/mackron/dr_libs), upstream commit `dfe83776`, dr_flac 0.13.4. It is Vibe's FLAC decoder (Vibe's `docs/audio-quality.md`). It reads the stream itself, through Vibe's `AudioFileHandle` reads, and answers the file's facts. A FLAC it refuses does not play. Other authors' code: **do not restyle it.** It depends on nothing. Its template is `VibeLibsDrFlac`.
+dr_flac from [dr_libs](https://github.com/mackron/dr_libs), upstream commit `dfe83776`, dr_flac 0.13.4. It is Vibe's FLAC decoder (Vibe's `docs/audio-quality.md`). It reads the stream itself, through the reads of `audio/Decode`'s `AudioFileHandle`, and answers the file's facts. A FLAC it refuses does not play. Other authors' code: **do not restyle it.** It depends on nothing. Its template is `VibeLibsDrFlac`.
 
 ## Building
 

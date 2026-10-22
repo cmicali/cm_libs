@@ -11,10 +11,12 @@
 //  size, time and path, and keys it anew once it changes. Turns a CUE window
 //  into a file's frames. Opens a temporary file through the file loader, with
 //  a handle of its own. Roots a disk cache in a temporary directory and reads
-//  its usage back. Exits 0 when all ten hold.
+//  its usage back. Writes a WAV of a ramp, opens it through the audio file
+//  handle, and reads its frames back exactly. Exits 0 when all eleven hold.
 //
 
 #import <Foundation/Foundation.h>
+#import "AudioFileHandle.h"
 #import "AudioFileMaterializationCoordinator.h"
 #import "AudioVarispeed.h"
 #import "CueWindowMath.h"
@@ -341,6 +343,47 @@ int main(void) {
     [NSFileManager.defaultManager removeItemAtURL:directory error:NULL];
     if (!cached) {
         fprintf(stderr, "consumer: the disk cache holds %lu entries\n", (unsigned long)entries);
+        return 1;
+    }
+    // A canonical 16-bit stereo WAV, its bytes written here, so the handle is
+    // not its own oracle. Each frame's left sample is its index, and its right
+    // sample the negation.
+    enum { kFrames = 1000 };
+    NSMutableData *wav = [NSMutableData dataWithBytes:"RIFF" length:4];
+    uint32_t chunk = 36 + kFrames * 4, fmtSize = 16, rate = 44100, byteRate = rate * 4, dataSize = kFrames * 4;
+    uint16_t pcm = 1, channels = 2, align = 4, bits = 16;
+    [wav appendBytes:&chunk length:4];
+    [wav appendBytes:"WAVEfmt " length:8];
+    [wav appendBytes:&fmtSize length:4];
+    [wav appendBytes:&pcm length:2];
+    [wav appendBytes:&channels length:2];
+    [wav appendBytes:&rate length:4];
+    [wav appendBytes:&byteRate length:4];
+    [wav appendBytes:&align length:2];
+    [wav appendBytes:&bits length:2];
+    [wav appendBytes:"data" length:4];
+    [wav appendBytes:&dataSize length:4];
+    for (int16_t i = 0; i < kFrames; i++) {
+        int16_t frame[2] = {i, (int16_t)-i};
+        [wav appendBytes:frame length:sizeof frame];
+    }
+    NSURL *wavURL = [NSURL fileURLWithPath:[NSTemporaryDirectory()
+            stringByAppendingPathComponent:[NSUUID.UUID.UUIDString stringByAppendingPathExtension:@"wav"]]];
+    [wav writeToURL:wavURL atomically:YES];
+    NSError *readError = nil;
+    AudioFileHandle *handle = [[AudioFileHandle alloc] initForReading:wavURL error:&readError];
+    AVAudioPCMBuffer *frames = handle ? [[AVAudioPCMBuffer alloc] initWithPCMFormat:handle.processingFormat
+                                                                       frameCapacity:kFrames + 16] : nil;
+    BOOL read = frames && [handle readIntoBuffer:frames error:&readError] && frames.frameLength == kFrames
+            && handle.length == kFrames && [handle.decoderName isEqualToString:@"dr_wav"];
+    for (AVAudioFrameCount i = 0; read && i < kFrames; i++) {
+        read = frames.floatChannelData[0][i] == i / 32768.0f && frames.floatChannelData[1][i] == -(float)i / 32768.0f;
+    }
+    handle = nil;
+    [NSFileManager.defaultManager removeItemAtURL:wavURL error:NULL];
+    if (!read) {
+        fprintf(stderr, "consumer: the handle read %u frames (%s)\n", frames.frameLength,
+                readError.localizedDescription.UTF8String);
         return 1;
     }
     printf("consumer OK\n");

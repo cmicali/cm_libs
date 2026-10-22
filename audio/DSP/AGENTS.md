@@ -1,6 +1,6 @@
 # audio/DSP
 
-Realtime signal stages a render can host. **Today it holds `AudioVarispeed`**, the pitch fader's stage, moved from Vibe. The rest of the DSP piece follows as its users move: the resampler wrapper, the fades, the FX math, the band math and the analysis framing (`docs/plan.md`).
+Signal stages a render or a decode can host. **Today it holds `AudioVarispeed`**, the pitch fader's stage, and the resampler, both moved from Vibe. The rest of the DSP piece follows as its users move: the fades, the FX math, the band math and the analysis framing (`docs/plan.md`). It depends on `third_party/r8brain` for the resampler.
 
 ## AudioVarispeed
 
@@ -16,8 +16,14 @@ Realtime signal stages a render can host. **Today it holds `AudioVarispeed`**, t
 
 **The latency off zero is the kernel's half-width and one or two frames, and nothing else.** That is 64 input frames, and ceil(64 × ratio) above a ratio of 1. A host that reports what is heard adds it.
 
+## The resampler
+
+**`AudioResampler.h` wraps r8brain-free-src in a plain C API**: linear phase, its 24-bit preset, and a 1% transition band, with no quality setting. A fill pulls float32 input through a callback until it has the frames it was asked for, or the callback answers none. That ends the fill with what it produced and leaves the filter primed for more. Vibe's voice bus converts every file whose rate is not the output's with it, on its decode queue. It is not realtime.
+
+**TRAP: it is never told the stream's end.** N frames fed come out as round(N × ratio) only once pushed through with silence, as Vibe's bus flushes a stream's end. A fill that stops at zero frames leaves the filter's length of the input inside it.
+
 ## Tests
 
-`Tests/audio/DSP/AudioVarispeedTests.m` drives the stage alone, with random schedules of pitch and slice size, mono, and the pitch moved from another thread. Run it under the thread sanitizer when the stage's threading changes.
+`Tests/audio/DSP/AudioResamplerTests.m` checks the resampler's length and gain. Vibe had no tests of it apart from its bus, so those are new here. Vibe's `ResamplerQualityTests` measures it through its voice bus at every rate pair its player meets, and stays with the player. `Tests/audio/DSP/AudioVarispeedTests.m` drives the stage alone, with random schedules of pitch and slice size, mono, and the pitch moved from another thread. Run it under the thread sanitizer when the stage's threading changes.
 
 The tests that render the stage through a player stay with that player. In Vibe they are `testPitchQuality`, which holds the stage to −145 dB of distortion and false tones, flat to 20 kHz, and the edge and position tests in its render suite. Vibe's `pitch` benchmark group measures its cost beside Apple's Varispeed unit.
