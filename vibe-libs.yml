@@ -176,6 +176,28 @@ targetTemplates:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/Tags"]
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "Foundation"]
 
+  # The play queue over an app's own entries. It reads an entry only through
+  # the key blocks the app passes, so it lists no template. Nothing here logs.
+  VibeLibsPlayQueue:
+    sources:
+      - path: media/PlayQueue
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/PlayQueue"]
+
+  # CUE sheets, also embedded in FLAC, and M3U, read and written as records.
+  # It lists AudioTypes for the playable extensions and the CD frame rate,
+  # and Common for the path spelling. Nothing here logs.
+  VibeLibsPlaylists:
+    templates: [VibeLibsCommon, VibeLibsAudioTypes]
+    sources:
+      - path: media/Playlists
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/Playlists"]
+
   # The waveform engine, in C++17, so an app builds C++ as C++17 or later.
   # Nothing here logs, so it lists no template.
   # Its summary and band split are a decode's work per sample, and its raster

@@ -8,15 +8,16 @@
 //  VibeWriteFixture uses the handle's writer for what a bare RIFF cannot
 //  carry: a channel layout, or a codec. The ID3v2 and MP3 writers shape the
 //  MPEG open's inputs. VibeToneBuffer is the one test tone, and VibeAppendPCM
-//  the one capture. VibeFuzzRandom and VibeFuzzBaseSeed are the fuzz classes'
-//  generator and seed. VibeTestFileOpener is the player's open, for the file
-//  loader's stage 2.
+//  the one capture. VibeTestFileOpener is the player's open, for the file
+//  loader's stage 2. The fuzz classes' generator and seed are
+//  VibeFuzzRandom.h's, which this header imports.
 //
 
 #import <AVFoundation/AVFoundation.h>
 
 #import "AudioFileHandle.h"
 #import "AudioFileMaterializationCoordinator.h"
+#import "VibeFuzzRandom.h"
 
 // The player's open (VibePlayerFileOpener), for a coordinator test that opens
 // real files.
@@ -24,33 +25,6 @@ static VibeAudioFileOpener const VibeTestFileOpener =
         ^AudioFileHandle *(NSURL *url, BOOL (^interrupted)(void), NSError **error) {
     return [[AudioFileHandle alloc] initForReading:url interleaved:NO interrupted:interrupted error:error];
 };
-
-// xorshift64*, chosen for being four lines rather than for its statistics.
-// A state of 0 stays 0, so a seed must be nonzero.
-typedef struct { uint64_t state; } VibeFuzzRandom;
-
-static inline uint64_t VibeFuzzNext(VibeFuzzRandom *random) {
-    uint64_t x = random->state;
-    x ^= x >> 12;
-    x ^= x << 25;
-    x ^= x >> 27;
-    random->state = x;
-    return x * 0x2545F4914F6CDD1DULL;
-}
-
-// From the high bits. TRAP: `% bound` kept only the low bits, and seeds that
-// differ only in high bits drew the same small numbers first. Every iteration
-// of a mutator then made the same mutant.
-static inline NSUInteger VibeFuzzBelow(VibeFuzzRandom *random, NSUInteger bound) {
-    return (NSUInteger)(((__uint128_t)VibeFuzzNext(random) * bound) >> 64);
-}
-
-// VIBE_FUZZ_SEED in decimal or 0x hex, else `fallback`. Fixed by default: a
-// suite that explores new inputs on every run passes and fails at random.
-static inline uint64_t VibeFuzzBaseSeed(uint64_t fallback) {
-    NSString *seed = NSProcessInfo.processInfo.environment[@"VIBE_FUZZ_SEED"];
-    return seed ? strtoull(seed.UTF8String, NULL, 0) : fallback;
-}
 
 // `frames` of a 440 Hz tone at about -12 dBFS, every channel alike, interleaved
 // int16 or float32.
