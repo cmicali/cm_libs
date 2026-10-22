@@ -1,8 +1,8 @@
 //
 //  WaveformRasterTests.mm
-//  VibeTests
+//  vibe-libs
 //
-//  WaveformCore's raster: the steps and windows, exact coverage, the area
+//  The waveform raster: the steps and windows, exact coverage, the area
 //  resample, and the property they exist for: a picture that changes
 //  continuously with the view.
 //

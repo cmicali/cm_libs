@@ -1,6 +1,6 @@
 //
 //  AudioFXChainTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The FX chain hosted on its own and rendered over the debug pump's
 //  frame-driven clock, the one the render suite drives the whole player on.
@@ -383,8 +383,9 @@ static double VibeTestRMS(NSData *capture, int channel, NSUInteger from, NSUInte
     XCTAssertEqual(VibeTestRMS(silence, 0, 0, 48000), 0.0);
 }
 
-// A cutoff written directly engages the filter there — between the mac's
-// two cutoffs, where no toggle can put it — and parked rests it exactly.
+// A cutoff written directly engages the filter there, between the two
+// cutoffs the toggles set, where no toggle can put it. Parked, it rests
+// exactly.
 - (void)testADirectCutoffEngagesAndParkedRestsExactly {
     [self connectAt:kRate];
     _fx.lowKillCutoffHz = 300;

@@ -1,6 +1,6 @@
 //
 //  PlaylistFileTestCase.m
-//  VibeTests
+//  vibe-libs
 //
 
 #import "PlaylistFileTestCase.h"

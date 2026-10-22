@@ -76,7 +76,7 @@ static void VibeSetOggPageChecksum(uint8_t *page, size_t length) {
 - (void)testRegularPlaybackAndInactiveFXAreTransparent {
     for (NSNumber *fx in @[@NO,@YES]) for (NSNumber *rate in @[@44100,@48000,@96000]) {
         [self startPlayerAt:rate.doubleValue channels:2 fx:fx.boolValue bitPerfect:NO automatic:NO];
-        _player.levelsEnabled=YES; // the equalizer's meter reads the output, never writes it
+        _player.levelsEnabled=YES; // the level meter reads the output, never writes it
         NSURL *url=[self fixture:[NSString stringWithFormat:@"noise-%@-24-2.wav",rate]];
         NSData *reference=VibePCM([self read:url]); [self play:url paused:NO position:0];
         [self assertReference:reference capture:[self renderSeconds:2.1] skip:[self startupSkip] tolerance:0];
@@ -747,7 +747,7 @@ static const NSUInteger kLayer3DecoderDelay = 529;
     XCTAssertEqual([self open:[self writeBytes:tagged name:@"itunes-one-frame.mp3"] decoder:@"dr_mp3"].length, frames, @"an iTunes count of one");
 }
 // A stream can change its mode from frame to frame. CoreAudio stops counting
-// at the change. Vibe plays it with the most channels a frame holds, a mono
+// at the change. The handle plays it with the most channels a frame holds, a mono
 // frame in both. Here a mono stream runs into a stereo one: each decodes as
 // it does alone, but where the stereo one's first frame overlaps the mono
 // one's last, and for the filterbank's history after it.
@@ -1022,9 +1022,9 @@ static const NSUInteger kLayer3DecoderDelay = 529;
         XCTAssertEqual(slice.floatChannelData[0][0], (float)(((frame * 7919) & 0xFFFF) - 32768) / 32768, @"seek to %@", target);
     }
 }
-// A file in a container and coding Vibe decodes reaches CoreAudio's parser
-// only once Vibe's decoder refused it. Playback refuses it too, rather than
-// hand it to Apple's decoder. A FLAC whose STREAMINFO is not its first
+// A file in a container and coding the handle's own decoders take reaches
+// CoreAudio's parser only once its decoder refused it. Playback refuses it
+// too, rather than hand it to Apple's decoder. A FLAC whose STREAMINFO is not its first
 // metadata block is one. RFC 9639 forbids it, dr_flac refuses it, and CoreAudio
 // plays it. The last checks are a canary. They fail once CoreAudio refuses
 // the file too, and the test then proves nothing.

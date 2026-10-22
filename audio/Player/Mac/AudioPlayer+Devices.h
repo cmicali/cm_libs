@@ -1,10 +1,10 @@
 //
 //  AudioPlayer+Devices.h
-//  Vibe
+//  vibe-libs
 //
 //  The output-device half of the player, macOS only: which device the hosted
 //  output unit is bound to, termination and the device report. (Devices) is
-//  the public API a shell imports beside AudioPlayer.h. Bit-perfect output has
+//  the public API an app imports beside AudioPlayer.h. Bit-perfect output has
 //  its own header, AudioPlayer+BitPerfect.h. The queue side is in
 //  AudioPlayer+DevicesInternal.h. It lives under Mac/ so only the macOS target
 //  compiles it: a shared caller would compile on iOS and fail at link.
@@ -21,7 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 // IDs do not survive a reboot, so persistence goes by UID and name; see
 // initWithDeviceUID:. The delegate supplies the destination UID's modes
 // before its one rebuild. Completion runs on main after settlement (including
-// failure), so the shell can keep mode edits disabled until persistence settles.
+// failure). So the app can keep mode edits disabled until persistence settles.
 - (void)setOutputDevice:(NSInteger)outputDeviceID completion:(dispatch_block_t)completion;
 
 // Permanently stops transport, restores any changed device format and
@@ -33,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)prepareForTermination;
 
 // Queue snapshot of pending identity, device obligations and actual graph rates.
-// Save Debug Info reads off main; debug commands may deliberately wait.
+// A debug report reads it off main. A debug command may deliberately wait.
 - (NSDictionary<NSString *, id> *)outputDeviceDiagnosticSnapshot;
 
 @end

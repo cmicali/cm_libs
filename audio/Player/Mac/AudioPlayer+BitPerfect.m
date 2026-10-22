@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+BitPerfect.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioPlayer+BitPerfect.h"
@@ -96,8 +96,8 @@ static const useconds_t kFormatSwitchPollMicroseconds = 5000;
 
 // The chosen device vanished: the mode cannot follow the fallback onto System
 // Output. The off path verbatim — a confirmed removal retires any restore
-// obligation. The shell persists System Output on the -1 announcement;
-// the vanished device keeps its remembered modes.
+// obligation. The app persists System Output on the -1 announcement. The
+// vanished device keeps its remembered modes.
 - (void)abandonBitPerfectForVanishedDeviceOnQueue {
     if (!_bitPerfectWanted) {
         return;
@@ -322,7 +322,7 @@ static const useconds_t kFormatSwitchPollMicroseconds = 5000;
 #endif
                 if (selector == kAudioDevicePropertyNominalSampleRate) {
                     // Another process moved the prepared device's rate: the
-                    // rebind's prepare sets the mode's format back. Vibe's own
+                    // rebind's prepare sets the mode's format back. The player's own
                     // writes arrive with the graph already at the rate, a
                     // no-op; a vanished device is the device-list observer's.
                     Float64 rate = 0;
@@ -400,7 +400,7 @@ static const useconds_t kFormatSwitchPollMicroseconds = 5000;
 // Computes the report from its owners — the mode, the graph, the chosen
 // device, the hog, the current file, the prepared device's physical format
 // read live and its volume, balance and mute (cached while its listener
-// stands), the device's reads bounded — and publishes the copy the shell reads, announcing it when it
+// stands), the device's reads bounded — and publishes the copy the app reads, announcing it when it
 // differs. Held while a device switch is rebuilding. It gates itself: off,
 // once the zeroed Off report is out, a call is two ivar reads.
 - (void)publishBitPerfectReportOnQueue {

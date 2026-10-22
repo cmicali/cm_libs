@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+Pipeline.h
-//  Vibe
+//  vibe-libs
 //
 //  voice bus -> [varispeed] -> [FX] -> [meter] -> [volume] -> the output
 //  unit's buffers.
@@ -10,7 +10,7 @@
 //  bounded slices. Withdrawn storage survives until afterRenderLeavesOnQueue:
 //  sees the render outside; the output unit's bounded stop alone cannot free
 //  it. The platform categories make the output unit and own device and
-//  session work. AGENTS.md is the reading guide.
+//  session work. This piece's AGENTS.md is the reading guide.
 //
 
 #import "AudioPlayer.h"

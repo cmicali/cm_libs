@@ -347,7 +347,7 @@
 }
 
 - (void)testSettingTheSameCurrentIndexStillNotifies {
-    // A double-click on the playing row must re-render it.
+    // A pick of the playing row must re-render it.
     Playlist *playlist = PlaylistWithFiles(@[@"a.mp3"]);
     RecordingObserver *observer = [RecordingObserver new];
     playlist.observer = observer;
