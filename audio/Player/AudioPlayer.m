@@ -1,6 +1,6 @@
 //
 //  AudioPlayer.m
-//  Vibe
+//  vibe-libs
 //
 //  The transport: the state machine {Stopped, Loading, Playing, Paused}, the
 //  file open it waits on, and the delegate it reports to. Every verb below
@@ -111,7 +111,7 @@ VibeAudioFileOpener const VibePlayerFileOpener =
         // Default QoS: this queue waits on the output unit's Default-QoS queue
         // (waitUntilIdle), and a higher class would invert. The open and the
         // decode run on their own lanes.
-        _queue = dispatch_queue_create("com.vibe.audioplayer",
+        _queue = dispatch_queue_create("vibe-libs.player.transport",
                 dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_DEFAULT, 0));
         dispatch_queue_set_specific(_queue, kAudioPlayerQueueKey, (__bridge void *)self, NULL);
         _manualPump = pump;
@@ -361,8 +361,8 @@ submittedPlayIdentifier:(uint64_t)submittedPlayIdentifier {
 
 // Only inside Loading, since rebindTrack: mutates the request it matches. YES:
 // this file's open is already in flight, and a second would strand a blocked
-// worker. The delivery moves to the new row object (a re-drop makes fresh
-// instances).
+// worker. The delivery moves to the new row object. A caller that adds the
+// file again makes fresh instances.
 - (BOOL)rebindLoadingPlayOnQueueForTrack:(id<VibePlayableItem>)track path:(NSString *)path
                                   intent:(VibePendingPlaybackIntent)intent
                  submittedPlayIdentifier:(uint64_t)submittedPlayIdentifier {
@@ -533,8 +533,8 @@ submittedPlayIdentifier:(uint64_t)submittedPlayIdentifier {
     else {
         [self terminallyRetirePrefetchRequestOnQueue];
     }
-    // Matched by submission, not track: a same-row replay is the same
-    // item, so the previous play's start would pass the shell's guard.
+    // Matched by submission, not track. A same-row replay is the same item,
+    // so the previous play's start would pass the caller's guard.
     uint64_t settledPlay = request.submittedPlayIdentifier;
     uint64_t deliveredAt = [self deliveryStamp];
     run_on_main_thread({
@@ -874,7 +874,7 @@ intendedSubmittedPlayIdentifier:(uint64_t)intendedSubmittedPlayIdentifier submit
                                                 action:VibeVoiceActionPause] forVoice:_voice];
         }
         else if (live) {
-            // Buffering… ends at the first drain that finds the voice playing,
+            // The buffering notice ends at the first drain that finds the voice playing,
             // after a release or a re-voice.
             [self setBufferingNoticeOnQueue:NO];
         }
@@ -947,7 +947,8 @@ intendedSubmittedPlayIdentifier:(uint64_t)intendedSubmittedPlayIdentifier submit
     }];
 }
 
-// Buffering…, published under _stateLock, with its edge for the current play.
+// The buffering notice, published under _stateLock, with its edge for the
+// current play.
 - (void)setBufferingNoticeOnQueue:(BOOL)shown {
     if (_bufferingNoticeShown == shown) {
         return;
@@ -1449,7 +1450,7 @@ intendedSubmittedPlayIdentifier:(uint64_t)intendedSubmittedPlayIdentifier submit
 #pragma mark - The published tuple
 
 // One acquisition, so a getter never sees a torn tuple. A new voice for the
-// same file is a re-voice, and Buffering… stays up for it.
+// same file is a re-voice, and the buffering notice stays up for it.
 - (void)publishState:(VibePlayerState)state voice:(VibeVoiceID)voice file:(AudioFileHandle *)file
               window:(NSRange)window startSeconds:(NSTimeInterval)startSeconds baseFrames:(uint64_t)baseFrames {
     if (state != VibePlayerStatePlaying || voice != _voice) {
@@ -1478,7 +1479,7 @@ intendedSubmittedPlayIdentifier:(uint64_t)intendedSubmittedPlayIdentifier submit
 }
 
 // Clears the voice and its successor; the caller retires the voice. It leaves
-// Buffering… alone. A re-voice keeps it (publishState:…).
+// the buffering notice alone. A re-voice keeps it (publishState:…).
 - (VibeVoiceID)unpublishVoiceOnQueue {
     [self setBufferingOnQueue:NO outcome:@"its voice retired"];
     os_unfair_lock_lock(&_stateLock);
@@ -1594,8 +1595,8 @@ intendedSubmittedPlayIdentifier:(uint64_t)intendedSubmittedPlayIdentifier submit
 }
 
 // TRAP: only the player can judge this. Replay the same row before a failure's
-// error hops to main, and the shell sees a matching URL and no Loading yet,
-// so the old error tears down the newer play. A rebind adopts the new
+// error hops to main, and the caller sees a matching URL and no Loading yet.
+// So the old error tears down the newer play. A rebind adopts the new
 // submission's identifier, so its error is still delivered.
 - (void)sendDelegateError:(NSError *)error forSubmittedPlay:(uint64_t)submittedPlayIdentifier {
     LogError(@"AudioPlayer Error: %@", error.localizedDescription);

@@ -1,9 +1,9 @@
 //
 //  AudioPlayer+BitPerfect.h
-//  Vibe
+//  vibe-libs
 //
-//  Bit-perfect and exclusive output, macOS only: the setter a shell calls and
-//  the report it reads. (BitPerfect) is the public API a shell imports beside
+//  Bit-perfect and exclusive output, macOS only: the setter an app calls and
+//  the report it reads. (BitPerfect) is the public API an app imports beside
 //  AudioPlayer.h. The queue-side mechanism, (BitPerfectInternal), is declared
 //  in AudioPlayer+DevicesInternal.h. It lives under Mac/ so only the macOS
 //  target compiles it.
@@ -123,10 +123,10 @@ static inline VibeBitPerfectStatus VibeBitPerfectFold(VibeBitPerfectReport r) {
 // OutputFormatRules.h selects a fallback when the device cannot match them.
 // The bus follows the device rate and has no varispeed or FX. Declick controls
 // the transport ramps. Player volume still applies and is reported when below
-// full. The shell owns
-// the rest of the pruning (minimum crossfade, hidden pitch fader) and only
-// turns this on for an eligible device — explicitly chosen, on a transport
-// that carries bits unchanged (OutputFormatRules.h). Either direction
+// full. The app owns the rest of the pruning, such as a minimum crossfade and
+// a hidden pitch control. It turns this on only for an eligible device: one
+// explicitly chosen, on a transport that carries bits unchanged
+// (OutputFormatRules.h). Either direction
 // restores the current track in place, as a device switch onto the same
 // device; off also puts the device's format back and releases the hog. Main
 // thread, like every other transport-facing setter; the work lands on the
@@ -134,7 +134,7 @@ static inline VibeBitPerfectStatus VibeBitPerfectFold(VibeBitPerfectReport r) {
 // queue; explicit flags supply submission-time FX cleanup and the fallback
 // without a provider. Bit-perfect outranks the saved FX choice. Exclusive
 // access applies only in bit-perfect mode.
-// allowAnyDevice bypasses only transport eligibility for Advanced testing.
+// allowAnyDevice bypasses only transport eligibility, for testing.
 - (void)setBitPerfectOutput:(BOOL)bitPerfectOutput exclusiveOutput:(BOOL)exclusiveOutput
                   enableFX:(BOOL)enableFX allowAnyDevice:(BOOL)allowAnyDevice;
 
@@ -146,8 +146,7 @@ static inline VibeBitPerfectStatus VibeBitPerfectFold(VibeBitPerfectReport r) {
 @property (readonly) VibeBitPerfectReport bitPerfectReport;
 
 // The same report as a dictionary with its status named: every input to the
-// fold, so a reader can say why a lock is open. Save Debug Info and the debug
-// channel's dump_state both read it.
+// fold, so a reader can say why a lock is open. A debug report reads it.
 - (NSDictionary<NSString *, id> *)bitPerfectReportDictionary;
 
 @end

@@ -1,6 +1,6 @@
 //
 //  WaveformBandSplit.cpp
-//  WaveformCore
+//  vibe-libs
 //
 
 #include "WaveformBandSplit.hpp"

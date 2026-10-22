@@ -60,7 +60,6 @@ PIECES = [
     ("files/SandboxAccess", "Vibe/Mac/App/FolderAccess"),
     # media
     # waveform
-    ("waveform/Waveform", "Vibe/Audio/Waveform/AudioWaveform."),
     ("waveform/WaveformLoading", "Vibe/Audio/Waveform/"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/Renderers/"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformTheme"),

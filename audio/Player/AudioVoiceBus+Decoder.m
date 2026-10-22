@@ -1,6 +1,6 @@
 //
 //  AudioVoiceBus+Decoder.m
-//  Vibe
+//  vibe-libs
 //
 //  The decode pool's side of the bus: the prepare and its conversion, the
 //  failures, the slot recycle, the fills, the resampler feed, the chunk

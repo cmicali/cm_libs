@@ -244,7 +244,7 @@
                           [NSIndexSet indexSetWithIndex:2]);
 }
 
-// The cursor keeps naming the successor the shell started playing: a
+// The cursor keeps naming the successor the caller started playing. A
 // restore is a list edit, never a replay.
 - (void)testReinsertingARemovedCurrentRowKeepsTheSuccessorCurrent {
     Playlist *playlist = PlaylistWithFiles(@[@"a.mp3", @"b.mp3", @"c.mp3"]);
@@ -266,8 +266,8 @@
     XCTAssertEqualObjects(observer.events, @[@"insert 0 cursor 2 count 3"]);
 }
 
-// A fresh row would drop the state the app installed and fail every identity
-// check the async deliveries make.
+// A fresh row would drop the state an app installed. It would also fail every
+// identity check an async delivery makes.
 - (void)testSurvivingTracksKeepTheirIdentityAndState {
     Playlist *playlist = PlaylistWithFiles(@[@"a.mp3", @"b.mp3"]);
     TestRow *survivor = [playlist trackAtIndex:1];

@@ -1,9 +1,10 @@
 //
 //  AudioPlayer+Diagnostics.h
-//  Vibe
+//  vibe-libs
 //
-//  Audio-path reports for Settings and Debug in every build; Timeline, Phase,
-//  Callback, Signal and Stall instrumentation under VIBE_VERBOSE_LOGGING.
+//  Audio-path reports for an app's settings and debug report, in every build.
+//  Timeline, Phase, Callback, Signal and Stall instrumentation under
+//  VIBE_VERBOSE_LOGGING.
 //  Hooks leave transport readable. performDiagnosticPhase: always runs its
 //  operation. All methods run on the player queue unless noted.
 //
@@ -20,8 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 // device: `stage` names each (source, decode, bus, varispeed, fx, meter,
 // output, and on macOS device), `present` whether it is there now, and the
 // rest is that stage's facts — rates, sample formats, channels, whether it
-// is in the render. For the Settings window, the debug report and the
-// dump_audio_path verb.
+// is in the render. For an app's settings window and its debug report.
 - (NSArray<NSDictionary<NSString *, id> *> *)audioPathOnQueue;
 
 

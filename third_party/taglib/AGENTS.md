@@ -17,7 +17,7 @@ Four packaging edits:
 
 ## Building
 
-Its files include each other by name. So the template searches every directory that holds its headers. Its sources build with the static analyzer off and `-Wno-documentation-html`. `LICENSE.MPL` stays out of an app's bundle.
+Its files include each other by name. So the template searches every directory that holds its headers. Its sources are C++17, so an app builds C++ as C++17 or later. Its sources build with the static analyzer off and `-Wno-documentation-html`. `LICENSE.MPL` stays out of an app's bundle.
 
 **TRAP: an app that also takes `VibeLibsVorbis` lists it before `VibeLibsTaglib` and before `VibeLibsTags`.** `ogg/vorbis/vorbisfile.h` here is TagLib's own. It answers `<vorbis/vorbisfile.h>` when `taglib/ogg` is searched first, and the first search path wins. An app's search paths follow the order of its templates. `make check-pieces` settles the spelling as libvorbis's.
 

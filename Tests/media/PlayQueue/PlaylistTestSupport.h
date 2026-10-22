@@ -29,7 +29,8 @@ static inline NSString *RowsString(NSIndexSet *indexes) {
 @property (nonatomic, readonly) NSString *sourceKey;
 // State the row carries, which a copy would drop.
 @property (nonatomic) NSTimeInterval duration;
-// A fresh row for this one's window at another URL, as the convert swap makes.
+// A fresh row for this one's window at another URL, as a file's replacement
+// makes.
 - (TestRow *)replacementAtURL:(NSURL *)url;
 @end
 
@@ -93,7 +94,7 @@ static inline Playlist<TestRow *> *NewPlaylist(void) {
     }];
 }
 
-// The convert swap's replacement block.
+// The replacement block for every row of a file.
 static inline TestRow *(^ReplacementAt(NSURL *url))(TestRow *) {
     return ^TestRow *(TestRow *outgoing) {
         return [outgoing replacementAtURL:url];

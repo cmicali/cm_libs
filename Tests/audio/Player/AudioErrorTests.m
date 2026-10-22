@@ -1,7 +1,7 @@
 //
 //  AudioErrorTests.m
 //
-//  The play path's error vocabulary: the domain the app pushes, the code, the
+//  The play path's error vocabulary: the domain an app pushes, the code, the
 //  underlying error, and the failing track's URL.
 //
 

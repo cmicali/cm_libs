@@ -1,6 +1,6 @@
 //
 //  PlaylistFileTestCase.h
-//  VibeTests
+//  vibe-libs
 //
 //  The harness the PlaylistFile tests share: a temp folder of empty files
 //  beside a playlist, and the FILE names a sheet resolves. It runs no tests.

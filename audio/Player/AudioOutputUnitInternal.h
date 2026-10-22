@@ -1,6 +1,6 @@
 //
 //  AudioOutputUnitInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The test seam: the callback and the plain struct it reads, so the host-less
 //  suite can drive one IO cycle over its own buffers with a render proc it

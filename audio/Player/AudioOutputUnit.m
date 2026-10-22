@@ -1,6 +1,6 @@
 //
 //  AudioOutputUnit.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioOutputUnitInternal.h"
@@ -217,7 +217,7 @@ static void VibeOutputUnitRunningChanged(void *refCon, AudioUnit unit, AudioUnit
 #endif
     // Default QoS, as the player queue: the waits here are for a device's IO
     // thread, and the player queue is the only thing that ever waits on this.
-    _halQueue = dispatch_queue_create("com.commonwealthrecordings.Vibe.outputUnit", DISPATCH_QUEUE_SERIAL);
+    _halQueue = dispatch_queue_create("vibe-libs.player.output-unit", DISPATCH_QUEUE_SERIAL);
 #if !TARGET_OS_OSX
     _runningListenerToken = atomic_fetch_add_explicit(&VibeRunningListenerTokens, 1, memory_order_relaxed) + 1;
     os_unfair_lock_lock(&VibeRunningListenersLock);

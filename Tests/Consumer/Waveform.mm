@@ -3,10 +3,12 @@
 //
 //  Summarizes a second of a 1 kHz tone at half scale, fed in blocks as a
 //  decode would. Reads its peaks and level back, round-trips it through the
-//  archive, and draws it 64 pixels wide as a coverage mask.
+//  archive and through the cache entry an app files, and draws it 64 pixels
+//  wide as a coverage mask.
 //
 
 #import <Foundation/Foundation.h>
+#import "AudioWaveform.h"
 
 #include <algorithm>
 #include <cmath>
@@ -41,6 +43,16 @@ BOOL ConsumerWaveformHolds(void) {
     wavecore::Column back = restored ? restored->column(0, double(frames)) : wavecore::Column();
     if (!restored || back.lo != whole.lo || back.hi != whole.hi) {
         fprintf(stderr, "consumer: the archive of %zu bytes read back %.4f to %.4f\n", bytes.size(), back.lo, back.hi);
+        return NO;
+    }
+    CodableAudioWaveform *entry = [[CodableAudioWaveform alloc] initWithWaveform:std::move(restored)];
+    entry.results = @{@"tone": @1000};
+    NSData *archived = [NSKeyedArchiver archivedDataWithRootObject:entry requiringSecureCoding:NO error:NULL];
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:archived error:NULL];
+    unarchiver.requiresSecureCoding = NO;
+    CodableAudioWaveform *filed = [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+    if (!filed || filed.waveform->column(0, double(frames)).hi != whole.hi || ![filed.results isEqual:entry.results]) {
+        fprintf(stderr, "consumer: the cache entry of %lu bytes did not read back\n", (unsigned long)archived.length);
         return NO;
     }
 

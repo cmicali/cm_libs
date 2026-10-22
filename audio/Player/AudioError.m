@@ -1,9 +1,9 @@
 //
 //  AudioError.m
-//  Vibe
+//  vibe-libs
 //
-//  In a file of their own, so the host-less test suite can link the error
-//  rules without compiling the player.
+//  In a file of their own, so a test can link the error vocabulary without
+//  compiling the player.
 //
 
 #import "AudioError.h"

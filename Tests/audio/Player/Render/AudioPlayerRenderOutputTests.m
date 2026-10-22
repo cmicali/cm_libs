@@ -239,7 +239,8 @@
 }
 
 // The decoder's stage carries both sides of a conversion: the file's decoded
-// format and the bus's, which the Settings row shows as the decoder's output.
+// format and the bus's. An app's settings may show the bus's as the decoder's
+// output.
 - (void)testAudioPathDecoderReportsBothSidesOfTheConversion {
     [self startPlayerAt:48000 channels:2 fx:NO bitPerfect:NO automatic:NO];
     [self play:[self fixture:@"noise-44100-24-1.wav"] paused:NO position:0];
@@ -953,7 +954,7 @@
 - (void)testAHungDeviceRateReadHoldsThePlayerQueueOnlyForItsBound {
     dispatch_semaphore_t release = dispatch_semaphore_create(0);
     __block _Atomic bool returned = false;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method method = class_getClassMethod(CoreAudioUtil.class, @selector(readNominalSampleRate:forDeviceID:));
     IMP replacement = imp_implementationWithBlock(^BOOL(id cls, Float64 *rate, AudioDeviceID deviceID) {
         dispatch_semaphore_wait(release, dispatch_time(DISPATCH_TIME_NOW, VIBE_TEST_GATE_TIMEOUT * NSEC_PER_SEC));
@@ -994,8 +995,8 @@
     [self settleUntil:^BOOL { return [bus snapshotOfVoice:old].written >= 65536; }];
     dispatch_semaphore_t reading = dispatch_semaphore_create(0), letRead = dispatch_semaphore_create(0);
     Method produce = class_getInstanceMethod(AudioVoiceBus.class, @selector(produceChunkForSlot:final:));
-    // The old track's decode can still be running, so the produce IMP is
-    // stored atomically before the swizzle goes live (Tests/AGENTS.md).
+    // The old track's decode can still be running. So the produce IMP is
+    // stored atomically before the swizzle goes live.
     __block _Atomic(IMP) originalProduce;
     __block _Atomic(BOOL) heldRead = NO;
     IMP heldProduce = imp_implementationWithBlock(^uint32_t(id receiver, NSUInteger slot, BOOL *final) {
