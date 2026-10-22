@@ -953,6 +953,7 @@
 - (void)testAHungDeviceRateReadHoldsThePlayerQueueOnlyForItsBound {
     dispatch_semaphore_t release = dispatch_semaphore_create(0);
     __block _Atomic bool returned = false;
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
     Method method = class_getClassMethod(CoreAudioUtil.class, @selector(readNominalSampleRate:forDeviceID:));
     IMP replacement = imp_implementationWithBlock(^BOOL(id cls, Float64 *rate, AudioDeviceID deviceID) {
         dispatch_semaphore_wait(release, dispatch_time(DISPATCH_TIME_NOW, VIBE_TEST_GATE_TIMEOUT * NSEC_PER_SEC));

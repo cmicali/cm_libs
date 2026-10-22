@@ -329,6 +329,7 @@
     AudioDevice *a = [[AudioDevice alloc] initWithName:@"A" uid:@"a" deviceId:1 isSystemDefault:YES transportType:kAudioDeviceTransportTypeVirtual];
     AudioDevice *b = [[AudioDevice alloc] initWithName:@"B" uid:@"b" deviceId:2 isSystemDefault:NO transportType:kAudioDeviceTransportTypeVirtual];
     AudioDeviceManager *devices = [[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[a, b]; } retryScheduler:nil];
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
     Method method = class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance));
     IMP replacement = imp_implementationWithBlock(^AudioDeviceManager *(id cls) { return devices; });
     IMP original = method_setImplementation(method, replacement);
@@ -390,6 +391,7 @@
     // Replace only the device I/O boundaries; the real rebuild and PCM path run.
     // The bind retry is the one timer among them: two real seconds out, it
     // reports an unpublished default again, into the replay of a run that slow.
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(systemDefaultOutputDeviceID)),
