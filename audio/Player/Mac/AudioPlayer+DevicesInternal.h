@@ -20,6 +20,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// A saved-device bind may land whenever nothing is audible: a rebind under
+// sound clicks, or tears down a live stream. So: stopped; loading while the
+// output is not running (the first open at launch); and a pause whose fade has
+// settled, since an unplug parks playback as Paused and the rebuild restores a
+// paused track as Paused. Loading over a running outgoing fade, and playing,
+// are excluded.
+static inline BOOL VibeCanBindSavedOutputDevice(BOOL stopped, BOOL loading, BOOL paused,
+                                                BOOL outputRunning, BOOL audioActive) {
+    return stopped || (loading && !outputRunning) || (paused && !audioActive);
+}
+
 // The longest the player queue waits on one bounded HAL read.
 static const NSTimeInterval kDeviceReadWaitSeconds = 0.5;
 

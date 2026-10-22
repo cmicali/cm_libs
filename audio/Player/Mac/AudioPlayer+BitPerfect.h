@@ -14,6 +14,109 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSInteger, VibeBitPerfectStatus) {
+    // The setting is off, or the device is ineligible. This is defensive. An
+    // app should never let the two coincide.
+    VibeBitPerfectStatusOff,
+    // On, device chosen, nothing playing.
+    VibeBitPerfectStatusIdle,
+    VibeBitPerfectStatusActive,
+    // The device does not offer the file's rate; a multiple was used when it
+    // offered one.
+    VibeBitPerfectStatusRateUnsupported,
+    // The output route, format or gain could not be confirmed.
+    VibeBitPerfectStatusSwitchFailed,
+    VibeBitPerfectStatusChannelConversion,
+    VibeBitPerfectStatusDepthInsufficient,
+    VibeBitPerfectStatusMuted,
+    // Software volume below 1.0, balance away from center, or the player's
+    // own volume below full.
+    VibeBitPerfectStatusVolumeScaled,
+    // Exclusive output requested but ownership not confirmed.
+    VibeBitPerfectStatusExclusiveRefused,
+    // Everything held, but the file is lossy: its decoded audio plays at its
+    // own rate with no volume change, rounded only to the device's depth.
+    VibeBitPerfectStatusSourceLossy,
+};
+
+// Every input to the fold plus what it produced. Every reader of the status
+// reads one snapshot, so no two can disagree about why.
+typedef struct {
+    VibeBitPerfectStatus status;
+    double sampleRate;      // the device's, after the switch
+    UInt32 bitsPerChannel;  // the physical format's width
+    UInt32 sourceBits;      // the file's depth (VibeSourceBitDepth), 0 for lossy
+    BOOL isFloat;
+    float softwareVolume;
+    float balance;         // 0 = left, 0.5 = center, 1 = right
+    float playerVolume;    // the player's own volume, 1 at full
+    // The fold's inputs.
+    BOOL enabled;
+    BOOL eligibleDevice;
+    BOOL hasTrack;
+    BOOL rateExact;
+    BOOL formatConfirmed;   // the bound device has the requested format; its gain reads succeeded
+    BOOL channelsMatch;     // unchanged source channels, verified output routing
+    BOOL depthOK;
+    BOOL muted;
+    BOOL hogWanted;
+    BOOL exclusive;
+} VibeBitPerfectReport;
+
+// Every field, so a publication that changed nothing is not announced.
+static inline BOOL VibeBitPerfectReportsEqual(VibeBitPerfectReport a, VibeBitPerfectReport b) {
+    return a.status == b.status && a.sampleRate == b.sampleRate
+            && a.bitsPerChannel == b.bitsPerChannel && a.sourceBits == b.sourceBits && a.isFloat == b.isFloat
+            && a.softwareVolume == b.softwareVolume && a.balance == b.balance
+            && a.playerVolume == b.playerVolume && a.enabled == b.enabled
+            && a.eligibleDevice == b.eligibleDevice && a.hasTrack == b.hasTrack
+            && a.rateExact == b.rateExact
+            && a.formatConfirmed == b.formatConfirmed && a.channelsMatch == b.channelsMatch
+            && a.depthOK == b.depthOK && a.muted == b.muted
+            && a.hogWanted == b.hogWanted && a.exclusive == b.exclusive;
+}
+
+// The fold over the report's inputs, in priority order, so two breakers never
+// race for the caption: Off > Idle > SwitchFailed >
+// RateUnsupported > ChannelConversion > DepthInsufficient > Muted > VolumeScaled > ExclusiveRefused >
+// SourceLossy > Active. SourceLossy is last
+// before Active because it is the only status that says the chain is perfect
+// and the file is not. There is no pitch input: under the mode there is no
+// varispeed to have a pitch.
+static inline VibeBitPerfectStatus VibeBitPerfectFold(VibeBitPerfectReport r) {
+    if (!r.enabled || !r.eligibleDevice) {
+        return VibeBitPerfectStatusOff;
+    }
+    if (!r.hasTrack) {
+        return VibeBitPerfectStatusIdle;
+    }
+    if (!r.formatConfirmed) {
+        return VibeBitPerfectStatusSwitchFailed;
+    }
+    if (!r.rateExact) {
+        return VibeBitPerfectStatusRateUnsupported;
+    }
+    if (!r.channelsMatch) {
+        return VibeBitPerfectStatusChannelConversion;
+    }
+    if (!r.depthOK) {
+        return VibeBitPerfectStatusDepthInsufficient;
+    }
+    if (r.muted) {
+        return VibeBitPerfectStatusMuted;
+    }
+    if (r.softwareVolume < 1.0f || r.balance != 0.5f || r.playerVolume < 1.0f) {
+        return VibeBitPerfectStatusVolumeScaled;
+    }
+    if (r.hogWanted && !r.exclusive) {
+        return VibeBitPerfectStatusExclusiveRefused;
+    }
+    if (r.sourceBits == 0) {
+        return VibeBitPerfectStatusSourceLossy;
+    }
+    return VibeBitPerfectStatusActive;
+}
+
 @interface AudioPlayer (BitPerfect)
 
 // Bit-perfect output requests the file's rate and a suitable physical format.
