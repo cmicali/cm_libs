@@ -2,8 +2,8 @@
 //  AudioLevelPublisher+Debug.h
 //  Vibe
 //
-//  The publisher's counters, for dump_equalizer through AudioPlayer's
-//  debugEqualizerState. Implemented in AudioLevelPublisher+Debug.m.
+//  The publisher's counters, for a host's debug report of its levels.
+//  Implemented in AudioLevelPublisher+Debug.m.
 //
 
 #import "AudioLevelPublisher.h"

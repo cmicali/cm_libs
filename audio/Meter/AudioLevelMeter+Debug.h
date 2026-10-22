@@ -2,8 +2,8 @@
 //  AudioLevelMeter+Debug.h
 //  Vibe
 //
-//  The render suite's seam for a meter callback stalled between its entry
-//  and its publication. Implemented in AudioLevelMeter.m, beside the meter's
+//  A render test's seam for a meter callback stalled between its entry and
+//  its publication. Implemented in AudioLevelMeter.m, beside the meter's
 //  private struct.
 //
 

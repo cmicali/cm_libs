@@ -39,8 +39,8 @@ NSUInteger VibeAudioLevelAnalyzerConsume(VibeAudioLevelAnalyzer *analyzer,
                                          NSUInteger frameCount) CA_REALTIME_API;
 
 // Summarizes and clears the windows analyzed since the last call: returns
-// their number, and with any overwrites all five `callbackLevels`. The
-// per-mode rules are Levels/AGENTS.md's.
+// their number, and with any overwrites all five `callbackLevels`. This
+// piece's AGENTS.md has the rules for each mode.
 NSUInteger VibeAudioLevelAnalyzerSummarize(VibeAudioLevelAnalyzer *analyzer,
                                            float callbackLevels[_Nonnull kLevelBandCount]) CA_REALTIME_API;
 
