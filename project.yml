@@ -490,6 +490,33 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # media/FolderScan, tested on macOS, over temporary folders. The
+  # embedded-sheet tests take their FLAC writers from Tests/Support. DEBUG is
+  # on in every configuration, so the dataless test can set FileLoading's
+  # probe.
+  FolderScanTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsFolderScan]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/media/FolderScan
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "DEBUG=1", "VIBE_TEST_HANG_TIMEOUT=10"]
+
+  # media/FolderScan built for iOS.
+  FolderScan-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsFolderScan]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # waveform/Waveform, tested on macOS: the summary's builder, reads, deep
   # zoom, and archive, the raster's steps and coverage, the mono mix, and the
   # cache entry.
@@ -781,6 +808,8 @@ schemes:
         PlayQueue-iOS: all
         PlaylistsTests: [test]
         Playlists-iOS: all
+        FolderScanTests: [test]
+        FolderScan-iOS: all
         WaveformTests: [test]
         Waveform-iOS: all
         WaveformLoadingTests: [test]
@@ -809,7 +838,6 @@ schemes:
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, TagsTests,
-                MetadataTests, PlayQueueTests, PlaylistsTests, WaveformTests, WaveformLoadingTests, ControlsTests,
-                SettingsWindowTests,
-                ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests,
-                DrFlacTests, DrWavTests, OggTests, VorbisTests]
+                MetadataTests, PlayQueueTests, PlaylistsTests, FolderScanTests, WaveformTests, WaveformLoadingTests,
+                ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
+                R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
