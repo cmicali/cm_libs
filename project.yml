@@ -375,6 +375,8 @@ targets:
     type: library.static
     platform: iOS
     templates: [VibeLibsPlayer]
+    templateAttributes:
+      excludedPlatform: Mac
 
   # media/Tags, tested on macOS. The tests write their own files through
   # AVFoundation. They are Objective-C++, whose framework imports link
