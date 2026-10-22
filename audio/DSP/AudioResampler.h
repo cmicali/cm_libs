@@ -2,20 +2,21 @@
 //  AudioResampler.h
 //  Vibe
 //
-//  The voice bus's sample-rate converter: r8brain-free-src
-//  (vibe-libs/third_party/r8brain), linear phase, its 24-bit preset, a 1% transition
+//  A sample-rate converter for a decode: r8brain-free-src
+//  (third_party/r8brain), linear phase, its 24-bit preset, a 1% transition
 //  band. A fill pulls float32 input through a callback until it has the frames
 //  it was asked for or the callback answers none, which ends the fill with
 //  what it produced and leaves the filter primed. It is never told the
-//  stream's end: N frames fed come out as round(N × ratio) once pushed through
-//  with silence, as the bus's flush does. Decode queue only; not realtime.
+//  stream's end. N frames fed come out as round(N × ratio) once pushed through
+//  with silence, as the app's voice bus does at a stream's end. Decode queue
+//  only; not realtime.
 //
 
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-// C linkage: the bus (.m) calls the .mm.
+// C linkage, so plain Objective-C callers reach the .mm.
 #ifdef __cplusplus
 extern "C" {
 #endif
