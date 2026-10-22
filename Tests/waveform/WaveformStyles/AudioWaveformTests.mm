@@ -224,7 +224,7 @@ static CALayer *VibeMaskLayer(WaveformRenderer *renderer) {
     // Quiet, so no style's centered bar reaches the band's foot already.
     auto waveform = VibeTestSteadyWaveform(1, {-0.3f, 0.5f, 0.01f});
     for (NSString *style in @[@"detailed", @"oversampling_detailed_x4", @"basic", @"cupertino"]) {
-        CGRect boxes[2];
+        CGRect boxes[2] = {CGRectZero, CGRectZero};
         for (BOOL centered : {YES, NO}) {
             WaveformRenderer *renderer = [self rendererForStyle:style];
             renderer.centered = centered;
@@ -1548,6 +1548,8 @@ static WaveformRenderer *VibeHostedRenderer(NSString *identifier, CGRect bounds,
 }
 
 // The complete centerline is the reference for a window-limited path.
+static CGPathRef VibeReferenceWigglePath(CGSize size, const float *samples, NSUInteger count,
+                                  BOOL centered, CGFloat widthScale) CF_RETURNS_RETAINED;
 static CGPathRef VibeReferenceWigglePath(CGSize size, const float *samples, NSUInteger count,
                                   BOOL centered, CGFloat widthScale) {
     CGMutablePathRef line = CGPathCreateMutable();
