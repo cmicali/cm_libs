@@ -65,7 +65,6 @@ PIECES = [
     ("audio/Player", "Vibe/Audio/Mac/Devices/AudioPlayer+"),
     ("audio/Player", "Vibe/Audio/iOS/AudioPlayer+"),
     # media
-    ("media/Tags", "Vibe/Audio/Metadata/TagLibAudioFile"),
     ("media/Tags", "Vibe/Util/Categories/NSString+CPPStrings"),
     ("media/Metadata", "Vibe/Audio/Metadata/"),
     # waveform
