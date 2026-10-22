@@ -474,6 +474,33 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # waveform/WaveformStyles, tested on macOS: every style drawn into a layer
+  # with no window, the morph engine, the registry, the theme's palettes, and
+  # the level and zoom math. The renderer tests build waveforms bin by bin
+  # through Tests/Support.
+  WaveformStylesTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsWaveformStyles]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/waveform/WaveformStyles
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "VIBE_VERBOSE_LOGGING=1", "VIBE_SIGNPOSTS=1"]
+
+  # waveform/WaveformStyles built for iOS, where an app's scrubber draws with it.
+  WaveformStyles-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsWaveformStyles]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
@@ -703,6 +730,8 @@ schemes:
         Playlists-iOS: all
         WaveformTests: [test]
         Waveform-iOS: all
+        WaveformStylesTests: [test]
+        WaveformStyles-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -727,6 +756,6 @@ schemes:
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, TagsTests,
-                PlayQueueTests, PlaylistsTests, WaveformTests, ControlsTests, SettingsWindowTests,
-                ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests,
-                DrFlacTests, DrWavTests, OggTests, VorbisTests]
+                PlayQueueTests, PlaylistsTests, WaveformTests, WaveformStylesTests, ControlsTests,
+                SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests,
+                DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]

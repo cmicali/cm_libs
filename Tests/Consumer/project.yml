@@ -39,12 +39,13 @@ targets:
     # beside VibeLibsTags.
     templates: [VibeLibsAudioTypes, VibeLibsDSP, VibeLibsAnalysis, VibeLibsOutputDevices, VibeLibsFX,
                 VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsPlayer, VibeLibsTags, VibeLibsWaveform,
-                VibeLibsDiskCache, VibeLibsGraphics, VibeLibsPlayQueue, VibeLibsPlaylists, VibeLibsControls,
-                VibeLibsSettingsWindow, VibeLibsShortcuts]
+                VibeLibsWaveformStyles, VibeLibsDiskCache, VibeLibsGraphics, VibeLibsPlayQueue, VibeLibsPlaylists,
+                VibeLibsControls, VibeLibsSettingsWindow, VibeLibsShortcuts]
     templateAttributes:
       excludedPlatform: iOS
     sources:
       - path: main.m
       - path: Tags.mm
       - path: Waveform.mm
+      - path: WaveformStyles.mm
     scheme: {}

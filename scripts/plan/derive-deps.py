@@ -65,9 +65,6 @@ PIECES = [
     # waveform
     ("waveform/Waveform", "Vibe/Audio/Waveform/AudioWaveform."),
     ("waveform/WaveformLoading", "Vibe/Audio/Waveform/"),
-    ("waveform/WaveformStyles", "Vibe/WaveformUI/Renderers/"),
-    ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformTheme"),
-    ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformZoomMath"),
     ("waveform/WaveformView", "Vibe/WaveformUI/"),
     # ui, system, media
     ("app", "Vibe/Mac/Controls/ArtworkImageView"),
