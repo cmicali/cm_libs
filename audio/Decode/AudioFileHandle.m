@@ -64,7 +64,7 @@ static dispatch_queue_t VibeHandleCloseQueue(void) {
     static dispatch_queue_t queue;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        queue = dispatch_queue_create("com.vibe.audiofile.close",
+        queue = dispatch_queue_create("vibe-libs.decode.close",
                                       dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
     });
     return queue;

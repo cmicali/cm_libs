@@ -351,7 +351,7 @@ CloudFileAvailability *VibeNetworkReadAheadStart(NSURL *url, NSString *mount, ui
     NSThread *thread = [[NSThread alloc] initWithBlock:^{
         VibeReadAheadRun(availability, url, mount, flags);
     }];
-    thread.name = @"com.vibe.readahead";
+    thread.name = @"vibe-libs.fileloading.readahead";
     // Fixed, not the opener's: a prefetch opens at utility and then becomes
     // the voice the decode reads.
     thread.qualityOfService = NSQualityOfServiceUserInitiated;

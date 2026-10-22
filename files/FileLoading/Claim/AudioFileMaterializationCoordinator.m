@@ -142,11 +142,11 @@ static const NSUInteger kMaximumDatalessProbePendingCount = 16;
         _interactivePending = [NSMutableArray array];
         _backgroundPending = [NSMutableArray array];
         _datalessProbeActivity = [[VibeDatalessProbeActivity alloc] init];
-        _stateQueue = dispatch_queue_create("com.vibe.materialization.state", DISPATCH_QUEUE_SERIAL);
+        _stateQueue = dispatch_queue_create("vibe-libs.fileloading.materialization-state", DISPATCH_QUEUE_SERIAL);
         dispatch_queue_set_specific(_stateQueue, VibeMaterializationStateQueueKey,
                                     (__bridge void *)self, NULL);
         _datalessProbeScheduler = [[AudioWorkScheduler alloc]
-                initWithLabel:@"com.vibe.materialization.dataless-probe"
+                initWithLabel:@"vibe-libs.fileloading.dataless-probe"
                 qualityOfService:QOS_CLASS_USER_INITIATED
                 maximumRunningCount:kMaximumDatalessProbeRunningCount
                 maximumPendingCount:kMaximumDatalessProbePendingCount
@@ -154,11 +154,11 @@ static const NSUInteger kMaximumDatalessProbePendingCount = 16;
         dispatch_queue_attr_t interactiveAttributes = dispatch_queue_attr_make_with_qos_class(
                 DISPATCH_QUEUE_CONCURRENT, QOS_CLASS_USER_INITIATED, 0);
         _interactiveWorkerQueue = dispatch_queue_create(
-                "com.vibe.materialization.interactive", interactiveAttributes);
+                "vibe-libs.fileloading.materialization-interactive", interactiveAttributes);
         dispatch_queue_attr_t backgroundAttributes = dispatch_queue_attr_make_with_qos_class(
                 DISPATCH_QUEUE_CONCURRENT, QOS_CLASS_UTILITY, 0);
         _backgroundWorkerQueue = dispatch_queue_create(
-                "com.vibe.materialization.background", backgroundAttributes);
+                "vibe-libs.fileloading.materialization-background", backgroundAttributes);
         _pendingTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, _stateQueue);
         dispatch_source_set_timer(_pendingTimer, DISPATCH_TIME_FOREVER,
                                   DISPATCH_TIME_FOREVER, 0);

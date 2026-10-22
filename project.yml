@@ -47,6 +47,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
         GCC_PREPROCESSOR_DEFINITIONS: &common-definitions
           - "$(inherited)"
           - "VIBE_VERBOSE_LOGGING=1"

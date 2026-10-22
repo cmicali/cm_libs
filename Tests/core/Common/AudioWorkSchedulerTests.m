@@ -2,6 +2,7 @@
 #import <XCTest/XCTest.h>
 
 #import "AudioWorkScheduler.h"
+#import "VibeTestNegativeWindow.h"
 
 @interface AudioWorkSchedulerTests : XCTestCase
 @end
@@ -51,7 +52,7 @@
     XCTAssertNil(weakCapture);
     dispatch_semaphore_signal(releaseRunning);
 
-    [self waitForExpectations:@[pendingDidNotRun] timeout:0.05];
+    [self waitForExpectations:@[pendingDidNotRun] timeout:kVibeTestNegativeWindow];
 }
 
 - (void)testARejectedStormNeverWaitsBehindTheBlockedWorker {
@@ -174,7 +175,7 @@
     }];
     [self waitForExpectations:@[admissionFailed] timeout:VIBE_TEST_HANG_TIMEOUT];
     dispatch_semaphore_signal(releaseRunning);
-    [self waitForExpectations:@[pendingDidNotRun] timeout:0.05];
+    [self waitForExpectations:@[pendingDidNotRun] timeout:kVibeTestNegativeWindow];
 }
 
 - (void)testRunningCancellationCannotPretendAnOSCallReleasedItsSlot {
@@ -228,7 +229,7 @@
     XCTAssertNil(weakScheduler, @"the scheduler must not outlive its last reference");
     // Past the grace, so a surviving timer would have fired into a freed object.
     XCTestExpectation *outlivedItsGrace = [self expectationWithDescription:@"quiet"];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kVibeTestNegativeWindow * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         [outlivedItsGrace fulfill];
     });
