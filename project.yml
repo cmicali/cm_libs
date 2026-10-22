@@ -329,13 +329,16 @@ targets:
           - "VIBE_TEST_HANG_TIMEOUT=10"
           - "VIBE_TEST_GATE_TIMEOUT=30"
 
-  # audio/Decode built for iOS, so an AppKit leak fails here.
+  # audio/Decode built for iOS, so an AppKit leak fails here, with its probe
+  # of the tail window math, which only tests import.
   Decode-iOS:
     type: library.static
     platform: iOS
     templates: [VibeLibsDecode]
     templateAttributes:
       excludedPlatform: Mac
+    sources:
+      - path: Tests/audio/Decode/DecodeProbe.m
 
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.

@@ -68,7 +68,6 @@ PIECES = [
     ("files/DiskCache", "Vibe/Audio/PINCache+VibeAudioCache"),
     ("files/HTTP", "Vibe/Loading/Net/HTTPTransfer"),
     ("files/RemoteFiles", "Vibe/Loading/Net/RemotePlaceholderStore"),
-    ("files/RemoteFiles", "Vibe/Loading/Net/TailWindowMath"),
     ("app", "Vibe/Loading/Net/LinkStore"),
     ("files/ShareLinks", "Vibe/Loading/Net/"),
     ("app", "Vibe/Loading/iOS/"),

@@ -159,7 +159,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | files/FileLoading | audio/AudioTypes |
 | files/DiskCache | third_party/PINCache |
 | files/HTTP | nothing |
-| files/RemoteFiles | files/FileLoading, files/HTTP |
+| files/RemoteFiles | files/FileLoading, files/HTTP, audio/Decode |
 | files/ShareLinks | files/HTTP |
 | files/SandboxAccess | nothing, macOS only |
 | audio/AudioTypes | nothing |
@@ -446,7 +446,7 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 **The seams between pieces:**
 
 - **13. The playable-item protocol.** A small protocol gives an item's file, frame window, source key, and disk key. Only the pieces that read a file take it: the player, Metadata, and WaveformLoading. Vibe's `AudioTrack` adopts it and stays in Vibe, moving to `Vibe/Playlist/` as the row it is, with its tags, analyzed tempo and key, display names, and the rule that tags beat analysis. They take `id` of the protocol and hand back the same object. The queue takes any object (seam 19). The CUE window math goes to AudioTypes, so Playlists and FolderScan need no Decode for it. The seam landed on 2026-10-21 (Vibe #351).
-- **14. `AudioFileOpenRules.h` splits.** It held four parts, and four areas imported all of them. Each part went to the piece that owns it. The open's delivery states sit beside FileLoading's open token. The path spelling joined `FilePaths`, which goes to `core/Common`. The network mount's read-ahead rules and math sit beside FileLoading's read-ahead. The tail window sits beside RemoteFiles' placeholder store, in `TailWindowMath.h`. The seam landed on 2026-10-21 (Vibe #353).
+- **14. `AudioFileOpenRules.h` splits.** It held four parts, and four areas imported all of them. Each part went to the piece that owns it. The open's delivery states sit beside FileLoading's open token. The path spelling joined `FilePaths`, which goes to `core/Common`. The network mount's read-ahead rules and math sit beside FileLoading's read-ahead. The tail window went beside RemoteFiles' placeholder store, in `TailWindowMath.h`. That header later joined Decode, since it states what Decode's opens read, and RemoteFiles depends on Decode for it. The seam landed on 2026-10-21 (Vibe #353).
 - **15. The file loader stops naming the audio file handle.** Its opener is already a block. The handle it serves becomes a small protocol, `ServedFileHandle`, that only holds a stream. Interrupting a wait stays with the opener's `interrupted` block. It no longer calls into `AudioTrack` to forget memoized cache keys. It bumps the generation on `NSURL (Hash)` instead. A memo stamped below it is stale (Vibe #351).
 
   **The read-ahead's test hooks move too.** `NetworkReadAhead.m` imports `AudioFileHandle+Debug.h` in Debug, and that header imports the concrete handle. So a FileLoading build in Debug would still need Decode, which already needs FileLoading. The hooks' declarations go to a debug header of FileLoading's own. Decode's category forwards to them, so its read-ahead tests keep the same hooks. **Done when** FileLoading builds and tests alone in Debug, with no Decode header path. A scan of every debug seam in Vibe found no other header that declares hooks for two owners. The seam landed on 2026-10-21 (Vibe #353). Its done-when was met when FileLoading moved (this repo's #18).
