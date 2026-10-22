@@ -1,6 +1,6 @@
 # audio/DSP
 
-Realtime signal stages a render can host. **Today it holds `AudioVarispeed`**, the pitch fader's stage, moved from Vibe. The rest of the DSP piece follows as its users move: the resampler wrapper, the fades, the FX math, and the band math (`docs/plan.md`). The analysis framing went to `audio/Analysis`, its only user.
+Realtime signal stages a render can host, the math they share, and the resampler a decode runs. **Today it holds `AudioVarispeed`**, the pitch fader's stage, **`FadeMath.h`**, the fades, **and `AudioResampler`**. All three came from Vibe. The FX math and the band math went to `audio/FX` and `audio/Meter`, their only users. The analysis framing went to `audio/Analysis`, its only user. It depends on `third_party/r8brain` for the resampler.
 
 ## AudioVarispeed
 
@@ -16,8 +16,22 @@ Realtime signal stages a render can host. **Today it holds `AudioVarispeed`**, t
 
 **The latency off zero is the kernel's half-width and one or two frames, and nothing else.** That is 64 input frames, and ceil(64 × ratio) above a ratio of 1. A host that reports what is heard adds it.
 
+## FadeMath
+
+**Every fade exists because a gain step at a non-zero sample clicks.** `FadeMath.h` is header-only. The declick, `kFadeDurationMilliseconds`, is 10 ms and linear, which keeps its per-sample step small at every rate. A longer fade is equal-power, so the two sides of a crossfade do not dip at the midpoint. `VibeFadeGainAtFrame` computes a gain from the frame index, never by accumulating, so a ramp lands on its target exactly. A render evaluates it per frame on the audio thread. Vibe's voice bus does.
+
+**The stepped fades are for a queue, not the audio thread.** `VibeFadeVolumeOverSteps` steps a log curve in `kFadeSteps` equal ratios over one declick, floored at −60 dB so the curve stays defined through silence. `audio/FX`'s send gates take it.
+
+**Three functions are a player's crossfade decisions**, kept beside the curves they choose: `VibeIncomingFadeMilliseconds`, `VibeGaplessArmAllowed`, and `VibeTrackEndCrossfadeMilliseconds`. Vibe's player is their one caller. They take the setting and the tracks' lengths as values, so they read no app's settings.
+
+## The resampler
+
+**`AudioResampler.h` wraps r8brain-free-src in a plain C API**: linear phase, its 24-bit preset, and a 1% transition band, with no quality setting. A fill pulls float32 input through a callback until it has the frames it was asked for, or the callback answers none. That ends the fill with what it produced and leaves the filter primed for more. Vibe's voice bus converts every file whose rate is not the output's with it, on its decode queue. It is not realtime.
+
+**TRAP: it is never told the stream's end.** N frames fed come out as round(N × ratio) only once pushed through with silence, as Vibe's bus flushes a stream's end. A fill that stops at zero frames leaves the filter's length of the input inside it.
+
 ## Tests
 
-`Tests/audio/DSP/AudioVarispeedTests.m` drives the stage alone, with random schedules of pitch and slice size, mono, and the pitch moved from another thread. Run it under the thread sanitizer when the stage's threading changes.
+`Tests/audio/DSP/FadeMathTests.m` checks every curve's ends, its monotonic shape, the declick's step at every rate, constant power across a crossfade, and the player's three decisions. `Tests/audio/DSP/AudioResamplerTests.m` checks the resampler's length and gain. Vibe had no tests of it apart from its bus, so those are new here. Vibe's `ResamplerQualityTests` measures it through its voice bus at every rate pair its player meets, and stays with the player. `Tests/audio/DSP/AudioVarispeedTests.m` drives the stage alone, with random schedules of pitch and slice size, mono, and the pitch moved from another thread. Run it under the thread sanitizer when the stage's threading changes.
 
 The tests that render the stage through a player stay with that player. In Vibe they are `testPitchQuality`, which holds the stage to −145 dB of distortion and false tones, flat to 20 kHz, and the edge and position tests in its render suite. Vibe's `pitch` benchmark group measures its cost beside Apple's Varispeed unit.

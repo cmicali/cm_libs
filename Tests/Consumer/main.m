@@ -2,7 +2,9 @@
 //  main.m
 //
 //  Plays a ramp through the varispeed at zero pitch and checks it comes back
-//  exactly, then renders off zero. Round-trips a color through its hex form.
+//  exactly, then renders off zero. Plays a tone through the FX chain with
+//  nothing engaged and checks it comes back exactly, then reads the meter's
+//  levels of it. Round-trips a color through its hex form.
 //  Draws each mac control into a bitmap with no window. Builds a settings
 //  window of three panes without showing it, finds a color-pair row, a switch,
 //  and a slider in two of them, and picks the second pane in the sidebar. In
@@ -12,16 +14,20 @@
 //  into a file's frames. Opens a temporary file through the file loader, with
 //  a handle of its own. Roots a disk cache in a temporary directory and reads
 //  its usage back. Lists the output devices through the device manager and
-//  prints the default one's name, changing nothing. Finds the tempo of a
-//  click track at 128 BPM, fed in blocks as a decode would. Exits 0 when all
-//  twelve hold.
+//  prints the default one's name, changing nothing. Writes a WAV of a ramp,
+//  opens it through the audio file handle, and reads its frames back exactly.
+//  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
+//  would. Exits 0 when all fourteen hold.
 //
 
 #import <Foundation/Foundation.h>
 #import <math.h>
 #import "AudioBPMAnalyzer.h"
+#import "AudioFileHandle.h"
 #import "AudioFileMaterializationCoordinator.h"
 #import "AudioDeviceManager.h"
+#import "AudioFX+Pipeline.h"
+#import "AudioLevelMeter.h"
 #import "AudioVarispeed.h"
 #import "CueWindowMath.h"
 #import "PINCache+VibeAudioCache.h"
@@ -143,6 +149,72 @@ static OSStatus Ramp(void *context, const AudioTimeStamp *stamp, UInt32 frames, 
     return noErr;
 }
 
+static float Tone(uint64_t frame) {
+    return (float)(0.5 * sin(2.0 * M_PI * 1000.0 * (double)frame / 48000.0));
+}
+
+// A second of a 1 kHz tone through a connected FX chain with nothing engaged,
+// then through a meter. The chain hands the tone back exactly. The meter
+// lights the band from 800 to 4000 Hz, and the other four stay dark.
+static BOOL TonePassesFXAndMeter(void) {
+    dispatch_queue_t queue = dispatch_queue_create("consumer.audio", DISPATCH_QUEUE_SERIAL);
+    AudioFX *fx = [[AudioFX alloc] initWithQueue:queue scheduler:^(NSTimeInterval seconds, dispatch_block_t block) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(seconds * NSEC_PER_SEC)), queue, block);
+    } afterRenderLeaves:^(dispatch_block_t work) {
+        work();
+    }];
+    AVAudioFormat *format = [[AVAudioFormat alloc] initStandardFormatWithSampleRate:48000 channels:2];
+    AudioLevelPublisher *publisher = [[AudioLevelPublisher alloc] init];
+    AudioLevelMeter *meter = [[AudioLevelMeter alloc] initWithFormat:format publisher:publisher
+                                                   normalizationMode:kLevelDefaultNormalizationMode];
+    AVAudioPCMBuffer *buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:format frameCapacity:kFrames];
+    __block NSUInteger hosted = 0;
+    __block OSStatus status = noErr;
+    __block uint64_t changed = UINT64_MAX;
+    dispatch_sync(queue, ^{
+        [fx setConnected:YES format:format maximumFrameCount:kFrames];
+        hosted = fx.hostedUnitCount;
+        [meter install];
+        AudioTimeStamp stamp = {0};
+        stamp.mFlags = kAudioTimeStampSampleTimeValid;
+        for (uint64_t first = 0; first < 48000 && hosted && status == noErr; first += kFrames) {
+            for (UInt32 n = 0; n < kFrames; n++) {
+                buffer.floatChannelData[0][n] = Tone(first + n);
+                buffer.floatChannelData[1][n] = Tone(first + n);
+            }
+            buffer.frameLength = kFrames;
+            stamp.mSampleTime = (Float64)first;
+            status = VibeFXChainRender(fx.chain, &stamp, kFrames, buffer.mutableAudioBufferList);
+            for (UInt32 n = 0; n < kFrames && changed == UINT64_MAX; n++) {
+                float want = Tone(first + n);
+                if (buffer.floatChannelData[0][n] != want || buffer.floatChannelData[1][n] != want) {
+                    changed = first + n;
+                }
+            }
+            VibeLevelMeterRender(meter.meter, buffer.floatChannelData, 2, kFrames, &stamp);
+        }
+    });
+    float levels[kLevelBandCount] = {0};
+    uint64_t sequence = 0;
+    BOOL read = [publisher copyLevels:levels count:kLevelBandCount sequence:&sequence];
+    dispatch_sync(queue, ^{
+        [meter remove];
+        [fx setConnected:NO format:nil maximumFrameCount:kFrames];
+    });
+    if (!hosted || status != noErr || changed != UINT64_MAX) {
+        fprintf(stderr, "consumer: the chain hosted %lu units, rendered status %d, and changed frame %llu\n",
+                (unsigned long)hosted, (int)status, changed);
+        return NO;
+    }
+    BOOL dark = levels[0] < 0.1f && levels[1] < 0.1f && levels[2] < 0.1f && levels[4] < 0.1f;
+    if (!read || !sequence || levels[3] < 0.5f || !dark) {
+        fprintf(stderr, "consumer: the meter read %d at %llu: %.3f %.3f %.3f %.3f %.3f\n", read, sequence,
+                levels[0], levels[1], levels[2], levels[3], levels[4]);
+        return NO;
+    }
+    return YES;
+}
+
 int main(void) {
     VibeVarispeed *stage = VibeVarispeedCreate(2, kFrames);
     if (!stage) {
@@ -179,6 +251,9 @@ int main(void) {
     VibeVarispeedFree(stage);
     if (!engaged) {
         fprintf(stderr, "consumer: the converter never joined\n");
+        return 1;
+    }
+    if (!TonePassesFXAndMeter()) {
         return 1;
     }
     NSString *hex = VibeHexStringFromColor(VibeColorFromHexString(@"#12345678"));
@@ -385,6 +460,47 @@ int main(void) {
     }
     printf("consumer: %lu output devices, the default is %s\n", (unsigned long)found.count,
            standard ? standard.name.UTF8String : "none");
+    // A canonical 16-bit stereo WAV, its bytes written here, so the handle is
+    // not its own oracle. Each frame's left sample is its index, and its right
+    // sample the negation.
+    enum { kFrames = 1000 };
+    NSMutableData *wav = [NSMutableData dataWithBytes:"RIFF" length:4];
+    uint32_t chunk = 36 + kFrames * 4, fmtSize = 16, rate = 44100, byteRate = rate * 4, dataSize = kFrames * 4;
+    uint16_t pcm = 1, channels = 2, align = 4, bits = 16;
+    [wav appendBytes:&chunk length:4];
+    [wav appendBytes:"WAVEfmt " length:8];
+    [wav appendBytes:&fmtSize length:4];
+    [wav appendBytes:&pcm length:2];
+    [wav appendBytes:&channels length:2];
+    [wav appendBytes:&rate length:4];
+    [wav appendBytes:&byteRate length:4];
+    [wav appendBytes:&align length:2];
+    [wav appendBytes:&bits length:2];
+    [wav appendBytes:"data" length:4];
+    [wav appendBytes:&dataSize length:4];
+    for (int16_t i = 0; i < kFrames; i++) {
+        int16_t frame[2] = {i, (int16_t)-i};
+        [wav appendBytes:frame length:sizeof frame];
+    }
+    NSURL *wavURL = [NSURL fileURLWithPath:[NSTemporaryDirectory()
+            stringByAppendingPathComponent:[NSUUID.UUID.UUIDString stringByAppendingPathExtension:@"wav"]]];
+    [wav writeToURL:wavURL atomically:YES];
+    NSError *readError = nil;
+    AudioFileHandle *handle = [[AudioFileHandle alloc] initForReading:wavURL error:&readError];
+    AVAudioPCMBuffer *frames = handle ? [[AVAudioPCMBuffer alloc] initWithPCMFormat:handle.processingFormat
+                                                                       frameCapacity:kFrames + 16] : nil;
+    BOOL read = frames && [handle readIntoBuffer:frames error:&readError] && frames.frameLength == kFrames
+            && handle.length == kFrames && [handle.decoderName isEqualToString:@"dr_wav"];
+    for (AVAudioFrameCount i = 0; read && i < kFrames; i++) {
+        read = frames.floatChannelData[0][i] == i / 32768.0f && frames.floatChannelData[1][i] == -(float)i / 32768.0f;
+    }
+    handle = nil;
+    [NSFileManager.defaultManager removeItemAtURL:wavURL error:NULL];
+    if (!read) {
+        fprintf(stderr, "consumer: the handle read %u frames (%s)\n", frames.frameLength,
+                readError.localizedDescription.UTF8String);
+        return 1;
+    }
     float tempo = ClickTrackTempo(128.0);
     if (fabsf(tempo - 128.0f) > 1.0f) {
         fprintf(stderr, "consumer: the click track's tempo is %.2f\n", tempo);
