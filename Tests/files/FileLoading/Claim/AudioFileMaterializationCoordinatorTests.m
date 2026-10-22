@@ -1,6 +1,7 @@
 
 #import "AudioFileMaterializationCoordinatorTestCase.h"
 #import "CloudTransferRegistry.h"
+#import "VibeTestNegativeWindow.h"
 
 @interface AudioFileMaterializationCoordinatorTests : AudioFileMaterializationCoordinatorTestCase
 @end
@@ -148,7 +149,7 @@
     XCTAssertEqual(_probeController.totalCallCount, 24u);
     XCTAssertEqual(_controller.startedOperations.count, 0u,
                    @"a fresh local answer settles without an operation");
-    [self waitForExpectations:@[cancelledSilent] timeout:0.1];
+    [self waitForExpectations:@[cancelledSilent] timeout:kVibeTestNegativeWindow];
     (void)tokens;
 }
 
@@ -383,7 +384,7 @@
                    @"a dataless readmission refreshes before restarting");
     [second completeReady:YES];
     [self waitForExpectations:@[playbackReady] timeout:VIBE_TEST_HANG_TIMEOUT];
-    [self waitForExpectations:@[oldSilent] timeout:0.1];
+    [self waitForExpectations:@[oldSilent] timeout:kVibeTestNegativeWindow];
     VibeAudioFileMaterializationCoordinatorSnapshot settled =
             [_coordinator stateSnapshotForTesting];
     XCTAssertEqual(settled.claimCount, 0u);
@@ -422,7 +423,7 @@
                    @"a ready cancelled run makes its readmission local");
     [_controller.startedOperations.lastObject completeReady:YES];
     [self waitForExpectations:@[replacementReady] timeout:VIBE_TEST_HANG_TIMEOUT];
-    [self waitForExpectations:@[oldSilent] timeout:0.1];
+    [self waitForExpectations:@[oldSilent] timeout:kVibeTestNegativeWindow];
 }
 
 - (void)testReplacementDuringRefreshReusesItsFreshDatalessClassification {
@@ -509,7 +510,7 @@
 
     [replacementOperation completeReady:YES];
     [self waitForExpectations:@[replacementReady] timeout:VIBE_TEST_HANG_TIMEOUT];
-    [self waitForExpectations:@[oldSilent] timeout:0.1];
+    [self waitForExpectations:@[oldSilent] timeout:kVibeTestNegativeWindow];
     [self drainMainQueue];
     XCTAssertFalse([CloudTransferRegistry.sharedRegistry
             isTransferringURL:[self URLNamed:@"refresh-replacement.wav"]]);
@@ -554,7 +555,7 @@
     XCTAssertTrue([_probeController waitForIdle]);
     XCTAssertEqual(_controller.startedOperations.count, 0u,
                    @"the old dataless answer must not start a run for the replacement");
-    [self waitForExpectations:@[oldSilent] timeout:0.1];
+    [self waitForExpectations:@[oldSilent] timeout:kVibeTestNegativeWindow];
 }
 
 #pragma mark - Cancellation and restarts

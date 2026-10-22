@@ -10,6 +10,7 @@
 
 #import "AudioFileHandleStreamingTestCase.h"
 #import "TailWindowMath.h"
+#import "VibeTestNegativeWindow.h"
 
 #pragma mark - A file written in step with its reader
 
@@ -1139,7 +1140,7 @@ static NSData *VibeWithTrailingTag(NSData *file, NSString *extension, uint32_t l
     XCTAssertTrue([self eventually:^BOOL { return atomic_load(&self->_fetchCancels) == 1 && [self running:NO]; }],
                   @"the transfer nobody reads was cancelled");
     XCTAssertFalse([self transferring:file]);
-    [self waitForExpectations:@[silent] timeout:0.2];
+    [self waitForExpectations:@[silent] timeout:kVibeTestNegativeWindow];
 }
 
 // The hold stays raised while a delivered handle reads a running transfer,
@@ -1179,7 +1180,7 @@ static NSData *VibeWithTrailingTag(NSData *file, NSString *extension, uint32_t l
     XCTAssertNotNil(playback);
     XCTAssertNotNil(prefetch);
     playback = nil;
-    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.2]];
+    [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:kVibeTestNegativeWindow]];
     XCTAssertEqual(atomic_load(&_fetchCancels), 0u);
     XCTAssertTrue([self running:YES]);
     XCTAssertTrue(_coordinator.isForegroundTransferActive);
@@ -1216,7 +1217,7 @@ static NSData *VibeWithTrailingTag(NSData *file, NSString *extension, uint32_t l
         [early fulfill];
         [delivered fulfill];
     }];
-    [self waitForExpectations:@[early] timeout:0.2];
+    [self waitForExpectations:@[early] timeout:kVibeTestNegativeWindow];
     XCTAssertEqual(_coordinator.stateSnapshotForTesting.handleOpensStarted, 0u);
     XCTAssertTrue([self finishRemote:VibeFetchCompleted]);
     [self waitForExpectations:@[delivered] timeout:VIBE_TEST_HANG_TIMEOUT];
@@ -1283,7 +1284,7 @@ static NSData *VibeWithTrailingTag(NSData *file, NSString *extension, uint32_t l
         VibeAudioFileMaterializationCoordinatorSnapshot snapshot = self->_coordinator.stateSnapshotForTesting;
         return snapshot.handleOpensCompleted == 1 && snapshot.handleRunCount == 0;
     }], @"the parked open returned and left the ceiling");
-    [self waitForExpectations:@[silent] timeout:0.2];
+    [self waitForExpectations:@[silent] timeout:kVibeTestNegativeWindow];
     XCTAssertEqual(AudioFileHandle.debugOrphanedReadAheads, 1, @"its thread is still in the read");
 }
 
