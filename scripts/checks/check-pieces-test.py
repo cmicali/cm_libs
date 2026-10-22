@@ -45,32 +45,32 @@ def replace(root, path, old, new):
 HEADER = "core/Common/VibeMacros.h"
 SOURCE = "audio/DSP/AudioVarispeed.m"
 OTHER_APP = "vibe" + " " + "pro"
-# The macOS-only cases make audio/Meter macOS only, since no piece depends on
-# it. A piece another piece's iOS target reaches would fail on that target.
-METER_SOURCE = "audio/Meter/AudioLevelMeter.m"
-METER_ROW = "| audio/Meter | nothing |"
+# The macOS-only cases make audio/Analysis macOS only, since the map gives it
+# no dependent. A piece another piece's iOS target reaches would fail on that
+# target, as audio/Meter does since Player-iOS reaches it.
+LEAF_SOURCE = "audio/Analysis/AudioBPMAnalyzer.mm"
+LEAF_ROW = "| audio/Analysis | audio/AudioTypes |"
+LEAF_MAC_ROW = "| audio/Analysis | audio/AudioTypes, macOS only |"
 DSP_ROW = "| audio/DSP | third_party/r8brain |"
-METER_IOS = """  # audio/Meter built for iOS, with its probe of the render seam, which only
-  # tests import.
-  Meter-iOS:
+LEAF_IOS = """  # audio/Analysis built for iOS. Key analysis is an app's choice per
+  # platform, so the piece builds on both.
+  Analysis-iOS:
     type: library.static
     platform: iOS
-    templates: [VibeLibsMeter]
+    templates: [VibeLibsAnalysis]
     templateAttributes:
       excludedPlatform: Mac
-    sources:
-      - path: Tests/audio/Meter/MeterProbe.m
 
 """
 COMMON_IOS_TEMPLATES = "    templates: [VibeLibsCommon]\n    templateAttributes:\n      excludedPlatform: Mac"
 
 
 def mac_only(root):
-    """audio/Meter becomes macOS only, the way a shell piece arrives: the map
+    """audio/Analysis becomes macOS only, the way a shell piece arrives: the map
     row says so, and the piece has no iOS target."""
-    replace(root, "docs/plan.md", METER_ROW, "| audio/Meter | nothing, macOS only |")
-    replace(root, "project.yml", METER_IOS, "")
-    replace(root, "project.yml", "        Meter-iOS: all\n", "")
+    replace(root, "docs/plan.md", LEAF_ROW, LEAF_MAC_ROW)
+    replace(root, "project.yml", LEAF_IOS, "")
+    replace(root, "project.yml", "        Analysis-iOS: all\n", "")
 
 
 def ios_target_listing(root, listed):
@@ -153,23 +153,23 @@ CASES = [
      lambda r: append(r, "README.md", "\nVibeProbe\n"),
      None),
     ("a macOS-only piece given an iOS target",
-     lambda r: replace(r, "docs/plan.md", METER_ROW, "| audio/Meter | nothing, macOS only |"),
-     "Meter-iOS builds for iOS and lists VibeLibsMeter, but audio/Meter is macOS only"),
+     lambda r: replace(r, "docs/plan.md", LEAF_ROW, LEAF_MAC_ROW),
+     "Analysis-iOS builds for iOS and lists VibeLibsAnalysis, but audio/Analysis is macOS only"),
     ("an iOS target listing a macOS-only template",
-     lambda r: ios_target_listing(r, "VibeLibsMeter"),
-     "Common-iOS builds for iOS and lists VibeLibsMeter, but audio/Meter is macOS only"),
+     lambda r: ios_target_listing(r, "VibeLibsAnalysis"),
+     "Common-iOS builds for iOS and lists VibeLibsAnalysis, but audio/Analysis is macOS only"),
     ("an iOS target reaching a macOS-only template through a stack",
-     lambda r: (append(r, "vibe-libs.yml", "\n  VibeLibsShell:\n    templates: [VibeLibsMeter]\n"),
+     lambda r: (append(r, "vibe-libs.yml", "\n  VibeLibsShell:\n    templates: [VibeLibsAnalysis]\n"),
                 ios_target_listing(r, "VibeLibsShell")),
-     "Common-iOS builds for iOS and reaches VibeLibsMeter through VibeLibsShell, but audio/Meter is macOS only"),
+     "Common-iOS builds for iOS and reaches VibeLibsAnalysis through VibeLibsShell, but audio/Analysis is macOS only"),
     ("a macOS-only piece with an iOS/ half",
-     lambda r: (mac_only(r), write(r, "audio/Meter/iOS/Thing.m", "int VibeThing(void) { return 0; }\n")),
-     "audio/Meter is macOS only and has no iOS/ half"),
+     lambda r: (mac_only(r), write(r, "audio/Analysis/iOS/Thing.m", "int VibeThing(void) { return 0; }\n")),
+     "audio/Analysis is macOS only and has no iOS/ half"),
     ("a macOS-only piece with a Mac/ half",
-     lambda r: (mac_only(r), write(r, "audio/Meter/Mac/Thing.m", "int VibeThing(void) { return 0; }\n")),
+     lambda r: (mac_only(r), write(r, "audio/Analysis/Mac/Thing.m", "int VibeThing(void) { return 0; }\n")),
      None),
     ("a macOS-only piece importing AppKit with no guard",
-     lambda r: (mac_only(r), append(r, METER_SOURCE, "\n#import <AppKit/AppKit.h>\n")),
+     lambda r: (mac_only(r), append(r, LEAF_SOURCE, "\n#import <AppKit/AppKit.h>\n")),
      None),
     ("a first-party template searching third_party/",
      lambda r: replace(r, "vibe-libs.yml", '"$(VIBE_LIBS_ROOT)/audio/DSP"]', '"$(VIBE_LIBS_ROOT)/audio/DSP", "$(VIBE_LIBS_ROOT)/third_party"]'),

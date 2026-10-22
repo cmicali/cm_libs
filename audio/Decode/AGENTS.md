@@ -2,7 +2,7 @@
 
 One opened audio file, read as PCM. **Today it holds `AudioFileHandle`**, Vibe's file handle, moved from Vibe with its MPEG and stream decodes and its read-ahead seam. It depends on `core/Common`, on `files/FileLoading` for a stream's and a read-ahead's bytes, and on the four decoders it hosts: `third_party/dr_mp3`, `dr_flac`, `dr_wav`, and `vorbis`. Its surface is `AVAudioFile`'s: the file's facts, a cursor in file frames, and reads into a PCM buffer. It also writes, through an `ExtAudioFile`, so an app's converter and its test fixtures share the class. It reads no app's settings, strings, or types.
 
-Vibe's player, its waveform loader, its metadata fallback, and its converter each open one. What a player does with a handle, its voices, its fades, and its deadline, is Vibe's `Audio/AGENTS.md`. `docs/audio-quality.md` in Vibe has the measurements behind each decoder choice.
+Vibe's player, its waveform loader, its metadata fallback, and its converter each open one. What a player does with a handle, its voices, its fades, and its deadline, is `audio/Player/AGENTS.md`. `docs/audio-quality.md` in Vibe has the measurements behind each decoder choice.
 
 | File | Owns |
 | --- | --- |
@@ -49,7 +49,7 @@ A wait ends ready, failed, or interrupted. A failed transfer is a read failure c
 **TRAP: an MP3 with no count that fits the file states no packet count.** A count comes from a Xing, Info, or VBRI frame, or from iTunes' comment. The walk counts one by reading every frame header to the end, so a stream of one would open only once downloaded. It opens uncounted instead, on a count from the frames of its head (`estimateMPEGPacketsAtRate:`, `AudioFileHandle+MPEG.m`). The open waits for 16 frames and walks on through those already on disk. If they share the first's bit rate, the count is what that rate gives the audio's bytes. Otherwise it is the count at their average size. **Either is an estimate** (`lengthIsEstimated`), since a headerless file can change rate after its intro. It is kept ahead of the cursor, so a reader never takes it for the end. It is settled from the walk's count when the reads reach the stream's end, or at the first read once the download is complete, on the reading thread. Seeks land exactly either way, since a packet is a fixed number of frames. A head that does not walk is still counted at open, waiting for its download.
 
 - **TRAP:** the settle stores the length, then clears the flag with release ordering, and `lengthIsEstimated` reads it with acquire. A reader of both takes them as one pair (`lengthEstimated:`).
-- How Vibe's player follows an estimate, and refuses nothing against one, is Vibe's `Audio/AGENTS.md`. `audio/AudioTypes`' CUE window keeps a cue end past an estimate.
+- How the player follows an estimate, and refuses nothing against one, is `audio/Player/AGENTS.md`. `audio/AudioTypes`' CUE window keeps a cue end past an estimate.
 
 A whole file pays one lookup per open and one nil check per fill. The file loader's coordinator opens a readable transfer's file this way and interrupts the open when its run is cancelled. The open's deadline is the app's.
 
@@ -83,4 +83,4 @@ They write their own fixtures (`Tests/Support/AudioFileFixtures.h`). `VibeReadAh
 
 **`AudioFileHandleFuzzTests` feeds seeded mutants of every fixture through the handle.** Each decoder family is a subclass: dr_wav's, dr_flac's, the MPEG decoders', and Apple's. It reads the fixtures an app generates when `VIBE_AUDIO_FIXTURES` names their folder, and the few sources it writes itself. Here nothing generates fixtures, so the dr_flac and MPEG families skip. Vibe's audio suite compiles the same file and runs it over Vibe's generated fixtures. `TEST_RUNNER_VIBE_FUZZ_ITERATIONS`, `TEST_RUNNER_VIBE_FUZZ_SEED`, and `TEST_RUNNER_VIBE_FUZZ_EXPORT` work as the file's header says.
 
-Vibe keeps the tests that need its own code: the player's render suites, its corpus conformance test, and its waveform loader's streaming tests.
+The player's render suite reads files through the handle too. It is `audio/Player`'s, and an app's test target runs it over its generated fixtures. Vibe keeps the tests that need its own code: its corpus conformance test and its waveform loader's streaming tests.

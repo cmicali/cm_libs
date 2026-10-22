@@ -13,12 +13,12 @@ There are no shared files. The two halves have nothing in common but their job, 
 | `Mac/CoreAudioUtil+BitPerfect.m` | transport, rate, physical format, volume, hog, and liveness |
 | `Mac/CoreAudioUtil+Diagnostics.m` | one device's whole description for a debug report, and the event log's formatter |
 | `Mac/CoreAudioUtilInternal.h` | the HAL helpers the three `CoreAudioUtil` files share |
-| `Mac/OutputFormatRules.h` | the device decisions, as static inlines: bit-perfect output's format choice, eligibility, and report fold, device liveness, and when a saved device may bind |
+| `Mac/OutputFormatRules.h` | the device decisions, as static inlines: bit-perfect output's format choice and eligibility, and device liveness |
 | `iOS/AudioSessionController` | activation, idle release, and the route, interruption, and media-services events, each a delegate verdict |
 | `iOS/AudioSessionRecoveryRules.h` | the verdicts, as static inlines |
 | `iOS/OutputRouteRules.h` | what a route is, for an indicator and for the verdicts |
 
-Vibe's player binds its output unit to a device, runs bit-perfect output, and recovers its output on iOS. Those categories read the player's private state, so they stay with the player. Vibe's `Audio/Mac/Devices/AGENTS.md` and `Audio/iOS/AGENTS.md` describe them.
+`audio/Player` binds its output unit to a device, runs bit-perfect output, and recovers its output on iOS. Those categories read the player's private state, so they sit in its `Mac/` and `iOS/` halves. `audio/Player/AGENTS.md` describes them.
 
 ## Mac/: the output devices
 
@@ -73,8 +73,8 @@ Vibe's player binds its output unit to a device, runs bit-perfect output, and re
 - **The rate rule**: exact, else the smallest integer multiple, else untouched. It scans PCM offers carrying every source channel, and continuous ranges. Encoded-only rates cannot hide a usable PCM multiple.
 - **The depth rule**: the widest integer depth the device offers, never one below the source's, else the widest float format. Float and lossy sources take the float format first, since what reaches the device is a float32 decode. One depth for every integer source lets a 16-bit and a 24-bit track at one rate share a format.
 - **Eligibility is an allowlist of transports** (`VibeBitPerfectDeviceEligible`): built-in, PCI, USB, FireWire, Thunderbolt, HDMI, DisplayPort, AVB, and virtual. Bluetooth, AirPlay, Continuity, the Remote types, aggregates, and Unknown are out, and so is anything Apple adds until argued in. A testing override bypasses the allowlist.
-- **The report** (`VibeBitPerfectReport`) carries every input of the fold and its status. `VibeBitPerfectFold` names the first reason the output is not bit-perfect, in a fixed priority order.
-- `VibeCanBindSavedOutputDevice` says when a saved device may bind: whenever nothing is audible. It is the player's policy, written here beside the rules it shared a header with.
+
+The report these reasons fold into, and when a saved device may bind, are the player's. They read the player's state, and the player is their only caller, so they sit in `audio/Player`'s `Mac/` half.
 
 ## iOS/: the audio session
 
@@ -120,7 +120,7 @@ Existing interruption, route-loss, and reset ownership wins in all three, which 
 `Tests/audio/OutputDevices/` holds Vibe's tests of the manager and the rules. They run on macOS, with the headermap off. The iOS half's rules are Foundation-only, so their tests run on macOS too. The iOS target builds the iOS half. No test assumes a particular output device.
 
 - `Mac/AudioDeviceManagerTests` runs the manager with injected enumeration and retry scheduling, and no HAL registration: snapshot publication, saved-device lookups, and the recovery retry. It also runs the event log's listener, the bounded read, and the release loop with controlled attempts.
-- `Mac/OutputFormatRulesTests` covers the rate and depth rules, eligibility, the fold, device liveness, and the saved-device bind.
+- `Mac/OutputFormatRulesTests` covers the rate and depth rules, eligibility, and device liveness.
 - `iOS/AudioSessionRecoveryRulesTests` and `iOS/OutputRouteRulesTests` cover the two rule headers.
 
 The session controller has no tests here. Interruptions, route changes, and a media-services reset need a real device. The manager's HAL listeners, a device's property reads, and hardware settlement stay live tests in Vibe. **A bounded wait is a hang guard or a gate.** A wait for what must happen uses `VIBE_TEST_HANG_TIMEOUT`. A gate the test releases itself uses `VIBE_TEST_GATE_TIMEOUT`, which outlasts the guards it holds across. The test bundle defines both, as Vibe's do.

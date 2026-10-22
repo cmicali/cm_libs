@@ -3,28 +3,17 @@
 //  Vibe
 //
 //  The output device layer's decisions, as static inlines so the host-less
-//  suite reaches them without a HAL: when a saved device may bind, then
-//  bit-perfect output's — what a source's
-//  word length is, which of a device's formats carries it unchanged, whether
-//  a device may be driven at all, and how the reasons fold into one status.
-//  The app shows that status. The mechanism they serve is the app's player,
-//  which binds a device and drives bit-perfect output.
+//  suite reaches them without a HAL: whether a device is gone, then
+//  bit-perfect output's — what a source's word length is, which of a
+//  device's formats carries it unchanged, and whether a device may be driven
+//  at all. The mechanism they serve is a player, which binds a device and
+//  drives bit-perfect output. audio/Player keeps the report those reasons
+//  fold into, and when a saved device may bind.
 //
 
 #import <Foundation/Foundation.h>
 #import <CoreAudio/AudioHardwareBase.h>
 #include <math.h>
-
-// A saved-device bind may land whenever nothing is audible: a rebind under
-// sound clicks, or tears down a live stream. So: stopped; loading while the
-// output is not running (the first open at launch); and a pause whose fade has
-// settled, since an unplug parks playback as Paused and the rebuild restores a
-// paused track as Paused. Loading over a running outgoing fade, and playing,
-// are excluded.
-static inline BOOL VibeCanBindSavedOutputDevice(BOOL stopped, BOOL loading, BOOL paused,
-                                                BOOL outputRunning, BOOL audioActive) {
-    return stopped || (loading && !outputRunning) || (paused && !audioActive);
-}
 
 // Whether a direct HAL read of kAudioDevicePropertyDeviceIsAlive proves the
 // device is gone: it answered "dead", or the object itself no longer exists.
@@ -53,69 +42,7 @@ static inline BOOL VibeBitPerfectChannelMapPreservesSource(const SInt32 *map, UI
     return YES;
 }
 
-typedef NS_ENUM(NSInteger, VibeBitPerfectStatus) {
-    // The setting is off, or the device is ineligible. This is defensive. An
-    // app should never let the two coincide.
-    VibeBitPerfectStatusOff,
-    // On, device chosen, nothing playing.
-    VibeBitPerfectStatusIdle,
-    VibeBitPerfectStatusActive,
-    // The device does not offer the file's rate; a multiple was used when it
-    // offered one.
-    VibeBitPerfectStatusRateUnsupported,
-    // The output route, format or gain could not be confirmed.
-    VibeBitPerfectStatusSwitchFailed,
-    VibeBitPerfectStatusChannelConversion,
-    VibeBitPerfectStatusDepthInsufficient,
-    VibeBitPerfectStatusMuted,
-    // Software volume below 1.0, balance away from center, or the player's
-    // own volume below full.
-    VibeBitPerfectStatusVolumeScaled,
-    // Exclusive output requested but ownership not confirmed.
-    VibeBitPerfectStatusExclusiveRefused,
-    // Everything held, but the file is lossy: its decoded audio plays at its
-    // own rate with no volume change, rounded only to the device's depth.
-    VibeBitPerfectStatusSourceLossy,
-};
-
-// Every input to the fold plus what it produced. Every reader of the status
-// reads one snapshot, so no two can disagree about why.
-typedef struct {
-    VibeBitPerfectStatus status;
-    double sampleRate;      // the device's, after the switch
-    UInt32 bitsPerChannel;  // the physical format's width
-    UInt32 sourceBits;      // the file's depth (VibeSourceBitDepth), 0 for lossy
-    BOOL isFloat;
-    float softwareVolume;
-    float balance;         // 0 = left, 0.5 = center, 1 = right
-    float playerVolume;    // the player's own volume, 1 at full
-    // The fold's inputs.
-    BOOL enabled;
-    BOOL eligibleDevice;
-    BOOL hasTrack;
-    BOOL rateExact;
-    BOOL formatConfirmed;   // the bound device has the requested format; its gain reads succeeded
-    BOOL channelsMatch;     // unchanged source channels, verified output routing
-    BOOL depthOK;
-    BOOL muted;
-    BOOL hogWanted;
-    BOOL exclusive;
-} VibeBitPerfectReport;
-
 static const UInt32 kVibeBitPerfectAssumedLosslessDepth = 24;
-
-// Every field, so a publication that changed nothing is not announced.
-static inline BOOL VibeBitPerfectReportsEqual(VibeBitPerfectReport a, VibeBitPerfectReport b) {
-    return a.status == b.status && a.sampleRate == b.sampleRate
-            && a.bitsPerChannel == b.bitsPerChannel && a.sourceBits == b.sourceBits && a.isFloat == b.isFloat
-            && a.softwareVolume == b.softwareVolume && a.balance == b.balance
-            && a.playerVolume == b.playerVolume && a.enabled == b.enabled
-            && a.eligibleDevice == b.eligibleDevice && a.hasTrack == b.hasTrack
-            && a.rateExact == b.rateExact
-            && a.formatConfirmed == b.formatConfirmed && a.channelsMatch == b.channelsMatch
-            && a.depthOK == b.depthOK && a.muted == b.muted
-            && a.hogWanted == b.hogWanted && a.exclusive == b.exclusive;
-}
 
 // PCM: mBitsPerChannel. ALAC and FLAC: the kAppleLosslessFormatFlag_*
 // source-depth flags, or 24 assumed when the flags say nothing. Lossy and
@@ -297,45 +224,4 @@ static inline BOOL VibeBitPerfectChooseFormat(AudioStreamBasicDescription source
     BOOL preferFloat = (VibeSourceIsFloat(source) || depth == 0) ? haveFloat : !haveInteger;
     *chosen = preferFloat ? floatPick : integerPick;
     return YES;
-}
-
-// The fold over the report's inputs, in priority order, so two breakers never
-// race for the caption: Off > Idle > SwitchFailed >
-// RateUnsupported > ChannelConversion > DepthInsufficient > Muted > VolumeScaled > ExclusiveRefused >
-// SourceLossy > Active. SourceLossy is last
-// before Active because it is the only status that says the chain is perfect
-// and the file is not. There is no pitch input: under the mode there is no
-// varispeed to have a pitch.
-static inline VibeBitPerfectStatus VibeBitPerfectFold(VibeBitPerfectReport r) {
-    if (!r.enabled || !r.eligibleDevice) {
-        return VibeBitPerfectStatusOff;
-    }
-    if (!r.hasTrack) {
-        return VibeBitPerfectStatusIdle;
-    }
-    if (!r.formatConfirmed) {
-        return VibeBitPerfectStatusSwitchFailed;
-    }
-    if (!r.rateExact) {
-        return VibeBitPerfectStatusRateUnsupported;
-    }
-    if (!r.channelsMatch) {
-        return VibeBitPerfectStatusChannelConversion;
-    }
-    if (!r.depthOK) {
-        return VibeBitPerfectStatusDepthInsufficient;
-    }
-    if (r.muted) {
-        return VibeBitPerfectStatusMuted;
-    }
-    if (r.softwareVolume < 1.0f || r.balance != 0.5f || r.playerVolume < 1.0f) {
-        return VibeBitPerfectStatusVolumeScaled;
-    }
-    if (r.hogWanted && !r.exclusive) {
-        return VibeBitPerfectStatusExclusiveRefused;
-    }
-    if (r.sourceBits == 0) {
-        return VibeBitPerfectStatusSourceLossy;
-    }
-    return VibeBitPerfectStatusActive;
 }
