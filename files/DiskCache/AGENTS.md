@@ -1,6 +1,6 @@
 # files/DiskCache
 
-A bounded disk cache over PINCache. It depends on `third_party/PINCache` and on `core/Common`. **Today it holds what Vibe moved here**: one category, `PINCache (VibeAudioCache)`. Vibe's metadata cache and waveform cache both build their stores through it, so their entries live and die on the same terms.
+A bounded disk cache over PINCache. It depends on `third_party/PINCache` and on `core/Common`. **Today it holds what Vibe moved here**: one category, `PINCache (VibeAudioCache)`. `media/Metadata`'s cache and Vibe's waveform cache both build their stores through it, so their entries live and die on the same terms.
 
 ## The store
 

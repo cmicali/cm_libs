@@ -2,7 +2,7 @@
 
 TagLib's fields and embedded art bytes. It depends on `third_party/taglib`, on `audio/AudioTypes` for the format names, and on `core/Common` for the log macros. **Today it holds what Vibe moved here**: `TagLibAudioFile`, Vibe's TagLib wrapper, in Objective-C++. It reads no app's settings, strings, or types.
 
-Vibe's metadata parse is its one user. Vibe reads the title, the artist, the audio properties, the tempo, and the key from the wrapper's `TagLib::File`. What it does with them, the cache, the scan, and the artwork, is Vibe's `Audio/Metadata/AGENTS.md`.
+`media/Metadata`'s parse is its one user. It reads the title, the artist, the audio properties, the tempo, and the key from the wrapper's `TagLib::File`. What it does with them, the cache, the scan, and the artwork, is `media/Metadata/AGENTS.md`.
 
 ## How an app uses it
 
@@ -10,7 +10,7 @@ Vibe's metadata parse is its one user. Vibe reads the title, the artist, the aud
 
 **The header is C++**, so only Objective-C++ and C++ can include it. A file that includes it also needs TagLib's header paths, which the template brings.
 
-**A read blocks, and an entered read cannot be cancelled.** Call it off main. A corrupt tag can make TagLib throw. `VibeTagLibReadEmbeddedArt` catches it. A caller of the constructor wraps its own reads in a `try`, as Vibe's parse does, since an uncaught throw on a worker ends the process.
+**A read blocks, and an entered read cannot be cancelled.** Call it off main. A corrupt tag can make TagLib throw. `VibeTagLibReadEmbeddedArt` catches it. A caller of the constructor wraps its own reads in a `try`, as `media/Metadata`'s parse does, since an uncaught throw on a worker ends the process.
 
 ## Detection
 
@@ -24,7 +24,7 @@ Without `readProperties`, no audio properties are parsed. The art read never use
 
 ## Reading by range
 
-**With a `VibeTagByteRangeRead`, the wrapper reads the file's bytes through the caller's block instead of from disk.** The caller passes the file's length too. Vibe passes one for a remote placeholder, a file whose bytes are on a server, so its tags and art are read without downloading the song. The block runs on the reading thread and blocks.
+**With a `VibeTagByteRangeRead`, the wrapper reads the file's bytes through the caller's block instead of from disk.** The caller passes the file's length too. `media/Metadata` passes one for a remote placeholder, a file whose bytes are on a server, so its tags and art are read without downloading the song. The block runs on the reading thread and blocks.
 
 `VibeRangedStream` fetches 64 KiB blocks, one request per run of missing blocks, and keeps them for the stream's life. The first read fetches up to 384 KiB, so nearby art costs no second request. Later requests follow the parser's reads. A tail read can therefore fetch the file's end alone. A server must honor ranges, or the reader the app passes must skip to the offset itself.
 
@@ -36,4 +36,4 @@ Without `readProperties`, no audio properties are parsed. The art read never use
 
 ## Tests
 
-`Tests/media/Tags/` holds Vibe's tests of the detection: the extension's parser first, then the content sniff, with an ID3v2 tag before a FLAC, and FLAC in Ogg refused. They write their own untagged files with AVFoundation and an MP3's frames. Vibe keeps the tests of its parse over the wrapper: each format's tags and facts, the art, the range read through its placeholder store, and the fuzz family. They need Vibe's metadata model and its fixtures. The minimal consumer tags a WAV with TagLib, reads its title back through the wrapper, and reads its picture's bytes through a byte-range reader.
+`Tests/media/Tags/` holds Vibe's tests of the detection: the extension's parser first, then the content sniff, with an ID3v2 tag before a FLAC, and FLAC in Ogg refused. They write their own untagged files with AVFoundation and an MP3's frames. The tests of the parse over the wrapper are `media/Metadata`'s: each format's tags and facts, the art, the range read through a placeholder's backend, and the fuzz family. The minimal consumer tags a WAV with TagLib, reads its title back through the wrapper, and reads its picture's bytes through a byte-range reader.

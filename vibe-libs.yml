@@ -198,6 +198,38 @@ targetTemplates:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/Tags"]
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "Foundation"]
 
+  # The tag record and its CoreAudio fallback, the cache, the background scan,
+  # embedded art and thumbnails, and covers beside the files. Artwork/ and
+  # Artwork/FolderArt/ are searched, since the files name each other's headers
+  # alone. It lists AudioTypes for the playable item and the format names,
+  # Decode for the fallback's handle, Tags for the TagLib parse, DiskCache for
+  # the store, FileLoading for the materialization and the ranged read,
+  # Graphics for the image helpers, and TagLib and PINCache, whose own headers
+  # the parse and the cache read. Its seams compile in every configuration.
+  # Each wraps its body in #if DEBUG, so a release build ships none of it.
+  #
+  # Its Objective-C++ sources include TagLib's headers, so an app builds C++
+  # as C++17 or later. Xcode builds them with -fno-cxx-modules, so their
+  # framework imports link nothing on their own. It passes linker flags for
+  # Foundation and the parse's AudioToolbox, as Tags does.
+  #
+  # TRAP: an app that also takes VibeLibsVorbis or VibeLibsDecode lists this
+  # template after them, as it would VibeLibsTags.
+  VibeLibsMetadata:
+    templates: [VibeLibsCommon, VibeLibsAudioTypes, VibeLibsDecode, VibeLibsTags, VibeLibsDiskCache,
+                VibeLibsFileLoading, VibeLibsGraphics, VibeLibsTaglib, VibeLibsPINCache]
+    sources:
+      - path: media/Metadata
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(VIBE_LIBS_ROOT)/media/Metadata"
+          - "$(VIBE_LIBS_ROOT)/media/Metadata/Artwork"
+          - "$(VIBE_LIBS_ROOT)/media/Metadata/Artwork/FolderArt"
+        OTHER_LDFLAGS: ["$(inherited)", "-framework", "Foundation", "-framework", "AudioToolbox"]
+
   # The play queue over an app's own entries. It reads an entry only through
   # the key blocks the app passes, so it lists no template. Nothing here logs.
   VibeLibsPlayQueue:

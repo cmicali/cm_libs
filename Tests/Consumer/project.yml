@@ -35,10 +35,11 @@ targets:
   Consumer:
     type: tool
     platform: macOS
-    # VibeLibsTags after VibeLibsDecode, which lists libvorbis: see the TRAP
-    # beside VibeLibsTags.
+    # VibeLibsTags and VibeLibsMetadata after VibeLibsDecode, which lists
+    # libvorbis: see the TRAP beside VibeLibsTags.
     templates: [VibeLibsAudioTypes, VibeLibsDSP, VibeLibsAnalysis, VibeLibsOutputDevices, VibeLibsFX,
-                VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsPlayer, VibeLibsTags, VibeLibsWaveform,
+                VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsPlayer, VibeLibsTags, VibeLibsMetadata,
+                VibeLibsWaveform,
                 VibeLibsDiskCache, VibeLibsGraphics, VibeLibsPlayQueue, VibeLibsPlaylists, VibeLibsControls,
                 VibeLibsSettingsWindow, VibeLibsShortcuts]
     templateAttributes:
@@ -46,5 +47,6 @@ targets:
     sources:
       - path: main.m
       - path: Tags.mm
+      - path: Metadata.mm
       - path: Waveform.mm
     scheme: {}
