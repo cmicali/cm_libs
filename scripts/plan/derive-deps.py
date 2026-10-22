@@ -72,8 +72,6 @@ PIECES = [
     ("system/NowPlaying", "Vibe/NowPlaying/"),
     ("system/AppOpening", "Vibe/Mac/App/OpenBurstCoalescer"),
     ("system/AppOpening", "Vibe/Mac/App/OpenRequestCoordinator"),
-    ("media/FolderScan", "Vibe/Playlist/FolderWalk"),
-    ("media/FolderScan", "Vibe/Common/FolderOpenSort"),
     ("media/FolderScan", "Vibe/iOS/Search/FileSearch"),
     ("dev/iOSDriver", "Tests/iOSDriver/"),
     ("app", ""),

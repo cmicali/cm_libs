@@ -40,7 +40,7 @@ targets:
     templates: [VibeLibsAudioTypes, VibeLibsDSP, VibeLibsAnalysis, VibeLibsOutputDevices, VibeLibsFX,
                 VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsPlayer, VibeLibsTags, VibeLibsMetadata,
                 VibeLibsWaveform,
-                VibeLibsDiskCache, VibeLibsGraphics, VibeLibsPlayQueue, VibeLibsPlaylists, VibeLibsControls,
+                VibeLibsDiskCache, VibeLibsGraphics, VibeLibsPlayQueue, VibeLibsPlaylists, VibeLibsFolderScan, VibeLibsControls,
                 VibeLibsSettingsWindow, VibeLibsShortcuts]
     templateAttributes:
       excludedPlatform: iOS
