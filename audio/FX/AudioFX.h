@@ -10,8 +10,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // The DJ effects: the low-kill high-pass (Q, with a W boost) and the
 // send-returns (E reverb, R and T ping-pong delays). The intent is one number
-// per stage — a cutoff, a send level — which the mac's on-off setters write
-// (TransportKeyMonitor tells a tap from a hold) and the iOS pad writes
+// per stage — a cutoff, a send level. An app's held keys write it through the
+// on-off setters, and the app tells a tap from a hold. A two-axis pad writes it
 // directly. The FX segment of the render, between the bus and the meter:
 //
 //   bus -> lowKill -+-> dry -----------------------------------> out
@@ -52,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL sendsActive;
 @property (nonatomic, readonly) NSTimeInterval longestTailSeconds;
 
-// For the audio-path report: intentSnapshot plus what the hosting says.
+// For a debug report: intentSnapshot plus what the hosting says.
 // Player queue, because it reads the chain the queue may free.
 - (NSDictionary<NSString *, id> *)diagnosticSnapshot;
 // The part of it no queue owns — every stage's intent and gate, the tempo
@@ -66,7 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
 // lowKillCutoffHz through VibeLowKillCutoffHz.
 @property (nonatomic) BOOL lowKillEnabled;
 
-// The cutoff as one number, the iOS pad's writer: kLowKillParkedHz or below
+// The cutoff as one number, the pad's writer: kLowKillParkedHz or below
 // is off (the getter reads the parked value), above it engages the filter
 // there. A direct write clears both toggles. Each write moves from wherever
 // the filter sits, preempting a sweep in flight.
@@ -80,7 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
 // tail rings out. A held key opens at the base level and swells.
 @property (nonatomic) BOOL reverbSendEnabled;
 
-// The same send as a level, 0..1 of the level a held key swells to: the iOS
+// The same send as a level, 0..1 of the level a held key swells to: the
 // pad's writer. A write clears reverbSendEnabled and swells nothing; 0 closes
 // the send, the tail ringing out. The gate slews toward it on the audio
 // thread, so a stream of positions needs no fade of its own.

@@ -21,7 +21,7 @@ static const float kLowKillParkedHz = 20.0f;
 // The tap length with no tempo known: 0.25s at the 1/8-note division.
 static const float kDelayDefaultBPM = 120.0f;
 
-// The iOS pad's ceilings: Y sweeps the cutoff from parked to here on a log
+// The pad's ceilings: Y sweeps the cutoff from parked to here on a log
 // curve; X is the reverb across
 // the axis, with the 1/8-note delay blending in past the onset.
 static const float kFXPadLowCutMaxHz = 1200.0f;
