@@ -515,6 +515,7 @@ In this order, each its own move:
 
    **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
 6. `media/Tags`, `media/Metadata`, `media/PlayQueue`, `media/Playlists`, and `media/FolderScan`.
+   - Tags: the TagLib wrapper's 2 files moved with their history (this repo's #28), its tests run here, and Vibe compiles it through the template. Its detection tests now write their own files, since Vibe's tag fixtures write WAV and AIFF through Decode's handle. Vibe's metadata parse still reads TagLib's own types from the wrapper's file, as the map allows. Moving those reads behind the wrapper needs a record of tag fields, which is Phase 4's.
 7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. Controls' map row then drops macOS only, and the piece gains an iOS target. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file.
 9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move.

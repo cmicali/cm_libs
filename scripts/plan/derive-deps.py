@@ -60,7 +60,6 @@ PIECES = [
     ("app", "Vibe/Loading/iOS/"),
     ("files/SandboxAccess", "Vibe/Mac/App/FolderAccess"),
     # media
-    ("media/Tags", "Vibe/Audio/Metadata/TagLibAudioFile"),
     ("media/Tags", "Vibe/Util/Categories/NSString+CPPStrings"),
     ("media/Metadata", "Vibe/Audio/Metadata/"),
     # waveform

@@ -6,7 +6,7 @@ A subset of [TagLib](https://taglib.org) 2.3.2, `toolkit/taglib.h`'s version. It
 
 Only the formats Vibe plays: `mpeg/` and ID3, `mp4/`, `flac/`, `riff/`, and `ogg/` with its `vorbis/` and `opus/` files. It also keeps the APE *tag* machinery that MPEG files need, and `ogg/xiphcomment` for FLAC and Ogg comments. It has no Ogg FLAC, which Vibe refuses. It has nothing for CAF or W64, which TagLib cannot read.
 
-`TagLib::FileRef` is not vendored, since its detection references every format parser. Vibe's `TagLibAudioFile` factory stands in for it. It mirrors FileRef's extension-then-content-sniff detection for these formats. An update re-checks it against `fileref.cpp`.
+`TagLib::FileRef` is not vendored, since its detection references every format parser. `media/Tags`' `TagLibAudioFile` factory stands in for it. It mirrors FileRef's extension-then-content-sniff detection for these formats. An update re-checks it against `fileref.cpp`.
 
 Four packaging edits:
 
@@ -19,11 +19,11 @@ Four packaging edits:
 
 Its files include each other by name. So the template searches every directory that holds its headers. Its sources build with the static analyzer off and `-Wno-documentation-html`. `LICENSE.MPL` stays out of an app's bundle.
 
-**TRAP: an app that also takes `VibeLibsVorbis` lists it before `VibeLibsTaglib`.** `ogg/vorbis/vorbisfile.h` here is TagLib's own. It answers `<vorbis/vorbisfile.h>` when `taglib/ogg` is searched first, and the first search path wins. An app's search paths follow the order of its templates. `make check-pieces` settles the spelling as libvorbis's.
+**TRAP: an app that also takes `VibeLibsVorbis` lists it before `VibeLibsTaglib` and before `VibeLibsTags`.** `ogg/vorbis/vorbisfile.h` here is TagLib's own. It answers `<vorbis/vorbisfile.h>` when `taglib/ogg` is searched first, and the first search path wins. An app's search paths follow the order of its templates. `make check-pieces` settles the spelling as libvorbis's.
 
 ## Updating
 
-Re-copy the same subset, re-apply the four edits, and let the linker report anything new. 2.3 added the MP4 chapter and STEM files, which `MP4::File` now references. Re-count the files that carry both license notices, below. Then run Vibe's `make test-audio`, whose tag tests and fuzz family read every fixture through it.
+Re-copy the same subset, re-apply the four edits, and let the linker report anything new. 2.3 added the MP4 chapter and STEM files, which `MP4::File` now references. Re-count the files that carry both license notices, below. Then run this repo's `make test`, whose Tags tests detect each format through it. Then run Vibe's `make test-audio`, whose tag tests and fuzz family read every fixture through it.
 
 ## License
 

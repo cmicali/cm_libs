@@ -375,6 +375,30 @@ targets:
     type: library.static
     platform: iOS
     templates: [VibeLibsPlayer]
+
+  # media/Tags, tested on macOS. The tests write their own files through
+  # AVFoundation. They are Objective-C++, whose framework imports link
+  # nothing on their own, so the bundle links AVFoundation.
+  TagsTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsTags]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/media/Tags
+        excludes: ["**/*.md"]
+    dependencies:
+      - sdk: AVFoundation.framework
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # media/Tags built for iOS, so an AppKit leak fails here.
+  Tags-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsTags]
     templateAttributes:
       excludedPlatform: Mac
 
@@ -599,6 +623,8 @@ schemes:
         Decode-iOS: all
         PlayerTests: [test]
         Player-iOS: all
+        TagsTests: [test]
+        Tags-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -622,6 +648,6 @@ schemes:
         Vorbis-iOS: all
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
-                FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, ControlsTests,
-                SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
+                FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, TagsTests,
+                ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
                 R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
