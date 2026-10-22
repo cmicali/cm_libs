@@ -46,8 +46,6 @@ PIECES = [
     # third_party: Sparkle is still Vibe's
     ("third_party/Sparkle", "Vibe/ThirdParty/Sparkle/"),
     # debug seams and simulators go with the class they open
-    ("audio/Player", "Vibe/Debug/Seams/AudioPlayer+"),
-    ("audio/Player", "Vibe/Debug/Simulators/VibeManualRenderPump"),
     ("files/ShareLinks", "Vibe/Debug/Simulators/VibeFakeHTTP"),
     ("media/Metadata", "Vibe/Debug/Seams/AudioTrackMetadata"),
     ("waveform/WaveformLoading", "Vibe/Debug/Seams/AudioWaveformCache+"),
@@ -61,9 +59,6 @@ PIECES = [
     ("files/ShareLinks", "Vibe/Loading/Net/"),
     ("app", "Vibe/Loading/iOS/"),
     ("files/SandboxAccess", "Vibe/Mac/App/FolderAccess"),
-    # audio
-    ("audio/Player", "Vibe/Audio/Mac/Devices/AudioPlayer+"),
-    ("audio/Player", "Vibe/Audio/iOS/AudioPlayer+"),
     # media
     ("media/Tags", "Vibe/Audio/Metadata/TagLibAudioFile"),
     ("media/Tags", "Vibe/Util/Categories/NSString+CPPStrings"),
@@ -72,7 +67,6 @@ PIECES = [
     ("waveform/Waveform", "Packages/WaveformCore/Sources/"),
     ("waveform/Waveform", "Vibe/Audio/Waveform/AudioWaveform."),
     ("waveform/WaveformLoading", "Vibe/Audio/Waveform/"),
-    ("audio/Player", "Vibe/Audio/"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/Renderers/"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformTheme"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformZoomMath"),
