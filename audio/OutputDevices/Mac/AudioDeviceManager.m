@@ -148,7 +148,7 @@ static OSStatus devicePropertyChangedCallback(AudioObjectID inObjectID,
         _observers = [NSHashTable weakObjectsHashTable];
         _observersLock = OS_UNFAIR_LOCK_INIT;
         _devicesLock = OS_UNFAIR_LOCK_INIT;
-        _refreshQueue = dispatch_queue_create("com.vibe.audiodevicemanager.refresh",
+        _refreshQueue = dispatch_queue_create("vibe-libs.outputdevices.refresh",
                 dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_DEFAULT, 0));
         _listenerSetupGroup = dispatch_group_create();
         _snapshotWaiters = [NSMutableArray array];

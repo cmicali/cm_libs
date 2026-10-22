@@ -259,7 +259,7 @@ static BOOL VibeStallSampleDue(NSString *name, uint64_t stuck, int *samples, uin
 // draining a stuck queue. Returned suspended
 // (refreshQueueStallWatcherOnQueue).
 dispatch_source_t VibeWatchQueueForStalls(dispatch_queue_t queue, NSString *name) {
-    dispatch_queue_t watcher = dispatch_queue_create("com.vibe.stallwatch", DISPATCH_QUEUE_SERIAL);
+    dispatch_queue_t watcher = dispatch_queue_create("vibe-libs.common.stallwatch", DISPATCH_QUEUE_SERIAL);
     __block BOOL waiting = NO; // confined to watcher, like the rest below
     __block uint64_t pingedAt = 0;
     __block int samples = 0;
@@ -315,7 +315,7 @@ void VibeWatchMainThreadForStalls(mach_port_t thread) {
     static _Atomic uint64_t passes;
     static _Atomic bool armed;
     const uint64_t period = 250 * NSEC_PER_MSEC;
-    dispatch_queue_t watcher = dispatch_queue_create("com.vibe.stallwatch", DISPATCH_QUEUE_SERIAL);
+    dispatch_queue_t watcher = dispatch_queue_create("vibe-libs.common.stallwatch", DISPATCH_QUEUE_SERIAL);
     dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, watcher);
     dispatch_block_t arm = ^{
         if (!atomic_exchange_explicit(&armed, true, memory_order_seq_cst)) {
