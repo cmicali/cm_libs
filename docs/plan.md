@@ -401,6 +401,8 @@ CI runs `make check-pieces`, `make test`, `make build-ios`, `make consumer`, and
 
 **Every change across the repos lands in one order:** the commit here first, then the consumer's pin, then the consumer's gates. The old pin is the rollback. Each move reports the code it removed from Vibe apart from the code it added across both repos, since a relocation is not a net reduction. A plan sentence in a move's pull request names only this repo's pull request, because naming Vibe's forces a re-pin after Vibe's pull request exists. A mover adds no remote to a vibe-libs worktree, since that writes the shared repository config, and fetches from a path instead.
 
+**A piece's tests are written against its own types and fixtures before the move.** A test that holds an app's model or reads an app's fixtures cannot build here. So a prep commit in Vibe rewrites it first, under Vibe's gates, and the move then carries it unchanged. The PlayQueue and Playlists move needed two: the queue's tests moved onto a row of their own, and the readers' tests onto entries. A test of the app's own type stays in the app.
+
 ### Phase 0: setup and experiments
 
 **The license is Apache 2.0** (decided 2026-10-18), Vibe's own, so code moves between the repos under the terms it already has.
