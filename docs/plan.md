@@ -385,6 +385,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 - no two first-party headers share a basename, since an app's headermap would pick one
 - every header is compiled by a source or test of its piece. A header-only piece imports its headers from a plain probe file in its tests, which its iOS target compiles too.
 - `Mac/` and `iOS/` are the only platform directories, and only at the top of a piece, where the template's exclude reaches them. A shared file imports AppKit or UIKit only under a platform guard. A half never imports the other platform's framework.
+- every target that builds a first-party piece, directly or through another template, sets `excludedPlatform` in its `templateAttributes`: `Mac` on iOS, `iOS` on macOS. Without it, the template's exclude names nothing, and both halves compile.
 - no `#if DEBUG` in a shipping header
 - the other app's name appears nowhere
 - no file outside `third_party/` holds a merge conflict marker. A marker is seven `<`, `=`, or `>` at a line's start, then a space or the line's end. A longer underline of `=` is not one.

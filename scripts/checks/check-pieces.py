@@ -36,6 +36,9 @@ For each piece:
     guard.
 Across the repo:
   - the map names only known pieces and has no cycle
+  - every target that reaches a first-party piece's template sets
+    excludedPlatform in its templateAttributes: Mac on iOS, iOS on macOS.
+    Without it, the template's exclude names nothing and both halves compile.
   - no two first-party headers share a basename
   - no shipping header has #if DEBUG
   - the other app's name appears nowhere
@@ -274,6 +277,22 @@ for target, v in sorted(targets.items()):
             via = reached[name]
             how = f"reaches {name} through {via}" if via else f"lists {name}"
             fail(f"project.yml: {target} builds for iOS and {how}, but {piece} is macOS only")
+
+
+# Every target that builds a first-party piece names the platform it leaves
+# out. Without it, ${excludedPlatform} names nothing and both halves compile.
+EXCLUDED = {"iOS": "Mac", "macOS": "iOS"}
+halved = {template_name(p) for p in pieces if first_party(p)}   # vendored pieces have no halves
+for target, v in sorted(targets.items()):
+    wants = EXCLUDED.get(v.get("platform"))
+    if wants is None:
+        continue
+    listed = [n for n in v.get("templates", []) if halved & set(reached_by([n]))]
+    excluded = (v.get("templateAttributes") or {}).get("excludedPlatform")
+    if listed and excluded != wants:
+        sets = f"sets excludedPlatform: {excluded}" if excluded else "sets no excludedPlatform"
+        fail(f"project.yml: {target} builds for {v.get('platform')} with {listed[0]}, but {sets}; "
+             f"its templateAttributes need excludedPlatform: {wants}")
 
 
 # Headers, and the basename index an app's headermap would build.

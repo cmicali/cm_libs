@@ -63,6 +63,10 @@ LEAF_IOS = """  # audio/Analysis built for iOS. Key analysis is an app's choice 
 
 """
 COMMON_IOS_TEMPLATES = "    templates: [VibeLibsCommon]\n    templateAttributes:\n      excludedPlatform: Mac"
+EXCLUDE_MAC = "    templateAttributes:\n      excludedPlatform: Mac\n"
+EXCLUDE_IOS = "    templateAttributes:\n      excludedPlatform: iOS\n"
+DSP_IOS = "  DSP-iOS:\n    type: library.static\n    platform: iOS\n    templates: [VibeLibsDSP]\n" + EXCLUDE_MAC
+DSP_TESTS = "  DSPTests:\n    type: bundle.unit-test\n    platform: macOS\n    templates: [VibeLibsDSP]\n" + EXCLUDE_IOS
 
 
 def mac_only(root):
@@ -183,6 +187,15 @@ CASES = [
     ("a spelling two vendored pieces answer, unsettled",
      lambda r: write(r, "third_party/taglib/ogg/ogg/ogg.h", "#pragma once\n"),
      "ogg/ogg.h is ambiguous"),
+    ("an iOS target that excludes no platform",
+     lambda r: replace(r, "project.yml", DSP_IOS, DSP_IOS.replace(EXCLUDE_MAC, "")),
+     "DSP-iOS builds for iOS with VibeLibsDSP, but sets no excludedPlatform"),
+    ("an iOS target that excludes iOS",
+     lambda r: replace(r, "project.yml", DSP_IOS, DSP_IOS.replace("excludedPlatform: Mac", "excludedPlatform: iOS")),
+     "DSP-iOS builds for iOS with VibeLibsDSP, but sets excludedPlatform: iOS"),
+    ("a macOS test bundle that excludes no platform",
+     lambda r: replace(r, "project.yml", DSP_TESTS, DSP_TESTS.replace(EXCLUDE_IOS, "")),
+     "DSPTests builds for macOS with VibeLibsDSP, but sets no excludedPlatform"),
     ("a merge conflict's first marker",
      lambda r: append(r, SOURCE, "\n" + "<" * 7 + " HEAD\n"),
      "AudioVarispeed.m:"),
