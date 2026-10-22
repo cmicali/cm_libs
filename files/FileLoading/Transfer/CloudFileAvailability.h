@@ -137,9 +137,9 @@ typedef NS_ENUM(NSInteger, CloudFileAvailabilityWait) {
 // the writer's wait for work. A transfer ignores it.
 @property (nonatomic) uint64_t readAheadSpan;
 
-// A holder: a reader, the app's file handle open on the part file, counted from
-// its open to its dealloc, or an open about to become one, so whoever runs the
-// transfer can tell when nobody still wants it.
+// A holder: a reader, such as audio/Decode's file handle open on the part
+// file, counted from its open to its dealloc, or an open about to become one.
+// So whoever runs the transfer can tell when nobody still wants it.
 - (void)addReader;
 - (void)removeReader;
 @property (nonatomic, readonly) NSUInteger readerCount;

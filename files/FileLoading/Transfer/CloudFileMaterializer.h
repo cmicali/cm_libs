@@ -74,8 +74,8 @@ typedef CloudFileAvailability *_Nullable (^CloudFileRemoteAvailability)(NSURL *u
 // reads a remote placeholder through it.
 + (nullable CloudFileRemoteRead)remoteReadForURL:(NSURL *)url;
 
-// The app's file handle opens a file being streamed through it; nil, and
-// nothing asked, when no backend streams.
+// audio/Decode's file handle opens a file being streamed through it. Nil,
+// and nothing asked, when no backend streams.
 + (nullable CloudFileAvailability *)availabilityForURL:(NSURL *)url;
 
 // The caller's role in the debug transfer trace; set once at creation.

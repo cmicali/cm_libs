@@ -5,7 +5,8 @@
 //  The read-ahead of a file on a network mount. One thread per handle reads
 //  the file into an availability with no part file (CloudFileAvailability),
 //  and the handle's reads wait for their bytes there. A read the server fails
-//  is retried until the handle goes. The app's file handle is the one caller.
+//  is retried until the handle goes. audio/Decode's file handle is the one
+//  caller.
 //
 
 #import <Foundation/Foundation.h>

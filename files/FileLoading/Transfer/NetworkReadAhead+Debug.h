@@ -4,8 +4,8 @@
 //
 //  The read-ahead's own test hooks: which files read ahead, and what each of
 //  its reads does. Both are process-wide. The statics and the functions live
-//  in NetworkReadAhead.m. The app's file handle may forward to them from a
-//  debug category, whose header states each one's contract.
+//  in NetworkReadAhead.m. audio/Decode's file handle forwards to them from
+//  its debug category, whose header states each one's contract.
 //
 
 #import <Foundation/Foundation.h>
