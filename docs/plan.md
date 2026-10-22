@@ -387,6 +387,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 - `Mac/` and `iOS/` are the only platform directories, and only at the top of a piece, where the template's exclude reaches them. A shared file imports AppKit or UIKit only under a platform guard. A half never imports the other platform's framework.
 - no `#if DEBUG` in a shipping header
 - the other app's name appears nowhere
+- no file outside `third_party/` holds a merge conflict marker. A marker is seven `<`, `=`, or `>` at a line's start, then a space or the line's end. A longer underline of `=` is not one.
 - and it lists the classes with no prefix
 
 **The checker has tests of its own.** `scripts/checks/check-pieces-test.py` copies the repo, breaks one rule per case, and fails unless the checker fails with that rule's message. Each new rule gets a case. Two cases are the ones a review reproduced against the first checker: an angled include of another piece from `core/Common`, and a map edge from `core/Common` back to a piece that uses it.

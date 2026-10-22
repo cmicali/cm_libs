@@ -183,6 +183,21 @@ CASES = [
     ("a spelling two vendored pieces answer, unsettled",
      lambda r: write(r, "third_party/taglib/ogg/ogg/ogg.h", "#pragma once\n"),
      "ogg/ogg.h is ambiguous"),
+    ("a merge conflict's first marker",
+     lambda r: append(r, SOURCE, "\n" + "<" * 7 + " HEAD\n"),
+     "AudioVarispeed.m:"),
+    ("a merge conflict's middle marker in a doc",
+     lambda r: append(r, "audio/DSP/AGENTS.md", "\n" + "=" * 7 + "\n"),
+     "audio/DSP/AGENTS.md:"),
+    ("a merge conflict's last marker",
+     lambda r: append(r, "README.md", "\n" + ">" * 7 + " main\n"),
+     "README.md:"),
+    ("a Markdown underline longer than a marker",
+     lambda r: append(r, "README.md", "\nHeading\n" + "=" * 12 + "\n"),
+     None),
+    ("a marker in vendored code",
+     lambda r: append(r, "third_party/dr_flac/AGENTS.md", "\n" + "=" * 7 + "\n"),
+     None),
 ]
 
 
