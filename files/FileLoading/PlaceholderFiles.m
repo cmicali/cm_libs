@@ -73,9 +73,9 @@ NSString *const VibeRemotePlaceholderPartSuffix = @".vibe-download";
 
 // TRAP: never second-guess SF_DATALESS with an NSURL resource value
 // (NSURLUbiquitousItemDownloadingStatus or any other). NSURL memoizes them per
-// instance, and these URLs live as long as their AudioTrack, so a placeholder
-// would read "not downloaded" forever and the metadata loader's locality
-// re-probes would never see it turn local.
+// instance, and these URLs live as long as the app's row, so a placeholder
+// would read "not downloaded" forever and the app's metadata loader would
+// never see it turn local when it probes again.
 //
 // A provider whose placeholders carry no flag would read as local: the sweep
 // would parse them on its local workers, several downloads at once outside the

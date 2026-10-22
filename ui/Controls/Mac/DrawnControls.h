@@ -3,7 +3,7 @@
 //  Vibe
 //
 //  TRAP: use custom drawing to avoid AppKit's SwiftUI control hosts and
-//  their Metal startup cost on macOS 26. See Mac/Controls/AGENTS.md.
+//  their Metal startup cost on macOS 26. See this piece's AGENTS.md.
 //
 //  Both draw gray while the window is not key and at half alpha disabled, as
 //  AppKit's do. Neither is first responder except the switch under full

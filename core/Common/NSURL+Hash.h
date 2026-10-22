@@ -7,8 +7,8 @@
 
 @interface NSData (Hash)
 
-// Lowercase hex SHA-1: the one spelling cacheKey and AppTheme's image names
-// share.
+// Lowercase hex SHA-1: the one spelling cacheKey and the app's own hashed
+// names share.
 - (nonnull NSString *)sha1Hex;
 
 @end
