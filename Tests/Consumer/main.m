@@ -26,11 +26,11 @@
 //  two of them for one file, and walks what follows each track's end under
 //  repeat and shuffle. Writes an M3U, reads it back, and reads a small CUE
 //  sheet. Walks a folder of two tracks and an M3U in each folder order, and
-//  opens the M3U in its own order. Summarizes a tone and draws it
-//  (Waveform.mm). Draws the tone in every waveform style and reads back that
-//  each drew (WaveformStyles.mm). Plays another WAV of a ramp through a player
-//  on the manual render pump, and reads every frame back exactly. Exits 0
-//  when all twenty-two hold.
+//  opens the M3U in its own order. Summarizes a tone and draws it, and loads
+//  a WAV of it through the waveform loader (Waveform.mm). Draws the tone in
+//  every waveform style and reads back that each drew (WaveformStyles.mm).
+//  Plays another WAV of a ramp through a player on the manual render pump,
+//  and reads every frame back exactly. Exits 0 when all twenty-three hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -69,6 +69,7 @@ FOUNDATION_EXTERN BOOL ConsumerReadsTags(void);
 FOUNDATION_EXTERN BOOL ConsumerLoadsMetadata(void);
 // Waveform.mm's check, since the waveform's headers are C++.
 FOUNDATION_EXTERN BOOL ConsumerWaveformHolds(void);
+FOUNDATION_EXTERN BOOL ConsumerLoadsAWaveform(void);
 // WaveformStyles.mm's check, since the renderers' headers are C++.
 FOUNDATION_EXTERN BOOL ConsumerWaveformStylesHold(void);
 
@@ -817,7 +818,7 @@ int main(void) {
         !FolderScanWalksATree()) {
         return 1;
     }
-    if (!ConsumerWaveformHolds()) {
+    if (!ConsumerWaveformHolds() || !ConsumerLoadsAWaveform()) {
         return 1;
     }
     if (!ConsumerWaveformStylesHold()) {
