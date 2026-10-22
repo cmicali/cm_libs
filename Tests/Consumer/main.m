@@ -2,7 +2,9 @@
 //  main.m
 //
 //  Plays a ramp through the varispeed at zero pitch and checks it comes back
-//  exactly, then renders off zero. Round-trips a color through its hex form.
+//  exactly, then renders off zero. Plays a tone through the FX chain with
+//  nothing engaged and checks it comes back exactly, then reads the meter's
+//  levels of it. Round-trips a color through its hex form.
 //  Draws each mac control into a bitmap with no window. Builds a settings
 //  window of three panes without showing it, finds a color-pair row, a switch,
 //  and a slider in two of them, and picks the second pane in the sidebar. In
@@ -11,11 +13,13 @@
 //  size, time and path, and keys it anew once it changes. Turns a CUE window
 //  into a file's frames. Opens a temporary file through the file loader, with
 //  a handle of its own. Roots a disk cache in a temporary directory and reads
-//  its usage back. Exits 0 when all ten hold.
+//  its usage back. Exits 0 when all eleven hold.
 //
 
 #import <Foundation/Foundation.h>
 #import "AudioFileMaterializationCoordinator.h"
+#import "AudioFX+Pipeline.h"
+#import "AudioLevelMeter.h"
 #import "AudioVarispeed.h"
 #import "CueWindowMath.h"
 #import "PINCache+VibeAudioCache.h"
@@ -117,6 +121,72 @@ static OSStatus Ramp(void *context, const AudioTimeStamp *stamp, UInt32 frames, 
     return noErr;
 }
 
+static float Tone(uint64_t frame) {
+    return (float)(0.5 * sin(2.0 * M_PI * 1000.0 * (double)frame / 48000.0));
+}
+
+// A second of a 1 kHz tone through a connected FX chain with nothing engaged,
+// then through a meter. The chain hands the tone back exactly. The meter
+// lights the band from 800 to 4000 Hz, and the other four stay dark.
+static BOOL TonePassesFXAndMeter(void) {
+    dispatch_queue_t queue = dispatch_queue_create("consumer.audio", DISPATCH_QUEUE_SERIAL);
+    AudioFX *fx = [[AudioFX alloc] initWithQueue:queue scheduler:^(NSTimeInterval seconds, dispatch_block_t block) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(seconds * NSEC_PER_SEC)), queue, block);
+    } afterRenderLeaves:^(dispatch_block_t work) {
+        work();
+    }];
+    AVAudioFormat *format = [[AVAudioFormat alloc] initStandardFormatWithSampleRate:48000 channels:2];
+    AudioLevelPublisher *publisher = [[AudioLevelPublisher alloc] init];
+    AudioLevelMeter *meter = [[AudioLevelMeter alloc] initWithFormat:format publisher:publisher
+                                                   normalizationMode:kLevelDefaultNormalizationMode];
+    AVAudioPCMBuffer *buffer = [[AVAudioPCMBuffer alloc] initWithPCMFormat:format frameCapacity:kFrames];
+    __block NSUInteger hosted = 0;
+    __block OSStatus status = noErr;
+    __block uint64_t changed = UINT64_MAX;
+    dispatch_sync(queue, ^{
+        [fx setConnected:YES format:format maximumFrameCount:kFrames];
+        hosted = fx.hostedUnitCount;
+        [meter install];
+        AudioTimeStamp stamp = {0};
+        stamp.mFlags = kAudioTimeStampSampleTimeValid;
+        for (uint64_t first = 0; first < 48000 && hosted && status == noErr; first += kFrames) {
+            for (UInt32 n = 0; n < kFrames; n++) {
+                buffer.floatChannelData[0][n] = Tone(first + n);
+                buffer.floatChannelData[1][n] = Tone(first + n);
+            }
+            buffer.frameLength = kFrames;
+            stamp.mSampleTime = (Float64)first;
+            status = VibeFXChainRender(fx.chain, &stamp, kFrames, buffer.mutableAudioBufferList);
+            for (UInt32 n = 0; n < kFrames && changed == UINT64_MAX; n++) {
+                float want = Tone(first + n);
+                if (buffer.floatChannelData[0][n] != want || buffer.floatChannelData[1][n] != want) {
+                    changed = first + n;
+                }
+            }
+            VibeLevelMeterRender(meter.meter, buffer.floatChannelData, 2, kFrames, &stamp);
+        }
+    });
+    float levels[kLevelBandCount] = {0};
+    uint64_t sequence = 0;
+    BOOL read = [publisher copyLevels:levels count:kLevelBandCount sequence:&sequence];
+    dispatch_sync(queue, ^{
+        [meter remove];
+        [fx setConnected:NO format:nil maximumFrameCount:kFrames];
+    });
+    if (!hosted || status != noErr || changed != UINT64_MAX) {
+        fprintf(stderr, "consumer: the chain hosted %lu units, rendered status %d, and changed frame %llu\n",
+                (unsigned long)hosted, (int)status, changed);
+        return NO;
+    }
+    BOOL dark = levels[0] < 0.1f && levels[1] < 0.1f && levels[2] < 0.1f && levels[4] < 0.1f;
+    if (!read || !sequence || levels[3] < 0.5f || !dark) {
+        fprintf(stderr, "consumer: the meter read %d at %llu: %.3f %.3f %.3f %.3f %.3f\n", read, sequence,
+                levels[0], levels[1], levels[2], levels[3], levels[4]);
+        return NO;
+    }
+    return YES;
+}
+
 int main(void) {
     VibeVarispeed *stage = VibeVarispeedCreate(2, kFrames);
     if (!stage) {
@@ -153,6 +223,9 @@ int main(void) {
     VibeVarispeedFree(stage);
     if (!engaged) {
         fprintf(stderr, "consumer: the converter never joined\n");
+        return 1;
+    }
+    if (!TonePassesFXAndMeter()) {
         return 1;
     }
     NSString *hex = VibeHexStringFromColor(VibeColorFromHexString(@"#12345678"));
