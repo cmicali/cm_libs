@@ -77,17 +77,13 @@ PIECES = [
     ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformTheme"),
     ("waveform/WaveformStyles", "Vibe/WaveformUI/WaveformZoomMath"),
     ("waveform/WaveformView", "Vibe/WaveformUI/"),
-    # ui, system, media/playlists
+    # ui, system, media
     ("app", "Vibe/Mac/Controls/ArtworkImageView"),
     ("ui/Controls", "Vibe/Mac/Controls/"),
     ("ui/Controls", "Vibe/Controls/"),
     ("system/NowPlaying", "Vibe/NowPlaying/"),
     ("system/AppOpening", "Vibe/Mac/App/OpenBurstCoalescer"),
     ("system/AppOpening", "Vibe/Mac/App/OpenRequestCoordinator"),
-    ("media/PlayQueue", "Vibe/Playlist/Playlist."),
-    ("media/PlayQueue", "Vibe/Common/RepeatMode"),
-    ("media/Playlists", "Vibe/Playlist/PlaylistFile"),
-    ("media/Playlists", "Vibe/Playlist/PlaylistEntry"),
     ("media/FolderScan", "Vibe/Playlist/FolderWalk"),
     ("media/FolderScan", "Vibe/Common/FolderOpenSort"),
     ("media/FolderScan", "Vibe/iOS/Search/FileSearch"),

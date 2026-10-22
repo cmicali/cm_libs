@@ -340,6 +340,53 @@ targets:
     sources:
       - path: Tests/audio/Decode/DecodeProbe.m
 
+  # media/PlayQueue, tested on macOS, over rows of the tests' own.
+  PlayQueueTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsPlayQueue]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/media/PlayQueue
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # media/PlayQueue built for iOS.
+  PlayQueue-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsPlayQueue]
+    templateAttributes:
+      excludedPlatform: Mac
+
+  # media/Playlists, tested on macOS, over temporary folders. The
+  # embedded-sheet and fuzz tests take their FLAC writers and their generator
+  # from Tests/Support.
+  PlaylistsTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsPlaylists]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/media/Playlists
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+
+  # media/Playlists built for iOS.
+  Playlists-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsPlaylists]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
@@ -559,6 +606,10 @@ schemes:
         DiskCache-iOS: all
         DecodeTests: [test]
         Decode-iOS: all
+        PlayQueueTests: [test]
+        PlayQueue-iOS: all
+        PlaylistsTests: [test]
+        Playlists-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -582,6 +633,7 @@ schemes:
         Vorbis-iOS: all
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
-                FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, ControlsTests,
-                SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
-                R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
+                FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayQueueTests,
+                PlaylistsTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests,
+                PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests,
+                OggTests, VorbisTests]
