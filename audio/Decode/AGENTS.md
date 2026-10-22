@@ -2,7 +2,7 @@
 
 One opened audio file, read as PCM. **Today it holds `AudioFileHandle`**, Vibe's file handle, moved from Vibe with its MPEG and stream decodes and its read-ahead seam. It depends on `core/Common`, on `files/FileLoading` for a stream's and a read-ahead's bytes, and on the four decoders it hosts: `third_party/dr_mp3`, `dr_flac`, `dr_wav`, and `vorbis`. Its surface is `AVAudioFile`'s: the file's facts, a cursor in file frames, and reads into a PCM buffer. It also writes, through an `ExtAudioFile`, so an app's converter and its test fixtures share the class. It reads no app's settings, strings, or types.
 
-Vibe's player, its waveform loader, its metadata fallback, and its converter each open one. What a player does with a handle, its voices, its fades, and its deadline, is `audio/Player/AGENTS.md`. `docs/audio-quality.md` in Vibe has the measurements behind each decoder choice.
+Vibe's player, its waveform loader, `media/Metadata`'s CoreAudio fallback, and Vibe's converter each open one. What a player does with a handle, its voices, its fades, and its deadline, is `audio/Player/AGENTS.md`. `docs/audio-quality.md` in Vibe has the measurements behind each decoder choice.
 
 | File | Owns |
 | --- | --- |
@@ -29,7 +29,7 @@ The opener an app passes `files/FileLoading`'s coordinator makes a handle. The h
 - **TRAP: a Vorbis open reads the first audio page and the last 64 KB.** A file still downloading needs both. So the tail window `TailWindowMath.h` gives an Ogg file must hold 64 KB.
 - Ogg Opus is CoreAudio's own reader and decoder, on both platforms.
 - **Apple's Opus decoder ignores the header's output gain**, which RFC 7845 says a player must apply. The handle reads it from the `OpusHead` packet at open and scales Apple's decode by it (`VibeOpusOutputGain`). The samples are then bounded at +12 dBFS, as a damaged MP3 frame's are (`kVibeDecodeSampleBound`). `testOpusPlaysAtItsHeaderOutputGain` ends with a canary that fails once Apple applies the gain itself.
-- **TRAP: FLAC in Ogg is refused at the parser open**, since that reader reports it no length and decodes only its first page. A metadata fallback opens the same way. Vibe's TagLib parse refuses it as FLAC. Its row then fails to parse rather than look playable (`AudioFileHandle.m`, `testFLACInOggIsRefused`).
+- **TRAP: FLAC in Ogg is refused at the parser open**, since that reader reports it no length and decodes only its first page. A metadata fallback opens the same way. `media/Metadata`'s TagLib parse refuses it as FLAC. Its row then fails to parse rather than look playable (`AudioFileHandle.m`, `testFLACInOggIsRefused`).
 - **TRAP: a CAF's info chunk is checked before CoreAudio's info parser reads it**, since a forged entry count makes that parser loop forever. `infoDictionaryReadable` walks the chunk headers through the handle's own reads. It answers NO when the info chunk is absent, runs past the file, or declares more entries than its body could hold. A streamed CAF's data chunk of size -1 ends the walk, so an info chunk after it is dropped.
 
 ## Closing a file

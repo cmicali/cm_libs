@@ -19,13 +19,16 @@
 //  opens it through the audio file handle, and reads its frames back exactly.
 //  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
 //  would. Tags a WAV through TagLib, and reads its title and its picture back
-//  through the tag wrapper, the picture by range (Tags.mm). Queues plain URLs,
+//  through the tag wrapper, the picture by range (Tags.mm). Roots a metadata
+//  cache of its own, loads a tagged WAV through it into a holder of its own,
+//  and reads its title, its picture's bytes, and its row thumbnail back
+//  (Metadata.mm). Queues plain URLs,
 //  two of them for one file, and walks what follows each track's end under
 //  repeat and shuffle. Writes an M3U, reads it back, and reads a small CUE
 //  sheet. Summarizes a tone and draws it, and loads a WAV of it through the
 //  waveform loader (Waveform.mm). Plays another WAV of a ramp through a
 //  player on the manual render pump, and reads every frame back exactly.
-//  Exits 0 when all twenty hold.
+//  Exits 0 when all twenty-one hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -59,6 +62,8 @@
 
 // Tags.mm's check, in Objective-C++, since the wrapper's header is C++.
 FOUNDATION_EXTERN BOOL ConsumerReadsTags(void);
+// Metadata.mm's check, since TagLib's writer is C++.
+FOUNDATION_EXTERN BOOL ConsumerLoadsMetadata(void);
 // Waveform.mm's check, since the waveform's headers are C++.
 FOUNDATION_EXTERN BOOL ConsumerWaveformHolds(void);
 FOUNDATION_EXTERN BOOL ConsumerLoadsAWaveform(void);
@@ -746,7 +751,7 @@ int main(void) {
         fprintf(stderr, "consumer: the click track's tempo is %.2f\n", tempo);
         return 1;
     }
-    if (!ConsumerReadsTags() || !QueueWalksItsSuccessors() || !PlaylistsRoundTrip()) {
+    if (!ConsumerReadsTags() || !ConsumerLoadsMetadata() || !QueueWalksItsSuccessors() || !PlaylistsRoundTrip()) {
         return 1;
     }
     if (!ConsumerWaveformHolds() || !ConsumerLoadsAWaveform()) {
