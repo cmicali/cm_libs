@@ -14,7 +14,8 @@
 //  into a file's frames. Opens a temporary file through the file loader, with
 //  a handle of its own. Roots a disk cache in a temporary directory and reads
 //  its usage back. Lists the output devices through the device manager and
-//  prints the default one's name, changing nothing. Writes a WAV of a ramp,
+//  prints the default one's name, changing nothing. It skips that, and says
+//  so, only when the HAL cannot read its device list. Writes a WAV of a ramp,
 //  opens it through the audio file handle, and reads its frames back exactly.
 //  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
 //  would. Exits 0 when all fourteen hold.
@@ -445,21 +446,33 @@ int main(void) {
         return 1;
     }
     // A published snapshot, empty or not. The first sweep runs from the
-    // manager's init, and a refused sweep retries.
+    // manager's init, and a refused sweep retries. A HAL with no devices
+    // publishes an empty one. A HAL that cannot read its device list, as on a
+    // runner with no coreaudiod, publishes none, so the check is skipped then.
     AudioDeviceManager *outputs = AudioDeviceManager.sharedInstance;
     if (!Settles(^BOOL { return outputs.cachedOutputDevices != nil; })) {
-        fprintf(stderr, "consumer: the device manager published no snapshot\n");
-        return 1;
-    }
-    NSArray<AudioDevice *> *found = outputs.cachedOutputDevices;
-    AudioDevice *standard = nil;
-    for (AudioDevice *device in found) {
-        if (device.isSystemDefault) {
-            standard = device;
+        AudioObjectPropertyAddress list = {kAudioHardwarePropertyDevices, kAudioObjectPropertyScopeGlobal,
+                                           kAudioObjectPropertyElementMain};
+        UInt32 size = 0;
+        OSStatus status = AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &list, 0, NULL, &size);
+        if (status == noErr) {
+            fprintf(stderr, "consumer: the device manager published no snapshot of a readable HAL\n");
+            return 1;
         }
+        printf("consumer: skipped the output devices, since the HAL reads no device list (OSStatus %d)\n",
+               (int)status);
     }
-    printf("consumer: %lu output devices, the default is %s\n", (unsigned long)found.count,
-           standard ? standard.name.UTF8String : "none");
+    else {
+        NSArray<AudioDevice *> *found = outputs.cachedOutputDevices;
+        AudioDevice *standard = nil;
+        for (AudioDevice *device in found) {
+            if (device.isSystemDefault) {
+                standard = device;
+            }
+        }
+        printf("consumer: %lu output devices, the default is %s\n", (unsigned long)found.count,
+               standard ? standard.name.UTF8String : "none");
+    }
     // A canonical 16-bit stereo WAV, its bytes written here, so the handle is
     // not its own oracle. Each frame's left sample is its index, and its right
     // sample the negation.
