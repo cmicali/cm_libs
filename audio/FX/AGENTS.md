@@ -13,7 +13,7 @@ It has the Q low-kill high-pass with its W double-cutoff boost, and three send-r
 
 ## The host
 
-**A host owns one `AudioFX` from its init**, so the controls and the tempo feed stay stable. It hands the chain three things: its serial queue, a scheduler on its own clock, and an `afterRenderLeaves` block that runs work once no render is inside. Vibe's player is the one host today. Its side is in Vibe's `Audio/AGENTS.md`.
+**A host owns one `AudioFX` from its init**, so the controls and the tempo feed stay stable. It hands the chain three things: its serial queue, a scheduler on its own clock, and an `afterRenderLeaves` block that runs work once no render is inside. `audio/Player` is the one host today. Its side is in `audio/Player/AGENTS.md`.
 
 **The segment connects through `setConnected:format:maximumFrameCount:` with the output stopped, and is in the render only while connected.** The host publishes the chain's pointer into its render after a connect and withdraws it before a disconnect or a re-host. A disconnected segment costs the render nothing. Disconnect parks the EQ and defers unit resets until the render leaves. Later intent writes wait for the next connect. A disconnect with tails ringing rests every stage at once, so the output is the input, sample for sample. The units are hosted at the first connect and kept across toggles. A connect at another rate hosts them again and re-applies the recorded intent, because an effect cannot convert between its input and output.
 
@@ -45,4 +45,4 @@ A level or cutoff written on every drag frame touches the queue only on a real c
 
 `Tests/audio/FX/AudioFXMathTests.m` covers the numbers. A probe compiles the fault seam, which only tests import, on both platforms. The minimal consumer connects the chain, plays a tone through it with nothing engaged, and checks it comes back exactly.
 
-**The chain's render tests stay in Vibe for now**, as `AudioFXChainTests`. They run the chain over Vibe's manual render pump, the frame-driven clock its player renders on, and the pump moves with the player. Vibe's render suites also drive the chain through the whole player, its fault seam included.
+**The chain's render tests are `audio/Player`'s**, as `AudioFXChainTests`. They run the chain over the player's manual render pump, the frame-driven clock the player renders on, so `PlayerTests` runs them. The player's render suite also drives the chain through the whole player, its fault seam included.

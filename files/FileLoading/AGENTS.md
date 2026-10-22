@@ -23,7 +23,7 @@ From a path to bytes an app can read. The file may be local, a cloud placeholder
 | `Transfer/NetworkReadAheadRules.h`, `Transfer/NetworkReadAheadMath.h` | which files read ahead, and how far a play's read-ahead fetches |
 | `VibeFakeCloud` and the five `+Debug` seams | the fake file provider and its injection points (The fake cloud, below) |
 
-Vibe's side of an open, the deadline, progress identity, and prefetch, is in Vibe's `Audio/AGENTS.md`. Vibe's `docs/file-loading-spec.md` states the behavior it observes. Vibe's root `AGENTS.md` keeps three guarantees this piece implements: the foreground open outranks background downloads, the six-run handle ceiling, and a row shows the loading bar only while a transfer is running.
+The player's side of an open, the deadline, progress identity, and prefetch, is in `audio/Player/AGENTS.md`. Vibe's `docs/file-loading-spec.md` states the behavior it observes. Vibe's root `AGENTS.md` keeps three guarantees this piece implements: the foreground open outranks background downloads, the six-run handle ceiling, and a row shows the loading bar only while a transfer is running.
 
 ## Placeholder files
 

@@ -190,8 +190,8 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
-  # audio/FX, tested on macOS. The chain's render tests stay in Vibe until its
-  # player moves, since they run over the player's manual render pump.
+  # audio/FX, tested on macOS. The chain's render tests run in PlayerTests,
+  # since they run over the player's manual render pump.
   FXTests:
     type: bundle.unit-test
     platform: macOS
@@ -339,6 +339,43 @@ targets:
       excludedPlatform: Mac
     sources:
       - path: Tests/audio/Decode/DecodeProbe.m
+
+  # audio/Player, tested on macOS. The tests drive the player's seam, the
+  # manual render pump, and the coordinator's test seams, which compile only
+  # under DEBUG, so the bundle defines it in every configuration, the
+  # analyzer's Release build included. The render suite in Render/ plays an
+  # app's generated fixtures, so it is not compiled here. An app's test target
+  # compiles it over them (AGENTS.md, Tests). The test track and the reference
+  # fixtures come from Tests/Support. Verbose logging is on, as in Vibe's tests.
+  # The hang and gate bounds match Vibe's.
+  PlayerTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsPlayer]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/Player
+        excludes: ["**/*.md", "Render/**"]
+      - path: Tests/Support/VibeTestTrack.m
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "DEBUG=1"
+          - "VIBE_VERBOSE_LOGGING=1"
+          - "VIBE_TEST_HANG_TIMEOUT=10"
+          - "VIBE_TEST_GATE_TIMEOUT=30"
+
+  # audio/Player built for iOS: its shared files and its iOS half.
+  Player-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsPlayer]
+    templateAttributes:
+      excludedPlatform: Mac
 
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.
@@ -559,6 +596,8 @@ schemes:
         DiskCache-iOS: all
         DecodeTests: [test]
         Decode-iOS: all
+        PlayerTests: [test]
+        Player-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -582,6 +621,6 @@ schemes:
         Vorbis-iOS: all
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
-                FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, ControlsTests,
+                FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, ControlsTests,
                 SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
                 R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]

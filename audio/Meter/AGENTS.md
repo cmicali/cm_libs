@@ -16,7 +16,7 @@ Live band levels from inside a render, only while someone looks. It depends on `
 
 **A host makes one `AudioLevelPublisher` for its life, and an `AudioLevelMeter` for a rate and a mode.** The meter is a plain C struct (`VibeLevelMeter`) the render feeds through `VibeLevelMeterRender`. `install` begins a publisher session, and `remove` ends it. `copyLevels:count:sequence:` reads the latest coherent five-level snapshot without a queue or an allocation. The sequence tells a new result from a repeated read. An ended session's snapshot is unavailable at once.
 
-**A meter's rate and mode are fixed for its life.** A host replaces the meter when either changes. It frees the old one only once the render was seen outside it. Vibe's player keeps a meter across demand changes and installs and removes it as levels are wanted (Vibe's `Audio/AGENTS.md`).
+**A meter's rate and mode are fixed for its life.** A host replaces the meter when either changes. It frees the old one only once the render was seen outside it. `audio/Player` keeps a meter across demand changes and installs and removes it as levels are wanted (`audio/Player/AGENTS.md`).
 
 **TRAP: a new session restarts the accumulator and the analyzer**, its partial window and references included (`AudioLevelMeter.m`). A host may keep a meter across sessions, so the previous track's audio would otherwise open the next session's bars. **TRAP: the render reads the session once, at the callback's entry**, and both restarts on it and publishes into it. A callback that began before a remove-and-reinstall then publishes into the ended session, and the publisher drops it. Read again at publication, it would label the old session's audio as the new one's.
 
@@ -34,7 +34,7 @@ The tunable audio half is `AudioLevelMath.h`. How a display moves its bars is th
 
 ## The signal probe
 
-**It compiles only where `VIBE_VERBOSE_LOGGING` is 1.** A host arms it for a start and polls it on its own queue. Vibe's player arms it on every voice start and holds the meter for it on hardware (Vibe's `Audio/AGENTS.md`).
+**It compiles only where `VIBE_VERBOSE_LOGGING` is 1.** A host arms it for a start and polls it on its own queue. `audio/Player` arms it on every voice start and holds the meter for it on hardware (`audio/Player/AGENTS.md`).
 
 Each request observes through the first buffer with signal at or above −60 dBFS, bounded to three seconds of accumulated poll intervals or captured frames. A delayed poll can extend the wall time. It records sample time, buffer host time, frame offset, observed leading silence in milliseconds, peak, finite-sample RMS, and the nonfinite count. Before first signal, a removal completes the capture as "meter removed".
 

@@ -18,7 +18,7 @@ There are no shared files. The two halves have nothing in common but their job, 
 | `iOS/AudioSessionRecoveryRules.h` | the verdicts, as static inlines |
 | `iOS/OutputRouteRules.h` | what a route is, for an indicator and for the verdicts |
 
-Vibe's player binds its output unit to a device, runs bit-perfect output, and recovers its output on iOS. Those categories read the player's private state, so they stay with the player. Vibe's `Audio/Mac/Devices/AGENTS.md` and `Audio/iOS/AGENTS.md` describe them.
+`audio/Player` binds its output unit to a device, runs bit-perfect output, and recovers its output on iOS. Those categories read the player's private state, so they sit in its `Mac/` and `iOS/` halves. `audio/Player/AGENTS.md` describes them.
 
 ## Mac/: the output devices
 
