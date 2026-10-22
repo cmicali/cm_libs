@@ -21,8 +21,8 @@ settings:
     # As Vibe and this repo's project build. Under a GNU dialect, Graphics'
     # constant-sized arrays warn as a GNU extension, and warnings are errors.
     GCC_C_LANGUAGE_STANDARD: c17
-    # As Vibe and this repo's project build. Waveform's C++ needs C++17, and
-    # XcodeGen's default is gnu++14.
+    # TagLib and Waveform are C++17, and XcodeGen's default is gnu++14. Vibe
+    # and this repo's project build C++17 too.
     CLANG_CXX_LANGUAGE_STANDARD: "c++17"
     GCC_TREAT_WARNINGS_AS_ERRORS: YES
     CLANG_WARN_UNGUARDED_AVAILABILITY: YES_AGGRESSIVE
@@ -32,12 +32,15 @@ targets:
   Consumer:
     type: tool
     platform: macOS
+    # VibeLibsTags after VibeLibsDecode, which lists libvorbis: see the TRAP
+    # beside VibeLibsTags.
     templates: [VibeLibsAudioTypes, VibeLibsDSP, VibeLibsAnalysis, VibeLibsOutputDevices, VibeLibsFX,
-                VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsWaveform, VibeLibsDiskCache,
-                VibeLibsGraphics, VibeLibsControls, VibeLibsSettingsWindow, VibeLibsShortcuts]
+                VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsTags, VibeLibsWaveform,
+                VibeLibsDiskCache, VibeLibsGraphics, VibeLibsControls, VibeLibsSettingsWindow, VibeLibsShortcuts]
     templateAttributes:
       excludedPlatform: iOS
     sources:
       - path: main.m
+      - path: Tags.mm
       - path: Waveform.mm
     scheme: {}
