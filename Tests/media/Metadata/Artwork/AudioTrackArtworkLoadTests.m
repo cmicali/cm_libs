@@ -76,8 +76,10 @@
     dispatch_async(completionQueue, ^{
         completion(result, nil, 0);
     });
-    // This fake delivers asynchronously but has nothing to cancel.
-    return nil;
+    // This fake delivers asynchronously but has nothing to cancel. The
+    // registry only cancels the token it keeps, so nil serves. The cast tells
+    // the analyzer so.
+    return (AudioFileMaterializationRequestToken *_Nonnull)nil;
 }
 
 @end
