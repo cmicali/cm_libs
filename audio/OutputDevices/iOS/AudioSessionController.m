@@ -63,7 +63,7 @@ static VibeOutputRouteKind VibeOutputRouteKindForPort(AVAudioSessionPort portTyp
     return VibeOutputRouteKindOther;
 }
 
-// The one place a route is classified, for both the indicator the card draws
+// The one place a route is classified, for both an app's route indicator
 // and — through VibeAudioSessionOutputRouteKindForRouteKind — the pause/recover
 // decision. The first external output decides, else the first output.
 static VibeOutputRouteKind VibeOutputRouteKindForRoute(
@@ -130,7 +130,7 @@ static VibeOutputRouteKind VibeOutputRouteKindForRoute(
     os_unfair_lock _configurationRecoveryLock;
     uint64_t _configurationRecoveryGeneration;
     VibeAudioSessionRecoveryBlocker _configurationRecoveryBlockers;
-    // The last recorded route, at the resolution the card's indicator draws;
+    // The last recorded route, at the resolution a route indicator draws;
     // the pause/recover decision reads its coarse fold.
     VibeOutputRouteKind _outputRouteKind;
     NSString *_outputRouteName;
@@ -144,7 +144,7 @@ static VibeOutputRouteKind VibeOutputRouteKindForRoute(
         NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
         AVAudioSession *session = [AVAudioSession sharedInstance];
         // Recorded, deliberately not published: the delegate pointer is set
-        // but PlaybackController is still inside its own init.
+        // but the delegate may still be inside its own init.
         NSString *routeName = nil;
         VibeOutputRouteKind routeKind =
                 VibeOutputRouteKindForRoute(session.currentRoute, &routeName);
@@ -320,8 +320,9 @@ static VibeOutputRouteKind VibeOutputRouteKindForRoute(
 }
 
 // TRAP: an unconditional dispatch_async, not onMain:. activateSession
-// publishes from inside an activation the play path is waiting on, and this
-// edge fans out to every PlaybackObserver; inline, that is re-entrancy.
+// publishes from inside an activation the play path is waiting on. The
+// delegate may fan this edge out to every observer of its own. Inline, that is
+// re-entrancy.
 - (void)publishOutputRouteChange {
     __weak AudioSessionController *weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -522,10 +523,10 @@ static VibeOutputRouteKind VibeOutputRouteKindForRoute(
     LogWarn(@"AudioSession: media services were reset");
     [self addConfigurationRecoveryBlocker:
             VibeAudioSessionRecoveryBlockerMediaReset];
-    // This is deliberately before the main hop: beginMediaServicesReset uses
-    // the same lock-and-enqueue edge as play submissions, so a play received
-    // after this notification runs on the rebuilt output rather than being
-    // destroyed by a reset queued later from main.
+    // This is deliberately before the main hop. The player's media-services
+    // reset uses the same lock-and-enqueue edge as its play submissions. So a
+    // play received after this notification runs on the rebuilt output rather
+    // than being destroyed by a reset queued later from main.
     [self.delegate audioSessionDidReceiveMediaServicesReset:self];
     [self onMain:^{
         self->_deactivationWanted = NO; // the session died with the server

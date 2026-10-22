@@ -2,11 +2,10 @@
 //  AudioSessionController.h
 //  Vibe (iOS)
 //
-//  The AVAudioSession half of what AudioPlayer+Devices does on macOS:
-//  activation and idle release, and the route, interruption and
-//  media-services events, each mapped to a delegate verdict. It never touches
-//  the player's output itself — the delegate maps the verdicts onto the
-//  player's public transport and recovery API.
+//  The iOS audio session for a player: activation and idle release, and the
+//  route, interruption and media-services events, each mapped to a delegate
+//  verdict. It never touches the player's output itself — the delegate maps
+//  the verdicts onto the player's public transport and recovery API.
 //
 //  Main thread only: activate, both deactivations and every delegate verdict
 //  run there. The media-reset receipt edge is the sole exception, documented
@@ -38,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)audioSessionShouldResume:(AudioSessionController *)controller;
 
 // The route moved without output being lost — a device connected, an
-// override, a category change. Route it to the player's recoverOutput.
+// override, a category change. Have the player recover its output.
 // External output falling back to built-in is a pause instead, whatever
 // reason the change carried. Coalesced: a later route change supersedes an
 // undelivered earlier one, and an interruption, route loss or media reset
@@ -47,8 +46,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Media services crashed and were relaunched: every live audio object is
 // invalid. This is called synchronously on the notification's receiving
-// thread, not main. Its only permitted action is beginMediaServicesReset on
-// the player; that method's main completion owns UI state and re-parking.
+// thread, not main. Its only permitted action is to begin the player's
+// media-services reset. That reset's completion on main owns UI state and
+// re-parking.
 - (void)audioSessionDidReceiveMediaServicesReset:(AudioSessionController *)controller;
 
 // The system moved the audio to a different output, or an activation recorded
@@ -57,8 +57,8 @@ NS_ASSUME_NONNULL_BEGIN
 // current answer rather than delivering a pair already moved past.
 - (void)audioSessionOutputRouteDidChange:(AudioSessionController *)controller;
 
-// Whether the player's output has stopped and nothing has started it since
-// (AudioPlayer.outputIdle). Asked at the moment of every deactivation.
+// Whether the player's output has stopped and nothing has started it since.
+// Asked at the moment of every deactivation.
 - (BOOL)audioSessionOutputIsIdle:(AudioSessionController *)controller;
 
 @end
@@ -75,13 +75,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)new NS_UNAVAILABLE;
 
 // Category Playback + setActive:YES, and cancels any pending idle
-// deactivation. Call before every user play/resume,
-// never at launch, so Vibe never claims audio it is not using. Clears
-// route-loss and media-reset ownership, which the interruption-ended resume
-// never does.
+// deactivation. Call before every user play/resume, never at launch. The app
+// then never claims audio it is not using. Clears route-loss and media-reset
+// ownership, which the interruption-ended resume never does.
 - (BOOL)activate;
 
-// Releases the session, with NotifyOthersOnDeactivation so the app Vibe
+// Releases the session, with NotifyOthersOnDeactivation so the app this one
 // interrupted gets its resume hint, once the player's output is idle: at
 // once when it already is, else at the next deactivateIfIdle. Call whenever
 // playback pauses or ends; a subsequent activate cancels it, and it holds off
@@ -89,7 +88,7 @@ NS_ASSUME_NONNULL_BEGIN
 // can forfeit the interruption-ended notification the resume depends on.
 - (void)deactivateWhenIdle;
 
-// Re-asks a release still wanted. Call at audioPlayerOutputDidBecomeIdle:.
+// Re-asks a release still wanted. Call when the player's output becomes idle.
 - (void)deactivateIfIdle;
 
 // What the audio is coming out of. Written together under one lock; each

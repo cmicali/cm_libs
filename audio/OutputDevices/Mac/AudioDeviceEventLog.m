@@ -10,7 +10,7 @@
 
 #if VIBE_VERBOSE_LOGGING
 // Every property whose change the device event log records, registered only
-// where a device has it: what changes on a device while Vibe holds it.
+// where a device has it: what changes on a device while this process holds it.
 static const AudioObjectPropertyAddress kVibeEventLogDeviceAddresses[] = {
     { kAudioDevicePropertyDeviceIsAlive, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain },
     { kAudioDevicePropertyDeviceIsRunning, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain },

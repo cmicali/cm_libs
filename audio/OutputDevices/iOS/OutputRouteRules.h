@@ -2,7 +2,7 @@
 //  OutputRouteRules.h
 //  Vibe (iOS)
 //
-//  What the audio is coming out of, as the card's indicator draws it, and the
+//  What the audio is coming out of, as a route indicator draws it, and the
 //  fold onto the coarser kind AudioSessionRecoveryRules.h decides with.
 //
 //  The recovery rule reads none/built-in/external. Derive it from the display
@@ -86,7 +86,7 @@ static inline NSString *VibeOutputRouteBluetoothSymbolName(NSString *_Nullable d
 //
 // Bluetooth is the one row that guesses, and it guesses from the user-renamable
 // name because that is the only public signal: no audio, Bluetooth or accessory
-// API says what the device is (docs/not-doing/rejected-alternatives.md).
+// API says what the device is.
 static inline NSString *VibeOutputRouteSymbolName(VibeOutputRouteKind kind,
                                                   NSString *_Nullable deviceName) {
     switch (kind) {
