@@ -705,7 +705,7 @@ static float VibeOpusOutputGain(AudioFileID parser) {
     }
     if (VibeOwnDecoderCoding(_container, fileDescription.mFormatID)) {
         return [self failWithError:error status:kAudioFileUnsupportedDataFormatError
-                       description:[NSString stringWithFormat:@"%@ is damaged past what Vibe's decoder plays", name]];
+                       description:[NSString stringWithFormat:@"%@ is damaged past what its decoder plays", name]];
     }
     if (![self takeFileFormat:fileDescription layout:VibeFileChannelLayout(_codec) interleaved:interleaved]) {
         return [self failWithError:error status:kAudioFileUnsupportedDataFormatError
