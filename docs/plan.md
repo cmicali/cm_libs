@@ -515,8 +515,8 @@ In this order, each its own move:
 
    **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
 6. `media/Tags`, `media/Metadata`, `media/PlayQueue`, `media/Playlists`, and `media/FolderScan`.
-   - PlayQueue: its 3 files moved with their history (this repo's pull request), their tests run here, and Vibe compiles them through the template. `RepeatMode.h` came with the queue, and Vibe's settings kept the modes' stored identifiers. It depends on nothing. Its tests run over rows of their own, since the queue reads an entry only through its key blocks.
-   - Playlists: its 6 files moved with their history (this repo's pull request), their tests run here, and Vibe compiles them through the template. It depends on AudioTypes and `core/Common`. Its tests read and write entries. Vibe keeps its rows made from entries, the session mirror, and the folder walk, which moves as FolderScan.
+   - PlayQueue: its 3 files moved with their history (this repo's #30), their tests run here, and Vibe compiles them through the template. `RepeatMode.h` came with the queue, and Vibe's settings kept the modes' stored identifiers. It depends on nothing. Its tests run over rows of their own, since the queue reads an entry only through its key blocks.
+   - Playlists: its 6 files moved with their history (this repo's #30), their tests run here, and Vibe compiles them through the template. It depends on AudioTypes and `core/Common`. Its tests read and write entries. Vibe keeps its rows made from entries, the session mirror, and the folder walk, which moves as FolderScan.
 7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. Controls' map row then drops macOS only, and the piece gains an iOS target. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file.
 9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move.
