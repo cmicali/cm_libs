@@ -262,7 +262,7 @@ Vibe decodes a waveform only for the track on screen. An app that analyzes a who
 
 ### Scanning a catalog
 
-Vibe's walk opens the readable part of a folder. `expandAndFilterList:` returns rows and a folder count, with no way to cancel and no verdict on whether it saw everything. Its enumerator logs an error and carries on. That is right for an open. It is not enough for a catalog, which may mark a file missing only after a scan that saw the whole folder. The walk also reads CUE sheets, beside the files and embedded in FLAC, so a listing may read file contents.
+FolderScan's walk opens the readable part of a folder. `expandAndFilterList:` returns entries and a folder count, with no way to cancel and no verdict on whether it saw everything. Its enumerator logs an error and carries on. That is right for an open. It is not enough for a catalog, which may mark a file missing only after a scan that saw the whole folder. The walk also reads CUE sheets, beside the files and embedded in FLAC, so a listing may read file contents.
 
 The catalog scan is new behavior in FolderScan. It lands after FolderScan's move, as its own change:
 
@@ -271,7 +271,7 @@ The catalog scan is new behavior in FolderScan. It lands after FolderScan's move
 - **Each root ends with one verdict: complete, partial, or cancelled.** Only a complete verdict lets a catalog mark unseen files missing.
 - **A read policy says which contents the scan may read**: none, local files only, or every file. It covers CUE sheets beside the files and embedded in FLAC. Under none, a CUE sheet is reported as a file and not expanded.
 - **A token cancels the scan**, checked between entries. A cancelled scan never reports complete.
-- **There is one enumerator.** Vibe's `expandAndFilterList:` becomes a caller of the same walk, reading every file and making its own rows. So CUE handling never runs under different access rules.
+- **There is one enumerator.** `expandAndFilterList:`, which Vibe's opens call, becomes a caller of the same walk and reads every file. Vibe makes its own rows from its entries. So CUE handling never runs under different access rules.
 
 **Done when** tests show these: a partly unreadable tree reports partial, a cancelled scan reports cancelled, a large tree arrives in bounded batches, and a listing over the fake cloud reads no audio. Vibe's open behaves as before.
 
@@ -518,11 +518,12 @@ In this order, each its own move:
    - Tags: the TagLib wrapper's 2 files moved with their history (this repo's #28), its tests run here, and Vibe compiles it through the template. Its detection tests now write their own files, since Vibe's tag fixtures write WAV and AIFF through Decode's handle. Vibe's metadata parse still reads TagLib's own types from the wrapper's file, as the map allows. Moving those reads behind the wrapper needs a record of tag fields, which is Phase 4's.
    - PlayQueue: its 3 files moved with their history (this repo's #30), their tests run here, and Vibe compiles them through the template. `RepeatMode.h` came with the queue, and Vibe's settings kept the modes' stored identifiers. It depends on nothing. Its tests run over rows of their own, since the queue reads an entry only through its key blocks.
    - Playlists: its 6 files moved with their history (this repo's #30), their tests run here, and Vibe compiles them through the template. It depends on AudioTypes and `core/Common`. Its tests read and write entries. Vibe keeps its rows made from entries, the session mirror, and the folder walk, which moves as FolderScan.
+   - FolderScan: the folder walk's 4 files moved with their history (this repo's pull request), their tests run here, and Vibe compiles them through the template. `FolderOpenSort.h` came with the walk, and Vibe's settings kept the orders' stored identifiers. It depends on AudioTypes, FileLoading, Playlists, and `core/Common`. Its tests read entries. Vibe keeps its rows made from entries, the handlers it installs, and the test of its own `TrackCommands`. The file-name search the tree lists here, Vibe's `FileSearchIndex`, has not moved.
 7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. Controls' map row then drops macOS only, and the piece gains an iOS target. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
    - Waveform: the 6 files of Vibe's `Packages/WaveformCore` moved with their history (this repo's #31), their tests run here, and Vibe compiles them through the template. The headers left the package's `include/`, since every consumer spells them by basename. `Package.swift` did not move, so `swift test` for this code ended with the move. The template links Accelerate and `libcompression` through linker flags, since its sources are all C++. Vibe's `AudioWaveform.h`, with `CodableAudioWaveform`, stays in Vibe for now.
    - WaveformStyles, WaveformLoading, WaveformView, and Controls' indicators remain.
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file.
-9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move.
+9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move. FolderScan has moved, so the catalog scan can now be built here.
 
 **Done when** a minimal consumer here, grown from `Tests/Consumer/`, uses the real templates with objects and strings of its own. It plays repeated queue entries and a CUE window, cancels a cloud open, roots a metadata cache of its own, and hits the waveform cache.
 
