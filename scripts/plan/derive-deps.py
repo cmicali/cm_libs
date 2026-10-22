@@ -3,7 +3,7 @@
 Usage: python3 -I scripts/plan/derive-deps.py <root> [--sites]
 
 <root> is a Vibe checkout with its vibe-libs submodule checked out. The
-script reads its Vibe/, Packages/, Tests/iOSDriver/, vibe-libs/, and
+script reads its Vibe/, Tests/iOSDriver/, vibe-libs/, and
 project.yml. Run it after each cut and each move, and update the map in
 docs/plan.md in the same change.
 
@@ -69,7 +69,6 @@ PIECES = [
     ("media/Tags", "Vibe/Util/Categories/NSString+CPPStrings"),
     ("media/Metadata", "Vibe/Audio/Metadata/"),
     # waveform
-    ("waveform/Waveform", "Packages/WaveformCore/Sources/"),
     ("waveform/Waveform", "Vibe/Audio/Waveform/AudioWaveform."),
     ("waveform/WaveformLoading", "Vibe/Audio/Waveform/"),
     ("audio/Player", "Vibe/Audio/"),
@@ -107,7 +106,7 @@ def piece_of(rel):
 
 
 SRC = (".h", ".hpp", ".hh", ".m", ".mm", ".c", ".cc", ".cpp", ".inc", ".tcc")
-tops = ["Vibe", "Packages", "Tests/iOSDriver"] + [f"{LIBS}/{g}" for g in GROUPS]
+tops = ["Vibe", "Tests/iOSDriver"] + [f"{LIBS}/{g}" for g in GROUPS]
 files = []
 for top in tops:
     for dirpath, _, names in os.walk(os.path.join(root, top)):

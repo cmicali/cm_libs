@@ -18,7 +18,8 @@
 //  so, only when the HAL cannot read its device list. Writes a WAV of a ramp,
 //  opens it through the audio file handle, and reads its frames back exactly.
 //  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
-//  would. Exits 0 when all fourteen hold.
+//  would. Summarizes a tone and draws it (Waveform.mm). Exits 0 when all
+//  fifteen hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -45,6 +46,9 @@
 #import "SettingsShortcutsViewController.h"
 #import "SettingsSidebarController.h"
 #import "ShortcutLayout.h"
+
+// Waveform.mm, since the waveform's headers are C++.
+BOOL ConsumerWaveformHolds(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -517,6 +521,9 @@ int main(void) {
     float tempo = ClickTrackTempo(128.0);
     if (fabsf(tempo - 128.0f) > 1.0f) {
         fprintf(stderr, "consumer: the click track's tempo is %.2f\n", tempo);
+        return 1;
+    }
+    if (!ConsumerWaveformHolds()) {
         return 1;
     }
     printf("consumer OK\n");
