@@ -277,6 +277,42 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # audio/Decode, tested on macOS. The tests drive the read-ahead's seam and
+  # the coordinator's test seams, which compile only under DEBUG, so the
+  # bundle defines it in every configuration, the analyzer's Release build
+  # included. The file fixtures and the read-ahead script come from
+  # Tests/Support. The fuzz tests also read the fixtures an app generates,
+  # when VIBE_AUDIO_FIXTURES names their folder. Verbose logging is on, as in
+  # Vibe's tests. The hang and gate bounds match Vibe's.
+  DecodeTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsDecode]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/Decode
+        excludes: ["**/*.md"]
+      - path: Tests/Support/VibeReadAheadScript.m
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "DEBUG=1"
+          - "VIBE_VERBOSE_LOGGING=1"
+          - "VIBE_TEST_HANG_TIMEOUT=10"
+          - "VIBE_TEST_GATE_TIMEOUT=30"
+
+  # audio/Decode built for iOS, so an AppKit leak fails here.
+  Decode-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsDecode]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
@@ -492,6 +528,8 @@ schemes:
         FileLoading-iOS: all
         DiskCacheTests: [test]
         DiskCache-iOS: all
+        DecodeTests: [test]
+        Decode-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -515,5 +553,5 @@ schemes:
         Vorbis-iOS: all
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, OutputDevicesTests, FXTests, MeterTests,
-                FileLoadingTests, DiskCacheTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
+                FileLoadingTests, DiskCacheTests, DecodeTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
                 R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]

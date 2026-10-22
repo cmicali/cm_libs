@@ -46,8 +46,9 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/audio/AudioTypes"]
 
+  # It lists r8brain for the resampler.
   VibeLibsDSP:
-    templates: [VibeLibsCommon]
+    templates: [VibeLibsCommon, VibeLibsR8brain]
     sources:
       - path: audio/DSP
         excludes: ["**/*.md", "${excludedPlatform}/**"]
@@ -121,6 +122,22 @@ targetTemplates:
     settings:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/files/DiskCache"]
+
+  # The audio file handle and the decoders it hosts. It lists FileLoading for
+  # a stream's and a read-ahead's bytes. The read-ahead's seam compiles in
+  # every configuration and wraps its body in #if DEBUG, so a release build
+  # ships none of it.
+  #
+  # TRAP: an app that also takes VibeLibsTaglib lists this template first, as
+  # it would VibeLibsVorbis. The handle includes libvorbis's vorbisfile.h.
+  VibeLibsDecode:
+    templates: [VibeLibsCommon, VibeLibsFileLoading, VibeLibsDrMp3, VibeLibsDrFlac, VibeLibsDrWav, VibeLibsVorbis]
+    sources:
+      - path: audio/Decode
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/audio/Decode"]
 
   # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
   # so the shared files it gains later move nothing.

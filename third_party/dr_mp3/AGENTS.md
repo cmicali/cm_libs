@@ -2,7 +2,7 @@
 
 dr_mp3 from [dr_libs](https://github.com/mackron/dr_libs), upstream commit `dfe83776`, dr_mp3 0.7.4. It is Vibe's MPEG decoder for MP1, MP2, and MP3 (Vibe's `docs/audio-quality.md`). Other authors' code: **do not restyle it.** It depends on nothing. Its template is `VibeLibsDrMp3`.
 
-Vibe calls only its frame decoder (`drmp3dec_*`). Vibe's `AudioFileHandle` frames the packets itself (`AudioFileHandle+MPEG.m`).
+Vibe calls only its frame decoder (`drmp3dec_*`). `audio/Decode`'s `AudioFileHandle` frames the packets itself (`AudioFileHandle+MPEG.m`).
 
 ## Building
 

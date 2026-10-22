@@ -2,7 +2,7 @@
 
 dr_wav from [dr_libs](https://github.com/mackron/dr_libs), upstream commit `dfe83776`, dr_wav 0.14.6-dev. It is Vibe's decoder for WAV, W64, RF64, and AIFF(-C), of integer and float PCM, A-law, mu-law, and ADPCM (Vibe's `docs/audio-quality.md`). Other authors' code: **do not restyle it.** It depends on nothing. Its template is `VibeLibsDrWav`.
 
-Vibe offers it only a file that starts with a RIFF, RF64, Wave64, or FORM header. It reads the stream itself, through Vibe's `AudioFileHandle` reads and the same callbacks as dr_flac, and answers the file's facts. An AIFF's CHAN chunk and its COMM chunk's sample width reach the handle through dr_wav's chunk callback. dr_wav rounds that width up to whole bytes.
+Vibe offers it only a file that starts with a RIFF, RF64, Wave64, or FORM header. It reads the stream itself, through the reads of `audio/Decode`'s `AudioFileHandle` and the same callbacks as dr_flac, and answers the file's facts. An AIFF's CHAN chunk and its COMM chunk's sample width reach the handle through dr_wav's chunk callback. dr_wav rounds that width up to whole bytes.
 
 ## Building
 

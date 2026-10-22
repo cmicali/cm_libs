@@ -49,6 +49,7 @@ OTHER_APP = "vibe" + " " + "pro"
 # it. A piece another piece's iOS target reaches would fail on that target.
 METER_SOURCE = "audio/Meter/AudioLevelMeter.m"
 METER_ROW = "| audio/Meter | nothing |"
+DSP_ROW = "| audio/DSP | third_party/r8brain |"
 METER_IOS = """  # audio/Meter built for iOS, with its probe of the render seam, which only
   # tests import.
   Meter-iOS:
@@ -176,6 +177,9 @@ CASES = [
     ("a vendored piece including another through third_party/",
      lambda r: append(r, "third_party/dr_flac/dr_flac.c", '\n#include "dr_mp3/dr_mp3.h"\n'),
      "which the map does not allow third_party/dr_flac"),
+    ("a map row dropping a vendored piece whose name holds a digit",
+     lambda r: replace(r, "docs/plan.md", DSP_ROW, "| audio/DSP | nothing |"),
+     "the map does not allow audio/DSP -> third_party/r8brain"),
     ("a spelling two vendored pieces answer, unsettled",
      lambda r: write(r, "third_party/taglib/ogg/ogg/ogg.h", "#pragma once\n"),
      "ogg/ogg.h is ambiguous"),
