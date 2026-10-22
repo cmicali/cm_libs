@@ -13,11 +13,14 @@
 //  size, time and path, and keys it anew once it changes. Turns a CUE window
 //  into a file's frames. Opens a temporary file through the file loader, with
 //  a handle of its own. Roots a disk cache in a temporary directory and reads
-//  its usage back. Exits 0 when all eleven hold.
+//  its usage back. Lists the output devices through the device manager and
+//  prints the default one's name, changing nothing. Exits 0 when all
+//  twelve hold.
 //
 
 #import <Foundation/Foundation.h>
 #import "AudioFileMaterializationCoordinator.h"
+#import "AudioDeviceManager.h"
 #import "AudioFX+Pipeline.h"
 #import "AudioLevelMeter.h"
 #import "AudioVarispeed.h"
@@ -416,6 +419,22 @@ int main(void) {
         fprintf(stderr, "consumer: the disk cache holds %lu entries\n", (unsigned long)entries);
         return 1;
     }
+    // A published snapshot, empty or not. The first sweep runs from the
+    // manager's init, and a refused sweep retries.
+    AudioDeviceManager *outputs = AudioDeviceManager.sharedInstance;
+    if (!Settles(^BOOL { return outputs.cachedOutputDevices != nil; })) {
+        fprintf(stderr, "consumer: the device manager published no snapshot\n");
+        return 1;
+    }
+    NSArray<AudioDevice *> *found = outputs.cachedOutputDevices;
+    AudioDevice *standard = nil;
+    for (AudioDevice *device in found) {
+        if (device.isSystemDefault) {
+            standard = device;
+        }
+    }
+    printf("consumer: %lu output devices, the default is %s\n", (unsigned long)found.count,
+           standard ? standard.name.UTF8String : "none");
     printf("consumer OK\n");
     return 0;
 }

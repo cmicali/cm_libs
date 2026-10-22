@@ -136,6 +136,36 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # audio/OutputDevices, tested on macOS. The bundle compiles the Mac half. The
+  # iOS half's rules are header-only and Foundation-only, so their tests run
+  # here too. Verbose logging is on, as in Vibe's tests, so the HAL event log
+  # compiles and its listener is tested. The hang and gate bounds match Vibe's.
+  OutputDevicesTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsOutputDevices]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/OutputDevices
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "VIBE_VERBOSE_LOGGING=1"
+          - "VIBE_TEST_HANG_TIMEOUT=10"
+          - "VIBE_TEST_GATE_TIMEOUT=30"
+
+  # audio/OutputDevices built for iOS: its iOS half, the audio session.
+  OutputDevices-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsOutputDevices]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # audio/FX, tested on macOS. The chain's render tests stay in Vibe until its
   # player moves, since they run over the player's manual render pump.
   FXTests:
@@ -452,6 +482,8 @@ schemes:
         AudioTypes-iOS: all
         DSPTests: [test]
         DSP-iOS: all
+        OutputDevicesTests: [test]
+        OutputDevices-iOS: all
         FXTests: [test]
         FX-iOS: all
         MeterTests: [test]
@@ -482,6 +514,6 @@ schemes:
         VorbisTests: [test]
         Vorbis-iOS: all
     test:
-      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, FXTests, MeterTests, FileLoadingTests,
-                DiskCacheTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
+      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, OutputDevicesTests, FXTests, MeterTests,
+                FileLoadingTests, DiskCacheTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
                 R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]

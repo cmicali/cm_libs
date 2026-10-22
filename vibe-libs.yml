@@ -55,6 +55,21 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/audio/DSP"]
 
+  # Mac/ is the HAL's output devices, and iOS/ the audio session. Each half's
+  # headers are searched on both platforms, as Graphics' are. It lists
+  # Common for the log macros and the retry scheduler's type.
+  VibeLibsOutputDevices:
+    templates: [VibeLibsCommon]
+    sources:
+      - path: audio/OutputDevices
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(VIBE_LIBS_ROOT)/audio/OutputDevices/Mac"
+          - "$(VIBE_LIBS_ROOT)/audio/OutputDevices/iOS"
+
   # The DJ chain over Apple's audio units. It lists DSP for the stereo buffer
   # list and the fade steps its gates take. Its seam compiles in every
   # configuration. AudioFX.m wraps the body in #if DEBUG, so a release build
