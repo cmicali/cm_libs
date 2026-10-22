@@ -86,7 +86,7 @@ vibe-libs/
 │   ├── AudioTypes ●     the words every audio piece shares: file format identifiers, the
 │   │                    extensions the decoders open, the CUE window math, the musical key,
 │   │                    and the playable-item protocol
-│   ├── DSP ●            varispeed, resampler, fades, FX math, FFT band math, analysis framing
+│   ├── DSP ●            varispeed, resampler, fades, analysis framing
 │   ├── Analysis ●       tempo and musical key from PCM
 │   ├── Decode ●         open a file or a frame window of it, and read PCM
 │   ├── Meter ●          live band levels from inside a render, only while someone looks
@@ -165,7 +165,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | audio/DSP | third_party/r8brain |
 | audio/Analysis | audio/AudioTypes, audio/DSP |
 | audio/Decode | files/FileLoading, third_party/dr_mp3, third_party/dr_flac, third_party/dr_wav, third_party/vorbis |
-| audio/Meter | audio/DSP |
+| audio/Meter | nothing |
 | audio/FX | audio/DSP |
 | audio/OutputDevices | nothing |
 | audio/Player | audio/AudioTypes, audio/DSP, audio/Decode, audio/FX, audio/Meter, audio/OutputDevices, files/FileLoading |
@@ -505,7 +505,7 @@ In this order, each its own move:
 2. `core/Common` alone, since `core/Graphics` moved on the shell track. Done 2026-10-21: its 24 files and Vibe's script moved with their history (this repo's #13), their tests run here, and Vibe compiles them through DSP's template (Vibe #363). The signposts and the work tally compile under the app's `VIBE_SIGNPOSTS`, since no header here may read `DEBUG`. The tree had named load timing here. It is the waveform decode's, so it stays in Vibe until WaveformLoading moves.
 3. `audio/AudioTypes`. Done 2026-10-21: its 7 files moved with their history (this repo's #16), their tests run here, and Vibe compiles them through the template (Vibe #368). It depends on nothing, not even `core/Common`, since nothing in it logs. The player's error codes and `PlaybackIntent.h` stay with the player, since no other piece uses them.
 4. `files/FileLoading` and `files/DiskCache`. Done 2026-10-21: FileLoading's 45 files and DiskCache's 2 moved with their history (this repo's #18), and Vibe compiles them through their templates (Vibe #369). FileLoading's five seams, the read-ahead's hooks, and the fake cloud moved with it. Its tests build with no Decode header path, which was seam 15's done-when. They open a fake served handle. Vibe keeps the three that check its real handle is delivered. FileLoading depends on AudioTypes for the extensions whose tags read by range.
-5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass.
+5. The rest of `audio/`: DSP, Analysis, Decode, Meter, FX, OutputDevices, Player. **Done when** `perf.py --analyze` proves tempo and key exact, and the render suites pass. FX and Meter moved on 2026-10-21: FX's 5 files and Meter's 11 moved with their history, and Vibe compiles them through their templates. Their seams moved with them. The fades joined DSP, since FX's gates and Vibe's player both step them. The FX math and the band math went with their only users, not to DSP, so Meter depends on nothing. The chain's render tests stay in Vibe until the player and its manual render pump move.
 6. `media/Tags`, `media/Metadata`, `media/PlayQueue`, `media/Playlists`, and `media/FolderScan`.
 7. `waveform/`: Waveform, WaveformStyles, WaveformLoading, WaveformView, and the indicators of `ui/Controls`. Controls' map row then drops macOS only, and the piece gains an iOS target. **Done when** Vibe's waveform benchmark pictures are byte-identical and screenshots on both platforms match.
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file.
