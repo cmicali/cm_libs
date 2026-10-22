@@ -60,17 +60,18 @@ targetTemplates:
   #
   # TRAP: it links Accelerate itself. Its sources are all Objective-C++,
   # which Xcode builds with -fno-cxx-modules, so their framework imports
-  # link nothing on their own.
+  # link nothing on their own. It passes a linker flag, not an sdk
+  # dependency, since XcodeGen refuses a target that lists the same sdk
+  # twice, and an app may list Accelerate too.
   VibeLibsAnalysis:
     templates: [VibeLibsAudioTypes]
     sources:
       - path: audio/Analysis
         excludes: ["**/*.md", "${excludedPlatform}/**"]
-    dependencies:
-      - sdk: Accelerate.framework
     settings:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/audio/Analysis"]
+        OTHER_LDFLAGS: ["$(inherited)", "-framework", "Accelerate"]
 
   # Mac/ is the HAL's output devices, and iOS/ the audio session. Each half's
   # headers are searched on both platforms, as Graphics' are. It lists
