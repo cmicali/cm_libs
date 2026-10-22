@@ -2,7 +2,7 @@
 //  AudioVarispeed.h
 //  Vibe
 //
-//  The pitch fader's stage: a varispeed between the voice bus and the FX.
+//  A pitch fader's stage: a varispeed between the app's voice bus and the FX.
 //  At zero pitch it is a bit-perfect pass-through: the source goes straight
 //  to the output, nothing converted, delayed or copied. Off zero it is a
 //  Kaiser-windowed sinc, β 15.6 for about 150 dB of stopband, with a
@@ -15,7 +15,7 @@
 //  The stage owns its ring, its position and its tables. The queue half sets
 //  the pitch and frees what it replaced with no render inside the stage. The
 //  audio-thread half renders one slice at a time and pulls its source through
-//  a callback. docs/audio-quality.md has the measurements.
+//  a callback. This piece's AGENTS.md says where the measurements are.
 //
 
 #import <Foundation/Foundation.h>
@@ -23,7 +23,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-// C linkage: the benchmarks (.mm) call it.
+// C linkage, so Objective-C++ callers such as benchmarks reach it.
 #ifdef __cplusplus
 extern "C" {
 #endif

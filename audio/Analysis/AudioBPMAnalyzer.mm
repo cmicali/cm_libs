@@ -21,7 +21,7 @@ static const NSUInteger kHopSize = 256;
 // The frame and hop are in samples and the method was tuned at 44.1 kHz, so a
 // file at twice the 44.1/48 kHz family or more is decimated by a power of two
 // first: an onset envelope at 192 kHz costs four times the FFTs and finds the
-// same tempo (the accuracy measurement is Analysis/AGENTS.md's). The
+// same tempo. This piece's AGENTS.md has the accuracy measurement. The
 // anti-alias filter is a Blackman-windowed sinc cut at 90% of the decimated
 // Nyquist, kDecimationTapsPerFactor taps per unit of the factor, plus one.
 static const double kDecimatedMinRate = 44100.0;
@@ -42,7 +42,7 @@ static const float kMinConfidence = 1.3f;
 // A Gaussian tempo prior weights every phase-comb candidate. For equal comb
 // scores, T beats its half when T < 4/3 of the center. The crossover here is
 // 187 BPM. The spread sets how strongly the prior can override the comb.
-// Both constants were swept against GiantSteps; see Analysis/AGENTS.md.
+// Both constants were swept against GiantSteps; see this piece's AGENTS.md.
 static const double kTempoPriorCenterBPM = 140.0;
 static const double kTempoPriorSpreadBPM = 80.0;
 
@@ -219,8 +219,8 @@ struct VibeBPMComb {
     if (!_fftSetup || frameCount == 0) {
         return;
     }
-    // Already mono: the loader downmixes each decode buffer once, through
-    // AudioWaveformMonoMix, and shares it with the waveform chunker.
+    // Already mono. A waveform loader downmixes each decode buffer once and
+    // shares it with its chunker.
     if (_decimation > 1) {
         const size_t taps = _decimationFilter.size();
         const size_t held = _decimationInput.size();
@@ -286,8 +286,8 @@ struct VibeBPMComb {
 // member's grid actually lands on the onsets, and refine that period against
 // the envelope without a tolerance window.
 //
-// Every early return is a refusal to guess: no tempo at all beats a wrong one,
-// because AudioTrack.bpm feeds the bar-based skips.
+// Every early return is a refusal to guess. No tempo at all beats a wrong one,
+// because an app may act on the tempo, as with skips by the bar.
 - (float)finish {
     const double fps = _sampleRate / (double)kHopSize; // envelope samples/sec
     const size_t n = _onsetEnvelope.size();

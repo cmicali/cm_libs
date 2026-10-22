@@ -41,7 +41,7 @@ typedef struct VibeLevelMeter VibeLevelMeter;
 - (void)remove;
 @property (nonatomic, readonly) BOOL installed;
 
-// The beta signal probe, bounded to first signal or three seconds, measured
+// The signal probe, bounded to first signal or three seconds, measured
 // in the caller's polls so the bound rides the player's clock. Player queue.
 // Poll returns YES while pending; removal completes a partial capture. The
 // last snapshot survives removal.

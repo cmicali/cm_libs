@@ -6,9 +6,9 @@
 //  suite reaches them without a HAL: when a saved device may bind, then
 //  bit-perfect output's — what a source's
 //  word length is, which of a device's formats carries it unchanged, whether
-//  a device may be driven at all, and how the reasons fold into the one
-//  status the header and Settings show. The mechanism they serve is
-//  AudioPlayer+Devices.m and AudioPlayer+BitPerfect.m.
+//  a device may be driven at all, and how the reasons fold into one status.
+//  The app shows that status. The mechanism they serve is the app's player,
+//  which binds a device and drives bit-perfect output.
 //
 
 #import <Foundation/Foundation.h>
@@ -54,8 +54,8 @@ static inline BOOL VibeBitPerfectChannelMapPreservesSource(const SInt32 *map, UI
 }
 
 typedef NS_ENUM(NSInteger, VibeBitPerfectStatus) {
-    // The setting is off, or the device is ineligible — defensive: the shell
-    // never lets the two coincide.
+    // The setting is off, or the device is ineligible. This is defensive. An
+    // app should never let the two coincide.
     VibeBitPerfectStatusOff,
     // On, device chosen, nothing playing.
     VibeBitPerfectStatusIdle,
@@ -78,17 +78,17 @@ typedef NS_ENUM(NSInteger, VibeBitPerfectStatus) {
     VibeBitPerfectStatusSourceLossy,
 };
 
-// Every input to the fold plus what it produced, so the caption, the glyph
-// and dump_state read one snapshot and cannot disagree about why.
+// Every input to the fold plus what it produced. Every reader of the status
+// reads one snapshot, so no two can disagree about why.
 typedef struct {
     VibeBitPerfectStatus status;
     double sampleRate;      // the device's, after the switch
     UInt32 bitsPerChannel;  // the physical format's width
-    UInt32 sourceBits;      // the file's depth (VibeSourceBitDepth), 0 for lossy; the Active caption shows it
+    UInt32 sourceBits;      // the file's depth (VibeSourceBitDepth), 0 for lossy
     BOOL isFloat;
     float softwareVolume;
     float balance;         // 0 = left, 0.5 = center, 1 = right
-    float playerVolume;    // AudioPlayer.volume
+    float playerVolume;    // the player's own volume, 1 at full
     // The fold's inputs.
     BOOL enabled;
     BOOL eligibleDevice;
@@ -182,8 +182,9 @@ static inline BOOL VibePhysicalFormatSatisfies(AudioStreamBasicDescription physi
 // unchanged — an ALLOWLIST, so anything Apple adds later is out until argued
 // in. The System Output policy (-1) is the absence of a chosen device; the
 // device that happens to be the default is judged by its transport like any
-// other. Read by the switch, the Output menu and the report, so the three
-// cannot disagree. The Advanced testing override bypasses only the transport.
+// other. The switch, an app's device list, and the report all read it, so
+// they cannot disagree. allowAnyDevice is a testing override. It bypasses only
+// the transport.
 static inline BOOL VibeBitPerfectDeviceEligible(UInt32 transportType, BOOL allowAnyDevice) {
     if (allowAnyDevice) return YES;
     switch (transportType) {
@@ -258,7 +259,7 @@ static inline BOOL VibeBitPerfectOutputNeedsSwitch(AudioStreamBasicDescription c
     return !VibePhysicalFormatsEquivalent(current, chosen) || mixerRate != chosen.mSampleRate;
 }
 
-// The depth rule at `rate`, as-is (Mac/Devices/AGENTS.md says why). The
+// The depth rule at `rate`, as-is. This piece's AGENTS.md says why. The
 // integer pick is the widest integer depth not below the source's, and the
 // float pick the widest float. An integer source takes the integer pick. A
 // float or lossy source takes the float pick first, since only a float format

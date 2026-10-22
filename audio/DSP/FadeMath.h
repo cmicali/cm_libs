@@ -5,8 +5,9 @@
 //  Every fade exists because a gain step at a non-zero sample clicks. The
 //  ≤10 ms declick is linear, which keeps its per-sample step small at every
 //  rate; a longer fade is equal-power, so the two sides of a crossfade do not
-//  dip at the midpoint. The voice bus evaluates both per frame on the audio
-//  thread; AudioFX's send gates step a log curve on the player queue instead.
+//  dip at the midpoint. The app's voice bus evaluates both per frame on the
+//  audio thread. AudioFX's send gates step a log curve on the player queue
+//  instead.
 //
 
 #import <Foundation/Foundation.h>
@@ -47,10 +48,10 @@ static inline float VibeFadeGainAtFrame(VibeFadeCurve curve, float from, float t
 }
 
 // The length both sides of a track change ride. The user's crossfade applies
-// only to a play replacing an audibly playing track, without `declick` (the
-// convert swap replaces a track with its own audio, which would overlap
-// with itself); everything else takes the declick minimum, which is also the
-// floor.
+// only to a play replacing an audibly playing track, without `declick`.
+// `declick` marks a play that replaces a track with its own audio, such as a
+// converted copy. A crossfade would overlap that audio with itself. Everything
+// else takes the declick minimum, which is also the floor.
 static inline uint64_t VibeIncomingFadeMilliseconds(NSInteger crossfadeMilliseconds,
                                                     BOOL replacingAudibleTrack,
                                                     BOOL declick) {
@@ -60,7 +61,7 @@ static inline uint64_t VibeIncomingFadeMilliseconds(NSInteger crossfadeMilliseco
     return (uint64_t)MAX(crossfadeMilliseconds, (NSInteger)kFadeDurationMilliseconds);
 }
 
-// Gapless arms only at the declick minimum, which the UI presents as
+// Gapless arms only at the declick minimum, which an app presents as
 // crossfade off; a longer setting crossfades auto-advance instead
 // (VibeTrackEndCrossfadeMilliseconds) — except into the next window of the
 // same file (VibePlayableItemIsFollowedContiguouslyBy), one recording a

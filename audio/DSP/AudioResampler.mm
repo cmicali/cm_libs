@@ -10,11 +10,11 @@
 #include <new>
 #include <vector>
 
-// The bus's decode chunk: the most one input call answers.
+// The most one input call answers, the size of the app's decode chunk.
 static const int kVibeMaxInput = 4096;
 // The 24-bit preset (180 dB stopband) with a 1% transition band, half
-// upstream's default: −0.1 dB at 21.72 kHz from 44.1, for about 20% more cost
-// (docs/audio-quality.md).
+// upstream's default: −0.1 dB at 21.72 kHz from 44.1, for about 20% more cost.
+// This piece's AGENTS.md says where the measurements are.
 static const double kVibeR8TransitionBand = 1.0;
 
 struct VibeResampler {

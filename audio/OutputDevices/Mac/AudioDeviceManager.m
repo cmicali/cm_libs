@@ -48,9 +48,8 @@ static const AudioObjectPropertyAddress kDevicesAddress = {
 @end
 
 @implementation AudioDeviceManager {
-    // Weakly held observers. AudioPlayer registers from its serial queue while
-    // the menu controller registers from the main thread, so all access goes
-    // through _observersLock.
+    // Weakly held observers. A player may register from its serial queue and a
+    // menu from the main thread. So all access goes through _observersLock.
     NSHashTable<id<AudioDeviceManagerObserver>> *_observers;
     os_unfair_lock _observersLock;
     // An immutable snapshot of the output-device list, guarded by
@@ -86,7 +85,7 @@ static const AudioObjectPropertyAddress kDevicesAddress = {
     BOOL _devicesListenerRegistered;
     BOOL _listenerRegistrationRetryScheduled;
 #if VIBE_VERBOSE_LOGGING
-    // Beta instrumentation: the device event log. Made in init, used only on
+    // Verbose logging only: the device event log. Made in init, used only on
     // _refreshQueue.
     AudioDeviceEventLog *_eventLog;
 #endif
@@ -389,8 +388,8 @@ static OSStatus devicePropertyChangedCallback(AudioObjectID inObjectID,
 }
 
 // Sweeps on the refresh queue first, then fans the observer notification out;
-// notifyObserversUsingBlock: hops to the main thread itself. Observers —
-// AudioPlayer's removed-device fallback, or an open devices menu's rebuild —
+// notifyObserversUsingBlock: hops to the main thread itself. Observers, such
+// as a player's removed-device fallback or an open devices menu's rebuild,
 // therefore read a cache that already reflects the change they are told about.
 - (void)refreshDevicesThenNotify:(void (^)(id<AudioDeviceManagerObserver> observer))block {
     [self refreshOutputDevicesWithCompletion:^(BOOL published) {

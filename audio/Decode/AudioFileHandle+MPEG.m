@@ -593,7 +593,7 @@ static BOOL VibeITunesGapless(AudioFileHandle *handle, SInt64 end, SInt64 *primi
 - (BOOL)readMPEGIntoBuffer:(AVAudioPCMBuffer *)buffer frameCount:(AVAudioFrameCount)wanted error:(NSError **)error {
     if (atomic_load_explicit(&_lengthEstimated, memory_order_relaxed) && VibeHandleAwaitWhole(self, NO)) {
         // TRAP: here, on the one thread that reads the handle, since the
-        // walk is not thread-safe: the bus's decode queue, or a waveform's.
+        // walk is not thread-safe: the app's voice bus's decode queue, or a waveform's.
         [self countMPEGPacketsOnDisk];
     }
     UInt32 channels = _processingFormat.channelCount;
@@ -625,8 +625,8 @@ static BOOL VibeITunesGapless(AudioFileHandle *handle, SInt64 end, SInt64 *primi
         total += frames;
     }
     if (_mpegPacketCount == kVibeMPEGPacketsUncounted && _mpegPosition >= _length) {
-        // The bus ends a voice whose cursor reaches the length, and an
-        // estimate is not the end.
+        // A reader such as the app's voice bus ends a voice whose cursor
+        // reaches the length. An estimate is not the end.
         __atomic_store_n(&_length, _mpegPosition + 1, __ATOMIC_RELAXED);
     }
     buffer.frameLength = total;

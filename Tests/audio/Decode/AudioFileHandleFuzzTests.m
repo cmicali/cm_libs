@@ -725,7 +725,7 @@ static BOOL FuzzSeekTablePastEnd(NSMutableData *bytes, FuzzSource *source, VibeF
     return NO;
 }
 
-#pragma mark Named shapes: the dr_wav fixes (vibe-libs/third_party/dr_wav/AGENTS.md)
+#pragma mark Named shapes: the dr_wav fixes (third_party/dr_wav/AGENTS.md)
 
 typedef NS_ENUM(NSUInteger, FuzzCOMM) { FuzzCOMM23, FuzzCOMMOdd, FuzzCOMMLong };
 
@@ -1118,7 +1118,8 @@ static void FuzzDecodeURL(FuzzDecode *result, NSURL *url, AVAudioFramePosition b
         result.decoder = handle.decoderName;
         // Apple's decoders read every packet their parser serves, past a damaged count, and can deliver
         // more after an end or a seek than a decode from the start did. A length of 0 is refused before
-        // anything plays, and the bus stops at the length, so those are checked only of Vibe's decoders.
+        // anything plays, and a player's bus stops at the length. So those are checked only of the handle's
+        // own decoders.
         BOOL ours = ![result.decoder isEqualToString:@"apple"];
         // dr_wav's and dr_flac's seeks land on the samples a decode from the start holds there, damaged or not.
         BOOL exact = [result.decoder isEqualToString:@"dr_wav"] || [result.decoder isEqualToString:@"dr_flac"];

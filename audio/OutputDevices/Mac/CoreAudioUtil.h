@@ -86,9 +86,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)readPhysicalFormat:(AudioStreamBasicDescription *)format forStream:(AudioStreamID)stream;
 + (BOOL)setPhysicalFormat:(AudioStreamBasicDescription)format forStream:(AudioStreamID)stream;
 
-// An output AU's destination-indexed channel map (AudioOutputUnit.channelMap).
-// Source channels must reach the prepared stream in order, with every unused
-// output silent.
+// An output unit's destination-indexed channel map
+// (kAudioOutputUnitProperty_ChannelMap). Source channels must reach the
+// prepared stream in order, with every unused output silent.
 + (BOOL)channelMap:(nullable NSArray<NSNumber *> *)map preservesChannels:(UInt32)channels
           inStream:(AudioStreamID)stream physicalChannelCount:(UInt32)physicalChannels;
 
@@ -138,10 +138,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-// Save Debug Info and the HAL event log (CoreAudioUtil+Diagnostics.m).
+// A debug report's device description and the HAL event log
+// (CoreAudioUtil+Diagnostics.m).
 @interface CoreAudioUtil (Diagnostics)
 
-// Everything the HAL will say about one device, for Save Debug Info: identity,
+// Everything the HAL will say about one device, for a debug report: identity,
 // liveness and exclusive ownership, rates and buffer, the latency it declares,
 // its clock, and its first output stream's formats and controls. Dictionaries,
 // arrays, strings and numbers only. Unreadable optional properties are omitted.
@@ -149,9 +150,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSDictionary<NSString *, id> *)diagnosticDescriptionOfDeviceID:(AudioDeviceID)deviceID;
 
 #if VIBE_VERBOSE_LOGGING
-// Beta instrumentation: one changed HAL property as a log phrase with
-// its new value ("nominal rate = 44100 Hz", "exclusive owner = 1377 (Vibe)"),
-// for AudioDeviceEventLog. Reads through coreaudiod; call it off main.
+// Verbose logging only: one changed HAL property as a log phrase with its new
+// value ("nominal rate = 44100 Hz", "exclusive owner = 1377 (Music)"), for
+// AudioDeviceEventLog. Reads through coreaudiod; call it off main.
 + (NSString *)eventDescriptionOfProperty:(AudioObjectPropertyAddress)address object:(AudioObjectID)object;
 #endif
 

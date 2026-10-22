@@ -25,11 +25,11 @@
 // CoreAudio's Ogg reader (.ogg, .oga, .opus). The SDK names no constant.
 static const AudioFileTypeID kVibeOggFileType = 'Oggf';
 
-// Whether one of Vibe's own decoders takes this container and coding
+// Whether one of the handle's own decoders takes this container and coding
 // (openOwnDecoderInterleaved:). Such a file reaches the parser only after its
 // decoder refused it, damaged past what that decoder plays, so playback
-// refuses it too. Apple's decoders play only codings Vibe has no decoder for,
-// GSM in a WAV among them, and containers it does not parse.
+// refuses it too. Apple's decoders play only codings the handle has no
+// decoder for, GSM in a WAV among them, and containers it does not parse.
 static BOOL VibeOwnDecoderCoding(AudioFileTypeID container, AudioFormatID format) {
     BOOL mpeg = format == kAudioFormatMPEGLayer1 || format == kAudioFormatMPEGLayer2 || format == kAudioFormatMPEGLayer3;
     BOOL pcm = format == kAudioFormatLinearPCM || format == kAudioFormatALaw || format == kAudioFormatULaw;
@@ -54,9 +54,9 @@ static const OSStatus kVibeReadInterrupted = 'intr';
 
 BOOL (^const VibeNeverWaitsForAStream)(void) = ^BOOL { return YES; };
 
-// TRAP: a close can wait on a network share's server. The player, the voice
-// bus, the open coordinator and the waveform loader each let a handle go
-// where main waits: under a lock main takes, or on a queue main syncs onto.
+// TRAP: a close can wait on a network share's server. The app's player and
+// voice bus, the open coordinator, and the waveform loader each let a handle
+// go where main waits: under a lock main takes, or on a queue main syncs onto.
 // So an interruptible open's file closes here, never on the thread that let
 // it go. Serial: a close stuck on a dead server holds the later ones, not a
 // thread each.
@@ -681,8 +681,8 @@ static float VibeOpusOutputGain(AudioFileID parser) {
     // Those answer the facts too. CoreAudio's parser opens only what none of
     // them takes.
     // TRAP: iOS's Ogg reader refuses Vorbis, and macOS's decoder drops
-    // each Vorbis file's first 128 frames (macOS 27,
-    // docs/future/audio-quality-gaps.md).
+    // each Vorbis file's first 128 frames (macOS 27; this piece's
+    // AGENTS.md).
     if ([self openOwnDecoderInterleaved:interleaved] || _waitError) {
         return [self openedWithError:error];
     }
@@ -705,7 +705,7 @@ static float VibeOpusOutputGain(AudioFileID parser) {
     }
     if (VibeOwnDecoderCoding(_container, fileDescription.mFormatID)) {
         return [self failWithError:error status:kAudioFileUnsupportedDataFormatError
-                       description:[NSString stringWithFormat:@"%@ is damaged past what Vibe's decoder plays", name]];
+                       description:[NSString stringWithFormat:@"%@ is damaged past what its decoder plays", name]];
     }
     if (![self takeFileFormat:fileDescription layout:VibeFileChannelLayout(_codec) interleaved:interleaved]) {
         return [self failWithError:error status:kAudioFileUnsupportedDataFormatError

@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithSampleRate:(double)sampleRate;
 
-// Mono float32; see AudioWaveformMonoMix. Any frame count per call.
+// Mono float32, such as a waveform loader's mono mix. Any frame count per call.
 - (void)appendMonoSamples:(const float *)samples frameCount:(NSUInteger)frameCount;
 
 // The estimated tempo in BPM, or 0 if undetectable. Call it once, after every

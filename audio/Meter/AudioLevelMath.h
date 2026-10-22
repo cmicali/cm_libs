@@ -13,7 +13,7 @@
 //  and compensate for the band's octave width. Balanced spectrum admits a
 //  bounded amount of relative activity only where shared spectrum also sees
 //  signal. The published 0..1 value is a LEVEL. Visual response belongs to
-//  EqualizerAnimationMath.h in Controls; audio publishes targets and never
+//  the view that draws the levels. This piece publishes targets and never
 //  knows how a view moves.
 //
 
@@ -23,8 +23,8 @@
 #import <stdint.h>
 #import "HelperMacros.h"
 
-// One per bar in EqualizerIndicatorView. Five is the indicator's shape, not a
-// tunable: the bars are the app icon's waveform.
+// One per bar of a five-bar indicator. Five is the indicator's shape, not a
+// tunable.
 enum { kLevelBandCount = 5 };
 
 typedef NS_ENUM(NSUInteger, VibeAudioLevelNormalizationMode) {
