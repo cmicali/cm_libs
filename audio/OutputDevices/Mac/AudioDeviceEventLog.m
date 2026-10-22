@@ -88,7 +88,7 @@ static void VibeEventLogListen(AudioObjectID object, const AudioObjectPropertyAd
 // so, one that goes says so, and a default change is logged with its name.
 - (void)watchDevices:(NSArray<AudioDevice *> *)devices {
     if (!_eventLogQueue) {
-        _eventLogQueue = dispatch_queue_create("com.vibe.audiodevicemanager.eventlog", DISPATCH_QUEUE_SERIAL);
+        _eventLogQueue = dispatch_queue_create("vibe-libs.outputdevices.eventlog", DISPATCH_QUEUE_SERIAL);
         _eventLogWatches = [NSMutableDictionary dictionary];
         _eventLogDefaultID = -1;
         VibeEventLogListen(kAudioObjectSystemObject, kVibeEventLogSystemAddresses,
