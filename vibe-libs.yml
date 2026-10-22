@@ -220,6 +220,20 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/Playlists"]
 
+  # The folder walk: a file, a folder, or a playlist file into entries, with
+  # CUE sheets beside the files and inside a large FLAC. It lists AudioTypes
+  # for the playable extensions, FileLoading for the placeholder checks,
+  # Playlists for the readers and the entry record, and Common for the
+  # emptiness test and the log macros.
+  VibeLibsFolderScan:
+    templates: [VibeLibsCommon, VibeLibsAudioTypes, VibeLibsFileLoading, VibeLibsPlaylists]
+    sources:
+      - path: media/FolderScan
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/FolderScan"]
+
   # The waveform engine, in C++17, so an app builds C++ as C++17 or later.
   # Nothing here logs, so it lists no template.
   # Its summary and band split are a decode's work per sample, and its raster
