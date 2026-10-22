@@ -479,7 +479,8 @@ targets:
       excludedPlatform: Mac
 
   # waveform/Waveform, tested on macOS: the summary's builder, reads, deep
-  # zoom, and archive, and the raster's steps and coverage.
+  # zoom, and archive, the raster's steps and coverage, the mono mix, and the
+  # cache entry.
   WaveformTests:
     type: bundle.unit-test
     platform: macOS
