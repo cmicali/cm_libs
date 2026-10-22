@@ -88,7 +88,7 @@ static AVAudioChannelLayout *VibeMaskLayout(UInt32 mask, UInt32 channels) {
 // The packet is the largest block. FLAC orders three to eight channels as
 // WAVE does, so each count is a mask. dr_flac answers the length, STREAMINFO's
 // or, for a stream that leaves it unknown, the end of its last frame
-// (vibe-libs/third_party/dr_flac/AGENTS.md).
+// (third_party/dr_flac/AGENTS.md).
 - (BOOL)openFLACInterleaved:(BOOL)interleaved {
     static const UInt32 masks[] = {0x7, 0x33, 0x37, 0x3F, 0x70F, 0x63F};
     _flac = drflac_open(VibeStreamRead, VibeFLACSeek, VibeStreamTell, (__bridge void *)self, NULL);
@@ -243,7 +243,7 @@ static drwav_uint64 VibeReadAIFFChunk(void *user, drwav_read_proc onRead, drwav_
 }
 
 // Vorbis I's channel order (section 4.3.9) for three to eight channels, as
-// labels. The voice bus then folds each channel as the file means it. Nil for
+// labels. The app's voice bus then folds each channel as the file means it. Nil for
 // mono and stereo, and for a wider stream, whose order is the encoder's own.
 static AVAudioChannelLayout *VibeVorbisChannelLayout(UInt32 channels) {
     enum { L = kAudioChannelLabel_Left, R = kAudioChannelLabel_Right, C = kAudioChannelLabel_Center,
@@ -270,7 +270,7 @@ static AVAudioChannelLayout *VibeVorbisChannelLayout(UInt32 channels) {
 }
 
 // vorbisfile answers the facts, the first link's. It skips a Skeleton or a
-// video stream beside the Vorbis one. The bus keeps one format per file, so a
+// video stream beside the Vorbis one. A reader keeps one format per file, so a
 // chained file plays its leading links that share the first's rate and
 // channels. CoreAudio's reader plays only the first link of such a chain. The
 // length is the last of those links' granule position, which trims the

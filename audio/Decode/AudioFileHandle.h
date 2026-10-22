@@ -4,15 +4,16 @@
 //
 //  One opened audio file. For reading: a descriptor this process owns and a
 //  decoder over it. dr_flac, dr_wav and libvorbis parse their own containers,
-//  and Vibe's MPEG open frames an MPEG file for dr_mp3. Any other file opens
+//  and the handle's own MPEG open frames an MPEG file for dr_mp3. Any other file opens
 //  CoreAudio's parser over the descriptor through AudioFileOpenWithCallbacks,
-//  and an ExtAudioFile decodes it. A file in a container and coding Vibe's
-//  decoders take reaches the parser only once its decoder refused it, and
-//  playback refuses it there too. For
+//  and an ExtAudioFile decodes it. A file in a container and coding the
+//  handle's own decoders take reaches the parser only once its decoder
+//  refused it. Playback refuses it there too. For
 //  writing: an ExtAudioFile encoding PCM into a file it creates. The surface
 //  is AVAudioFile's — the file's facts, a cursor in file frames, reads from
-//  and writes of a PCM buffer — so the player, the bus, the waveform loader,
-//  the converter and the test fixtures share one class and one lifetime rule.
+//  and writes of a PCM buffer. So an app's player, its voice bus, its
+//  waveform loader, its converter, and its test fixtures share one class and
+//  one lifetime rule.
 //  The last reference closes the decoder, then the parser, then the
 //  descriptor. A FAILED open leaks nothing, which is why no preflight
 //  precedes it. For an open with an `interrupted` block, the last
@@ -25,8 +26,7 @@
 //  MP3 with no VBR header: estimated from its head's frames
 //  (lengthIsEstimated), and settled by its decode (AudioFileHandle+MPEG.m).
 //  Writing advances length. Cursor, read, write and close operations belong
-//  to one consumer at a time (the bus's decoder after a voice starts,
-//  AudioVoiceBus.h).
+//  to one consumer at a time, such as the app's voice bus once a voice starts.
 //
 //  An MPEG file (MP1, MP2, MP3) is decoded by dr_mp3 instead of ExtAudioFile.
 //  Apple's arm64 MPEG decoder outputs 16-bit integers, clipped at full scale
@@ -37,14 +37,14 @@
 //  A FLAC file is decoded by dr_flac, bit-identical to Apple's decode, which
 //  it replaces for its cost and its seeks: Apple's scans the stream from its
 //  start on the first seek into any part not yet read, and never uses the seek
-//  table (docs/audio-quality.md). dr_flac reads the stream through the
+//  table (this piece's AGENTS.md). dr_flac reads the stream through the
 //  handle's reads itself.
 //  It states the file's format and layout as the parser would. It answers
 //  the length, found from the last frames when STREAMINFO leaves it unknown. The vendored copy
-//  carries fixes of its own (vibe-libs/third_party/dr_flac/AGENTS.md).
+//  carries fixes of its own (third_party/dr_flac/AGENTS.md).
 //
 //  A WAV, W64, RF64 or AIFF file is decoded by dr_wav the same way, when it
-//  holds a coding dr_wav decodes (vibe-libs/third_party/dr_wav/AGENTS.md lists them). The open
+//  holds a coding dr_wav decodes (third_party/dr_wav/AGENTS.md lists them). The open
 //  tells these containers and FLAC by the file's first bytes. A coding
 //  dr_wav lacks, such as GSM, is CoreAudio's.
 //
@@ -83,8 +83,8 @@ FOUNDATION_EXPORT BOOL (^const VibeNeverWaitsForAStream)(void);
 
 // Opens CoreAudio's parser alone, with no decoder: the one open every reader
 // of CoreAudio's verdict on a file shares. The reading inits open it for
-// every file Vibe's decoders do not take, so it refuses what playback
-// refuses (FLAC in Ogg). The files they take never open it.
+// every file the handle's own decoders do not take. So it refuses what
+// playback refuses (FLAC in Ogg). The files they take never open it.
 // Only `url` and `parser` answer.
 // `interrupted`, held only while the open runs, is asked whenever one of its
 // waits for a streaming file's bytes would block, and YES fails the open with
@@ -123,12 +123,12 @@ FOUNDATION_EXPORT BOOL (^const VibeNeverWaitsForAStream)(void);
                                   error:(NSError * _Nullable __autoreleasing * _Nullable)error NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
-// "dr_mp3", "dr_flac", "dr_wav", "libvorbis" or "apple", for the audio-path report.
+// "dr_mp3", "dr_flac", "dr_wav", "libvorbis" or "apple", for a debug report.
 @property (nonatomic, readonly) NSString *decoderName;
 
 @property (nonatomic, readonly) NSURL *url;
-// For property reads while the handle lives. NULL once one of Vibe's decoders
-// has taken the file over, and for a writing handle.
+// For property reads while the handle lives. NULL once one of the handle's
+// own decoders has taken the file over, and for a writing handle.
 @property (nonatomic, readonly, nullable) AudioFileID parser;
 // On the opening thread: NO when the parser's kAudioFilePropertyInfoDictionary
 // must not be read, for a CAF whose info chunk is absent, runs past the file

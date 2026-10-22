@@ -25,7 +25,7 @@
 // can decode past +90 dBFS. The FX's reverb and delay then ring at full scale
 // for seconds, the equalizer's reference stays up for half a minute, and the
 // track's detected tempo moves. The bound, +12 dBFS, sits well above any real
-// master's overs (docs/audio-quality.md).
+// master's overs (this piece's AGENTS.md).
 static const float kVibeDecodeSampleBound = 4.0f;
 
 // Small reads go through one block: the parser's under kVibeReadBlock, filling
