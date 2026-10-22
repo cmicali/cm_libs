@@ -35,7 +35,8 @@ targets:
     # beside VibeLibsTags.
     templates: [VibeLibsAudioTypes, VibeLibsDSP, VibeLibsAnalysis, VibeLibsOutputDevices, VibeLibsFX,
                 VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsTags, VibeLibsDiskCache,
-                VibeLibsGraphics, VibeLibsControls, VibeLibsSettingsWindow, VibeLibsShortcuts]
+                VibeLibsGraphics, VibeLibsPlayQueue, VibeLibsPlaylists, VibeLibsControls,
+                VibeLibsSettingsWindow, VibeLibsShortcuts]
     templateAttributes:
       excludedPlatform: iOS
     sources:

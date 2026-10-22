@@ -19,8 +19,10 @@
 //  opens it through the audio file handle, and reads its frames back exactly.
 //  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
 //  would. Tags a WAV through TagLib, and reads its title and its picture back
-//  through the tag wrapper, the picture by range (Tags.mm). Exits 0 when all
-//  fifteen hold.
+//  through the tag wrapper, the picture by range (Tags.mm). Queues plain URLs,
+//  two of them for one file, and walks what follows each track's end under
+//  repeat and shuffle. Writes an M3U, reads it back, and reads a small CUE
+//  sheet. Exits 0 when all seventeen hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -36,6 +38,9 @@
 #import "PINCache+VibeAudioCache.h"
 #import "NSURL+Hash.h"
 #import "PlatformColor.h"
+#import "Playlist.h"
+#import "PlaylistEntry.h"
+#import "PlaylistFile.h"
 #import "CrossfadingImageView.h"
 #import "DrawnControls.h"
 #import "ScaledImageView.h"
@@ -74,6 +79,102 @@ FOUNDATION_EXTERN BOOL ConsumerReadsTags(void);
 - (void)holdStream {
 }
 @end
+
+// A queue of plain URLs, keyed by themselves. Two URLs for one file stay two
+// rows. Off parks at the end, All wraps, One replays, and a shuffled cycle
+// under All plays every row once.
+static BOOL QueueWalksItsSuccessors(void) {
+    NSURL *a = [NSURL fileURLWithPath:@"/consumer/a.mp3"];
+    NSURL *b = [NSURL fileURLWithPath:@"/consumer/b.mp3"];
+    NSURL *again = [[NSURL alloc] initFileURLWithPath:a.path];
+    Playlist<NSURL *> *queue = [[Playlist<NSURL *> alloc] initWithURLKey:^NSURL *(NSURL *url) {
+        return url;
+    } sourceKey:^NSString *(NSURL *url) {
+        return url.path;
+    }];
+    [queue replaceAllWithTracks:@[a, b, again] startingAtIndex:NSNotFound];
+    if (again == a || [queue indexesOfTracksWithURL:a].count != 2 || [queue getIndexForTrack:again] != 2
+            || queue.trackEndSuccessor != b) {
+        fprintf(stderr, "consumer: the queue merged two rows of one file\n");
+        return NO;
+    }
+    queue.currentIndex = 2;
+    NSURL *off = queue.trackEndSuccessor;
+    queue.repeatMode = VibeRepeatModeAll;
+    NSURL *all = queue.trackEndSuccessor;
+    queue.repeatMode = VibeRepeatModeOne;
+    NSURL *one = queue.trackEndSuccessor;
+    if (off || all != a || one != again) {
+        fprintf(stderr, "consumer: the successors under Off, All, and One were %s, %s, and %s\n",
+                off.path.UTF8String, all.path.UTF8String, one.path.UTF8String);
+        return NO;
+    }
+    queue.repeatMode = VibeRepeatModeAll;
+    queue.shuffleEnabled = YES;
+    NSMutableArray<NSURL *> *heard = [NSMutableArray arrayWithObject:queue.currentTrack];
+    for (NSUInteger i = 0; i < 5; i++) {
+        NSURL *next = queue.trackEndSuccessor;
+        if (!next || ![queue advanceAtTrackEnd] || queue.currentTrack != next) {
+            fprintf(stderr, "consumer: the shuffled queue stopped after %lu tracks\n", (unsigned long)heard.count);
+            return NO;
+        }
+        [heard addObject:next];
+    }
+    for (NSUInteger cycle = 0; cycle < 2; cycle++) {
+        NSArray<NSURL *> *played = [heard subarrayWithRange:NSMakeRange(cycle * 3, 3)];
+        if ([played indexOfObjectIdenticalTo:a] == NSNotFound || [played indexOfObjectIdenticalTo:b] == NSNotFound
+                || [played indexOfObjectIdenticalTo:again] == NSNotFound) {
+            fprintf(stderr, "consumer: a shuffled cycle did not play every row once\n");
+            return NO;
+        }
+    }
+    return YES;
+}
+
+// An M3U of a file whole and a CUE window, written and read back as the same
+// entries, and a two-track CUE sheet read as two windows of its file.
+static BOOL PlaylistsRoundTrip(void) {
+    NSURL *directory = [NSURL fileURLWithPath:[NSTemporaryDirectory()
+            stringByAppendingPathComponent:NSUUID.UUID.UUIDString] isDirectory:YES];
+    [NSFileManager.defaultManager createDirectoryAtURL:directory withIntermediateDirectories:YES
+                                            attributes:nil error:NULL];
+    NSURL *song = [directory URLByAppendingPathComponent:@"song.mp3"];
+    NSURL *mix = [directory URLByAppendingPathComponent:@"mix.flac"];
+    NSURL *sheet = [directory URLByAppendingPathComponent:@"mix.cue"];
+    [[NSData dataWithBytes:"song" length:4] writeToURL:song atomically:YES];
+    [[NSData dataWithBytes:"mix" length:3] writeToURL:mix atomically:YES];
+    NSString *cue = @"PERFORMER \"DJ\"\nFILE \"mix.flac\" WAVE\n"
+                     "  TRACK 01 AUDIO\n    TITLE \"One\"\n    INDEX 01 00:00:00\n"
+                     "  TRACK 02 AUDIO\n    TITLE \"Two\"\n    INDEX 01 01:00:00\n";
+    [[cue dataUsingEncoding:NSUTF8StringEncoding] writeToURL:sheet atomically:YES];
+    NSArray<PlaylistEntry *> *cueEntries = [PlaylistFile entriesForPlaylistAtURL:sheet];
+    BOOL sheetRead = cueEntries.count == 2 && [cueEntries[0].url.lastPathComponent isEqual:@"mix.flac"]
+            && cueEntries[0].cueStart == 0 && cueEntries[0].cueEnd == 4500 && cueEntries[1].cueStart == 4500
+            && cueEntries[1].cueEnd == 0 && [cueEntries[1].cueTitle isEqual:@"Two"]
+            && [cueEntries[1].cuePerformer isEqual:@"DJ"];
+
+    PlaylistEntry *whole = [PlaylistEntry entryWithURL:song];
+    PlaylistEntry *window = [[PlaylistEntry alloc] initWithURL:mix cueStart:4500 cueEnd:9000 title:@"Two"
+                                                     performer:@"DJ" sheet:sheet trackNumber:2 duration:60
+                                                  displayTitle:@"Two" displayArtist:@"DJ"];
+    NSURL *list = [directory URLByAppendingPathComponent:@"set.m3u"];
+    NSError *error = nil;
+    BOOL written = [PlaylistFile writeM3UForEntries:@[whole, window] relativeToDirectory:directory toURL:list
+                                              error:&error];
+    NSArray<PlaylistEntry *> *read = [PlaylistFile entriesForPlaylistAtURL:list];
+    NSString *text = [NSString stringWithContentsOfURL:list encoding:NSUTF8StringEncoding error:NULL];
+    BOOL listRead = written && read.count == 2 && [read[0].url.lastPathComponent isEqual:@"song.mp3"]
+            && !read[0].isWindowed && [read[1].url.lastPathComponent isEqual:@"mix.flac"]
+            && read[1].cueStart == 4500 && read[1].cueEnd == 9000 && [read[1].cueTitle isEqual:@"Two"]
+            && read[1].cueTrackNumber == 2 && [text containsString:@"#EXTINF:60,DJ - Two\n"];
+    [NSFileManager.defaultManager removeItemAtURL:directory error:NULL];
+    if (!sheetRead || !listRead) {
+        fprintf(stderr, "consumer: the sheet read %lu entries, and the M3U %lu (%s)\n",
+                (unsigned long)cueEntries.count, (unsigned long)read.count, error.localizedDescription.UTF8String);
+        return NO;
+    }
+    return YES;
+}
 
 // Runs main's loop until done says so, for at most ten seconds.
 // Thirty seconds of the analyzer tests' click track: a short decaying burst
@@ -524,7 +625,7 @@ int main(void) {
         fprintf(stderr, "consumer: the click track's tempo is %.2f\n", tempo);
         return 1;
     }
-    if (!ConsumerReadsTags()) {
+    if (!ConsumerReadsTags() || !QueueWalksItsSuccessors() || !PlaylistsRoundTrip()) {
         return 1;
     }
     printf("consumer OK\n");
