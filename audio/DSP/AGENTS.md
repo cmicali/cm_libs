@@ -22,8 +22,6 @@ Realtime signal stages a render can host, the math they share, and the resampler
 
 **The stepped fades are for a queue, not the audio thread.** `VibeFadeVolumeOverSteps` steps a log curve in `kFadeSteps` equal ratios over one declick, floored at −60 dB so the curve stays defined through silence. `audio/FX`'s send gates take it.
 
-**Three functions are a player's crossfade decisions**, kept beside the curves they choose: `VibeIncomingFadeMilliseconds`, `VibeGaplessArmAllowed`, and `VibeTrackEndCrossfadeMilliseconds`. Vibe's player is their one caller. They take the setting and the tracks' lengths as values, so they read no app's settings.
-
 ## The resampler
 
 **`AudioResampler.h` wraps r8brain-free-src in a plain C API**: linear phase, its 24-bit preset, and a 1% transition band, with no quality setting. A fill pulls float32 input through a callback until it has the frames it was asked for, or the callback answers none. That ends the fill with what it produced and leaves the filter primed for more. Vibe's voice bus converts every file whose rate is not the output's with it, on its decode queue. It is not realtime.
@@ -32,6 +30,6 @@ Realtime signal stages a render can host, the math they share, and the resampler
 
 ## Tests
 
-`Tests/audio/DSP/FadeMathTests.m` checks every curve's ends, its monotonic shape, the declick's step at every rate, constant power across a crossfade, and the player's three decisions. `Tests/audio/DSP/AudioResamplerTests.m` checks the resampler's length and gain. Vibe had no tests of it apart from its bus, so those are new here. `audio/Player`'s `ResamplerQualityTests` measures it through the voice bus at every rate pair the player meets. `Tests/audio/DSP/AudioVarispeedTests.m` drives the stage alone, with random schedules of pitch and slice size, mono, and the pitch moved from another thread. Run it under the thread sanitizer when the stage's threading changes.
+`Tests/audio/DSP/FadeMathTests.m` checks every curve's ends, its monotonic shape, the declick's step at every rate, and constant power across a crossfade. The player's crossfade decisions, which choose among these curves, are `audio/Player`'s `AudioPrefetchRules.h`. `Tests/audio/DSP/AudioResamplerTests.m` checks the resampler's length and gain. Vibe had no tests of it apart from its bus, so those are new here. `audio/Player`'s `ResamplerQualityTests` measures it through the voice bus at every rate pair the player meets. `Tests/audio/DSP/AudioVarispeedTests.m` drives the stage alone, with random schedules of pitch and slice size, mono, and the pitch moved from another thread. Run it under the thread sanitizer when the stage's threading changes.
 
 The tests that render the stage through a player are `audio/Player`'s: `testPitchQuality`, which holds the stage to −145 dB of distortion and false tones, flat to 20 kHz, and the edge and position tests in its render suite. Vibe's `pitch` benchmark group measures its cost beside Apple's Varispeed unit. Vibe's `docs/audio-quality.md` has the measurements of the stage and the resampler.

@@ -19,7 +19,7 @@ Everything between a decoded file and the speaker: the transport, the voice bus,
 | `AudioError` | the play path's error vocabulary: the domain, the URL key, the codes |
 | `PlaybackRequestCoordinator` | the in-flight open: identity, row, intent, slow-load state, and what the delegate must be told |
 | `PlaybackIntent.h` | the intent a request must land in |
-| `AudioPrefetchRules.h` | the prefetch request's lifecycle and its dispositions, as static inlines |
+| `AudioPrefetchRules.h` | the prefetch request's lifecycle and its dispositions, and the three crossfade decisions of a track change, as static inlines |
 | `PlaybackDeliveryRules.h` | settlement identity, as static inlines, beside three rules an app's shells share |
 | `AudioPlayer+Debug` | the seam: manual rendering, the pipeline's counters, and the holds the render suites use. It compiles in every configuration and wraps its body in `#if DEBUG` |
 | `VibeManualRenderPump` | the manual render pump, which stands in for the output unit (The manual render pump, below). Debug only, as the seam is |
@@ -125,7 +125,7 @@ Every interrupt is issued on the player queue before any newer voice on the file
 
 ## Crossfades, pauses and seeks
 
-**`VibeIncomingFadeMilliseconds` (`audio/DSP`'s `FadeMath.h`, tested there) is the one place that decides a play's fade length.** `crossfadeMilliseconds` defaults to the 10 ms declick minimum, which an app may show as off, up to `kVibeCrossfadeMaxMilliseconds`. It applies only when a play replaces an audibly playing track. First plays, the pause/seek/stop declicks and `play:atPosition:startPaused:` force the minimum. A track change is a true crossfade on one bus: the outgoing voice fades on its own ramp while the incoming one fades in beside it, and nothing is rewired.
+**`VibeIncomingFadeMilliseconds` (`AudioPrefetchRules.h`, tested) is the one place that decides a play's fade length.** `crossfadeMilliseconds` defaults to the 10 ms declick minimum, which an app may show as off, up to `kVibeCrossfadeMaxMilliseconds`. It applies only when a play replaces an audibly playing track. First plays, the pause/seek/stop declicks and `play:atPosition:startPaused:` force the minimum. A track change is a true crossfade on one bus: the outgoing voice fades on its own ramp while the incoming one fades in beside it, and nothing is rewired.
 
 **A track end crossfades from inside the player**, since an app's `play:` after it would find nothing audible. Each drain asks `maybeCrossfadeIntoParkOnQueue`. `VibeTrackEndCrossfadeMilliseconds` (tested) says when it is due: the setting held to half of each track and to what remains, one steady drain early. The park then starts as its own voice fading in while the current one fades out. `adoptTrack:…`, which the gapless promote ends in too, makes it current and tells the app through `didAutoAdvanceFromTrack:toTrack:`. Nothing parked (the queue's end, a pause at track end), an estimated window, buffering and bit-perfect output each leave the ordinary track end.
 

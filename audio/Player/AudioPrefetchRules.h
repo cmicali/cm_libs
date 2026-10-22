@@ -5,6 +5,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "FadeMath.h"
+
 typedef NS_ENUM(NSInteger, VibeAudioPrefetchRetirementPoint) {
     VibeAudioPrefetchAtPlaySubmission = 0,
     VibeAudioPrefetchAtPlaySettlement,
@@ -154,4 +156,47 @@ static inline BOOL VibeAudioPrefetchShouldRetire(
             return YES;
     }
     return YES;
+}
+
+#pragma mark - Track changes
+
+// The length both sides of a track change ride. The user's crossfade applies
+// only to a play replacing an audibly playing track, without `declick`.
+// `declick` marks a play that replaces a track with its own audio, such as a
+// converted copy. A crossfade would overlap that audio with itself. Everything
+// else takes the declick minimum, which is also the floor.
+static inline uint64_t VibeIncomingFadeMilliseconds(NSInteger crossfadeMilliseconds,
+                                                    BOOL replacingAudibleTrack,
+                                                    BOOL declick) {
+    if (!replacingAudibleTrack || declick) {
+        return kFadeDurationMilliseconds;
+    }
+    return (uint64_t)MAX(crossfadeMilliseconds, (NSInteger)kFadeDurationMilliseconds);
+}
+
+// Gapless arms only at the declick minimum, which an app presents as
+// crossfade off; a longer setting crossfades auto-advance instead
+// (VibeTrackEndCrossfadeMilliseconds) — except into the next window of the
+// same file (VibePlayableItemIsFollowedContiguouslyBy), one recording a
+// crossfade would overlap with itself.
+static inline BOOL VibeGaplessArmAllowed(NSInteger crossfadeMilliseconds, BOOL continuesTheRecording) {
+    return continuesTheRecording || crossfadeMilliseconds <= (NSInteger)kFadeDurationMilliseconds;
+}
+
+// The crossfade into the parked successor at a track's end: 0 while it is not
+// due, else its length. The setting is held to half of each track, so a short
+// one is still heard whichever side it is on (one fading in for longer than
+// it lasts never reached full gain), and to what remains, so the outgoing side lands on silence
+// before its file ends. Due `lateness` early, the most the drain that notices
+// can be late; the outgoing side then reaches silence that much before its
+// end. A fade no longer than the declick is no crossfade: the track ends.
+static inline uint64_t VibeTrackEndCrossfadeMilliseconds(NSInteger crossfadeMilliseconds, NSTimeInterval remaining,
+                                                         NSTimeInterval duration, NSTimeInterval nextDuration,
+                                                         NSTimeInterval lateness) {
+    double fade = MIN((double)crossfadeMilliseconds / 1000.0, MIN(duration, nextDuration) / 2);
+    if (remaining > fade + lateness) {
+        return 0;
+    }
+    uint64_t milliseconds = (uint64_t)llround(MAX(0, MIN(fade, remaining)) * 1000);
+    return milliseconds > kFadeDurationMilliseconds ? milliseconds : 0;
 }
