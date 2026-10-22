@@ -1,6 +1,6 @@
 //
 //  AudioVoiceBus.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioVoiceBusInternal.h"
@@ -63,7 +63,7 @@
     atomic_init(&_renderLeaveWaitNanos, 100 * NSEC_PER_MSEC);
     if (!inlineDecoding) {
         for (NSUInteger i = 0; i < kVoiceSlots; i++) {
-            _decodeQueues[i] = dispatch_queue_create("com.vibe.voicebus.decode",
+            _decodeQueues[i] = dispatch_queue_create("vibe-libs.player.voicebus-decode",
                     dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0));
         }
     }

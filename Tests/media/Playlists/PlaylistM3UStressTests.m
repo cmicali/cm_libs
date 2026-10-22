@@ -1,6 +1,6 @@
 //
 //  PlaylistM3UStressTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  Pathological M3U playlists must never crash, hang, or emit an entry the
 //  resolver cannot treat as a path.

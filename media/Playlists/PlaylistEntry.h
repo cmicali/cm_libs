@@ -1,10 +1,10 @@
 //
 //  PlaylistEntry.h
-//  Vibe
+//  vibe-libs
 //
 //  One entry of a playlist, as the readers return it and the writer takes it:
 //  a file whole, or a CUE sheet's window of one. A plain value, made once and
-//  never changed, so it crosses threads freely. The app makes its rows from
+//  never changed, so it crosses threads freely. An app makes its rows from
 //  entries.
 //
 

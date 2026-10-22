@@ -1,10 +1,10 @@
 //
 //  PlaybackRequestCoordinator.h
-//  Vibe
+//  vibe-libs
 //
 //  Request identity for one pending file open, contested by the play that
 //  started it, the open worker, the timeout, a prefetch that may deliver it, a
-//  re-drop that rebinds its row, and the transport. Owns the request's state
+//  second play of the file that rebinds its row, and the transport. Owns the request's state
 //  and what the delegate must be told. Foundation-only, so it is tested
 //  host-less. Player queue only.
 //

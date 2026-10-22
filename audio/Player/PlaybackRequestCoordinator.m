@@ -1,6 +1,6 @@
 //
 //  PlaybackRequestCoordinator.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlaybackRequestCoordinator.h"

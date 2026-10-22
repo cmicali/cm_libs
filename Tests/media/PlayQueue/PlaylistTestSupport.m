@@ -1,6 +1,6 @@
 //
 //  PlaylistTestSupport.m
-//  VibeTests
+//  vibe-libs
 //
 
 #import "PlaylistTestSupport.h"

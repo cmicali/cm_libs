@@ -1,6 +1,6 @@
 //
 //  PlaylistFile+CUE.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlaylistFile.h"
@@ -166,7 +166,7 @@ static NSArray<NSDictionary *> *CueTracksInText(NSString *text, NSMutableArray<N
             }
             BOOL isTitle = [keyword isEqualToString:@"TITLE"];
             if (!seenTrack) {
-                // The sheet's TITLE names the album, which Vibe shows for no file.
+                // The sheet's TITLE names the album. No entry carries it.
                 if (!isTitle) {
                     performer = value;
                 }

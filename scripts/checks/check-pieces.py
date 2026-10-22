@@ -36,9 +36,14 @@ For each piece:
     guard.
 Across the repo:
   - the map names only known pieces and has no cycle
+  - every target that reaches a first-party piece's template sets
+    excludedPlatform in its templateAttributes: Mac on iOS, iOS on macOS.
+    Without it, the template's exclude names nothing and both halves compile.
   - no two first-party headers share a basename
   - no shipping header has #if DEBUG
   - the other app's name appears nowhere
+  - no file outside third_party/ holds a merge conflict marker: a line that
+    starts with seven <, =, or > and ends there or goes on after a space
 Lists the classes with no prefix. Exits 1 and lists every failure.
 """
 import json
@@ -57,6 +62,9 @@ MAC_FRAMEWORKS = ("AppKit", "Cocoa")
 IOS_FRAMEWORKS = ("UIKit",)
 INCLUDE = re.compile(r'^\s*#\s*(?:import|include)\s+([<"])([^>"]+)[>"]')
 CONDITION = re.compile(r"^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b(.*)")
+# Git's three markers. Exactly seven, then a space or the line's end, so a
+# longer Markdown or RST underline of = is no marker.
+CONFLICT = re.compile(r"^(?:<{7}|={7}|>{7})(?: |$)", re.M)
 
 SUPPORT = os.path.join("Tests", "Support")   # the tests' shared helpers, in no piece
 THIRD_PARTY = "third_party"   # a vendored piece's template may also search this group directory
@@ -271,6 +279,22 @@ for target, v in sorted(targets.items()):
             fail(f"project.yml: {target} builds for iOS and {how}, but {piece} is macOS only")
 
 
+# Every target that builds a first-party piece names the platform it leaves
+# out. Without it, ${excludedPlatform} names nothing and both halves compile.
+EXCLUDED = {"iOS": "Mac", "macOS": "iOS"}
+halved = {template_name(p) for p in pieces if first_party(p)}   # vendored pieces have no halves
+for target, v in sorted(targets.items()):
+    wants = EXCLUDED.get(v.get("platform"))
+    if wants is None:
+        continue
+    listed = [n for n in v.get("templates", []) if halved & set(reached_by([n]))]
+    excluded = (v.get("templateAttributes") or {}).get("excludedPlatform")
+    if listed and excluded != wants:
+        sets = f"sets excludedPlatform: {excluded}" if excluded else "sets no excludedPlatform"
+        fail(f"project.yml: {target} builds for {v.get('platform')} with {listed[0]}, but {sets}; "
+             f"its templateAttributes need excludedPlatform: {wants}")
+
+
 # Headers, and the basename index an app's headermap would build.
 headers_by_base = {}
 for piece in pieces:
@@ -443,6 +467,10 @@ for path in walk("."):
     # "Probe" is a word, not the name: VibeProbeCallKey is a test's helper.
     if re.search(r"vibe[ ._-]?pro(?!be)", text, re.I):
         fail(f"{path}: names the other app")
+    # Vendored code and its docs are other authors', so third_party/ is left out.
+    if not path.startswith(THIRD_PARTY + os.sep):
+        for m in CONFLICT.finditer(text):
+            fail(f"{path}:{text.count(chr(10), 0, m.start()) + 1}: a merge conflict marker")
 
 unprefixed = sorted({m for piece in pieces if first_party(piece) for f in walk(piece) if f.endswith(HEADER)
                      for m in re.findall(r"^@(?:interface|protocol)\s+([A-Za-z_]\w*)\b(?!\s*\()",

@@ -656,7 +656,7 @@ static int VibeCompareExcerptStarts(const void *a, const void *b) {
 }
 
 - (void)audioPlayer:(AudioPlayer *)p didPausePlaying:(VibeTestTrack *)t { [self record:@"pause" track:t]; }
-// What the iOS shell's session reads at this edge: the answer now, not the edge's.
+// What an iOS app's session reads at this edge: the answer now, not the edge's.
 - (void)audioPlayerOutputDidBecomeIdle:(AudioPlayer *)p {
     [_events addObject:@{@"event": @"idle", @"outputIdle": @(p.outputIdle)}];
 }

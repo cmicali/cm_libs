@@ -1,13 +1,12 @@
 //
 // Playlist.h
-// Vibe
+// vibe-libs
 //
 // The ordered list of the caller's entries and its current-index cursor, free
 // of any view dependency. An entry is an opaque object. The list keeps it,
 // hands the same object back, and never copies or compares it by content.
-// THERE IS EXACTLY ONE OBSERVER SLOT, deliberately: a second consumer gets
-// whatever the first fans out to (PlaylistController on macOS,
-// PlaybackController on iOS).
+// THERE IS EXACTLY ONE OBSERVER SLOT, deliberately. A second consumer gets
+// whatever the first observer fans out to.
 //
 
 #import <Foundation/Foundation.h>
@@ -69,13 +68,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak, nullable) id<PlaylistObserver> observer;
 
 // Setting it fires currentIndexDidChangeFromIndex: even when the index is
-// unchanged, so a double-click on the already-playing row still re-renders it.
+// unchanged. So a pick of the row already playing still re-renders it.
 // Under shuffle it is a manual pick: the row is spliced in as the next entry
 // of the play order, so nothing else repeats.
 @property (nonatomic) NSUInteger currentIndex;
 
-// The transport modes. Each shell pushes its setting in; the model reads no
-// setting. Neither sends an event: they change what next and the track end
+// The transport modes. The caller pushes each one in. The model reads no
+// setting. Neither sends an event. They change what next and the track end
 // mean, never the rows or the current one.
 @property (nonatomic) VibeRepeatMode repeatMode;
 
@@ -116,8 +115,8 @@ NS_ASSUME_NONNULL_BEGIN
 // The first forward survivor of a current-row removal — the next row, or
 // under shuffle the next unplayed entry — which is where the removal lands.
 // nil for a noncurrent edit, an invalid set, or when the landing is
-// backward/empty; it never wraps. The shell uses this to decide whether the
-// ordered playing intent may continue.
+// backward/empty; it never wraps. A caller uses it to decide whether its play
+// may continue in order.
 - (nullable ObjectType)forwardTrackAfterRemovingTracksAtIndexes:(NSIndexSet *)indexes;
 
 // Replaces the whole list, landing on index: NSNotFound is the model's
@@ -147,7 +146,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable ObjectType)nextTrack;
 
 // The next track, the row two slots ahead in this cycle, and the previous
-// one. Missing entries are omitted. The metadata scan ranks these first.
+// one. Missing entries are omitted. A background scan may rank these first.
 - (NSArray<ObjectType> *)neighborhoodTracks;
 
 // What follows a track that plays out, or nil to park: nil under
@@ -186,8 +185,8 @@ NS_ASSUME_NONNULL_BEGIN
 // whose source key matches. That is what an analyzed BPM or key delivery is
 // valid for. The first match alone would strand a duplicate row that happens
 // to be the one playing. Every row of the file would stamp one cue row's
-// tempo on the rest. Answers whether the current track was among them, which
-// is when a shell redraws or refeeds.
+// tempo on the rest. Answers whether the current track was among them. The
+// caller then redraws or refeeds it.
 - (BOOL)stampTracksSounding:(nullable ObjectType)track usingBlock:(void (NS_NOESCAPE ^)(ObjectType track))stamp;
 
 // Puts replacement in the row at index. The caller makes it, and it must be
@@ -199,7 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Replaces every row still holding track's file, even if the captured row
 // left during conversion. `replacement` makes each row's fresh entry from the
 // outgoing one, since each row may be a different cue window. Returns the
-// replaced rows; transport is the shell's.
+// replaced rows. Transport is the caller's.
 - (NSIndexSet *)replaceTracksMatchingTrack:(ObjectType)track
                                 usingBlock:(ObjectType (NS_NOESCAPE ^)(ObjectType outgoing))replacement;
 
@@ -211,13 +210,13 @@ NS_ASSUME_NONNULL_BEGIN
 // forwardTrackAfterRemovingTracksAtIndexes:'s answer, else the new last row
 // (under shuffle, the last entry played); emptying the list resets it to 0.
 //
-// The CALLING SHELL owns the audio transition: this stops, starts and parks
-// nothing, so removing the current row through it alone leaves the player
-// sounding a track the playlist no longer contains (MainPlayerController's
-// removal funnel is the coordinated version).
+// The CALLER owns the audio transition. This stops, starts and parks nothing.
+// So removing the current row through it alone leaves the player sounding a
+// track the playlist no longer contains. The caller's removal also unloads,
+// re-prefetches, and plays the replacement.
 - (nullable NSArray<ObjectType> *)removeTracksAtIndexes:(NSIndexSet *)indexes;
 
-// The removal's inverse, for the shell's undo: puts the exact objects back at
+// The removal's inverse, for the caller's undo: puts the exact objects back at
 // indexes, each clamped to the end so a restore after later edits still
 // lands. Refused, changing nothing, when tracks is empty or its count differs
 // from the index set's.
@@ -227,11 +226,11 @@ NS_ASSUME_NONNULL_BEGIN
 // restoring a removed current row does not replay it.
 - (void)insertTracks:(NSArray<ObjectType> *)tracks atIndexes:(NSIndexSet *)indexes;
 
-// Moves the rows at sourceIndexes so they occupy destinationIndexes —
-// ascending to ascending, insertObjects:atIndexes: semantics, so both sets are
-// FINAL row positions, never AppKit insertion slots (PlaylistDragRules.h
-// converts those). Sets on both sides make it its own inverse: the undo hands
-// them back swapped. The cursor follows the current track.
+// Moves the rows at sourceIndexes so they occupy destinationIndexes, ascending
+// to ascending, with insertObjects:atIndexes: semantics. So both sets are
+// FINAL row positions, never a table's insertion slots. The caller converts
+// those. Sets on both sides make it its own inverse: the undo hands them back
+// swapped. The cursor follows the current track.
 //
 // Returns NO, changing nothing and sending no event, for empty or
 // unequal-count sets, an out-of-range member, or identical sets.

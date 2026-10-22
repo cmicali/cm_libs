@@ -1,6 +1,6 @@
 //
 //  ResamplerQualityTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The voice bus's resampler, r8brain-free-src, measured through the production
 //  bus (inline decoding, the tests calling the render), at every rate pair the
@@ -32,8 +32,7 @@
 //  whose own floor on the ideal signals is checked once, below every bound.
 //
 //  Every run attaches the measured table to the result bundle ("resampler
-//  quality", markdown); docs/audio-quality.md carries the comparison with
-//  Apple's converter.
+//  quality", markdown).
 //
 
 #import <XCTest/XCTest.h>

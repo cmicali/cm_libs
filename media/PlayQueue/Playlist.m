@@ -1,6 +1,6 @@
 //
 // Playlist.m
-// Vibe
+// vibe-libs
 //
 
 #import "Playlist.h"
@@ -9,13 +9,14 @@
     NSURL * _Nullable (^_urlKey)(id entry);
     NSString * _Nullable (^_sourceKey)(id entry);
     NSMutableArray *_tracks;
-    // Keeps getIndexForTrack: O(1): the metadata sweep resolves a row per
-    // track, and a scan would make the sweep O(n²). Every mutator patches
+    // Keeps getIndexForTrack: O(1). A caller's sweep over its rows resolves a
+    // row per track, and a scan would make the sweep O(n²). Every mutator patches
     // both indexes over the rows whose positions change. Keyed by pointer,
     // never the entry's own isEqual:, so two entries for one file stay two.
     NSMapTable<id, NSNumber *> *_trackIndexes;
-    // The same, keyed by URL, for the BPM and key deliveries on every track
-    // start. A file can occupy several rows, so the value is a row set.
+    // The same, keyed by URL, for the deliveries a caller stamps by file, such
+    // as an analyzed tempo or key. A file can occupy several rows, so the value
+    // is a row set.
     NSMutableDictionary<NSURL *, NSMutableIndexSet *> *_indexesByURL;
     // Under shuffle, every row object exactly once, in play order: entries
     // before the cursor are played, the cursor entry is the current row, and
@@ -457,8 +458,8 @@
     if (!url) {
         return [NSIndexSet indexSet];
     }
-    // A copy, not the live set: callers enumerate the result while replacing
-    // the very rows it names (the convert swap does exactly that).
+    // A copy, not the live set. Callers enumerate the result while replacing
+    // the very rows it names, as a replacement of every row of a file does.
     return [_indexesByURL[url] copy] ?: [NSIndexSet indexSet];
 }
 

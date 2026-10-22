@@ -1,6 +1,6 @@
 //
 //  AudioMasterBus.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioMasterBusInternal.h"
@@ -45,7 +45,7 @@ static OSStatus VibeMasterBusSource(void *context, const AudioTimeStamp *stamp, 
     return VibeVoiceBusRender(context, &silence, stamp, frames, into);
 }
 
-// After the meter, so the equalizer shows the signal whatever the volume. A
+// After the meter, so a level display shows the signal whatever the volume. A
 // change ramps linearly across one slice, so a drag cannot zipper. Settled at
 // 0 it writes zeros rather than a product, which a NaN would survive.
 static void VibeMasterBusApplyVolume(VibeMasterBus *master, AudioBufferList *list, uint32_t channels,

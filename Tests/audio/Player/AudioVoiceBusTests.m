@@ -1,6 +1,6 @@
 //
 //  AudioVoiceBusTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The voice bus with no pipeline: the tests own the output buffers and call
 //  VibeVoiceBusRender themselves, so every frame is compared against the file

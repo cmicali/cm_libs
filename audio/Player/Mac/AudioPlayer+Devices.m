@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+Devices.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioPlayer+Devices.h"
@@ -209,7 +209,7 @@ static const NSTimeInterval kSlowDeviceRebindLogThresholdSeconds = 0.25;
 // device UID — a class-compliant interface on another USB port — reads the
 // modes remembered under the old UID, so the device comes back as the user
 // left it. Only a model match earns that (see selectOutputDeviceOnQueue:).
-// The shell persists the carry on main.
+// The app persists the carry on main.
 - (BOOL)selectSavedOutputDeviceOnQueue:(AudioDevice *)device
                               savedUID:(NSString *)savedUID
                          savedModelUID:(NSString *)savedModelUID {
@@ -296,8 +296,8 @@ static const NSTimeInterval kSlowDeviceRebindLogThresholdSeconds = 0.25;
     return _outputUnit.deviceID;
 }
 
-// Without a unit — the debug pump — there is nothing to bind, and a selection
-// keeps its menu and persistence behaviour. Refused at once only for a device
+// Without a unit — the debug pump — there is nothing to bind. A selection
+// still announces its choice for the app to show and persist. Refused at once only for a device
 // the snapshot knows is gone, never on a HAL read; any other refusal lands on
 // the unit's queue and fails the next start.
 - (BOOL)setOutputUnitDevice:(AudioDeviceID)deviceID {
@@ -318,7 +318,7 @@ static const NSTimeInterval kSlowDeviceRebindLogThresholdSeconds = 0.25;
 // nothing (measured). Another process can move the bound device's rate, so it
 // is watched in every mode, and a rate other than the pipeline's rebinds in
 // place, following it. A prepared bit-perfect device's own listener puts the
-// mode's format back instead; Vibe's own writes arrive with the pipeline
+// mode's format back instead; the player's own writes arrive with the pipeline
 // already at the rate, a no-op. Its hog owner rides the same listener. Both
 // are read off the player queue.
 - (void)watchBoundDeviceOnQueue:(AudioDeviceID)deviceID {
@@ -513,8 +513,9 @@ static const NSTimeInterval kSlowDeviceRebindLogThresholdSeconds = 0.25;
             [self stopOutputOnQueue];
             [self leaveOutputDeviceOnQueue];
         }
-        // Reset may have cleared Settings before this failed bind. Reannounce
-        // the retained choice, unless a saved launch preference still owns it.
+        // A reset may have cleared the app's shown choice before this failed
+        // bind. Reannounce the retained choice, unless a saved launch
+        // preference still owns it.
         if (_pendingSavedDeviceUID.length || _pendingSavedDeviceName.length) {
             [self publishBitPerfectReportOnQueue];
         }
@@ -728,11 +729,11 @@ static const NSTimeInterval kSlowDeviceRebindLogThresholdSeconds = 0.25;
 }
 
 // The single announcement of the committed choice, sent on EVERY settled
-// mutation, not only when the id moved. The delegate persists it and drives
-// the menu checkmark, idempotently. Skipping the unchanged case would leave a
-// disagreement between Settings and the binding — a failed bind, a launch
-// preference resolved to the id already requested — with no call left to
-// resynchronize them. The delegate hop is to main.
+// mutation, not only when the id moved. The delegate persists it and shows
+// it, idempotently. Skipping the unchanged case would leave the app's shown
+// choice and the binding disagreeing, with no call left to resynchronize
+// them. A failed bind does that, and so does a launch preference resolved to
+// the id already requested. The delegate hop is to main.
 - (void)notifyRequestedOutputDeviceOnQueue {
     NSInteger requested = self.currentlyRequestedAudioDeviceId;
     // Here, not in the rebuild: the report's eligibility follows the

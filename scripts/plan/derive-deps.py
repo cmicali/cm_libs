@@ -63,7 +63,6 @@ PIECES = [
     ("media/Tags", "Vibe/Util/Categories/NSString+CPPStrings"),
     ("media/Metadata", "Vibe/Audio/Metadata/"),
     # waveform
-    ("waveform/Waveform", "Vibe/Audio/Waveform/AudioWaveform."),
     ("waveform/WaveformLoading", "Vibe/Audio/Waveform/"),
     ("waveform/WaveformView", "Vibe/WaveformUI/"),
     # ui, system, media

@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Declaration-only, which keeps the shipping headers free of #if DEBUG.
 //  AudioPlayer's half is implemented in AudioPlayer+Debug.m. AudioVoiceBus's
@@ -44,14 +44,14 @@ NS_ASSUME_NONNULL_BEGIN
 // state. NO when it could not.
 - (BOOL)debugSetOutputRate:(double)rate;
 
-// For dump_audio_loading's comparison against the coordinator's and the
-// metadata cache's copies; nothing in the app reads it back.
+// For a debug report's comparison against the file loader's and a metadata
+// cache's copies. Nothing else reads it back.
 - (AudioLoadingConfiguration *)loadingConfiguration;
 
-// For dump_state; nothing in the app asks.
+// For a debug report. Nothing else asks.
 - (NSUInteger)numChannels;
 
-// The buffering holds since launch, for dump_state: holds begun, releases
+// The buffering holds since launch, for a debug report: holds begun, releases
 // (each a resume), stalls (Connection lost), and heldSeconds, the current
 // hold's age while buffering, else the last hold's length.
 - (NSDictionary<NSString *, NSNumber *> *)debugBufferingRecord;
@@ -61,17 +61,17 @@ NS_ASSUME_NONNULL_BEGIN
 // Written once, before any voice; read lock-free.
 - (BOOL)manualRenderingActive;
 
-// Pipeline counters for dump_health, check_consistency and the render tests.
-// `retiredFades` (the name the stress tooling reads) counts retiring voices:
-// its unbounded growth across a soak is the leak this exists to catch.
+// Pipeline counters for a debug report, a consistency check, and the render
+// tests. `retiredFades` counts retiring voices, under the name stress tooling
+// reads. Its unbounded growth across a soak is the leak this exists to catch.
 // `unitRenders` stays flat while no effect is engaged, `decodeTurns` while
 // every voice is paused at its end, `varispeedRenders` and
 // `varispeedHistoryWrites` at zero pitch settled. The output unit's
 // `renderCycles`, `renderMeanMicros`, `renderMaxMicros` and `outputDropouts`
 // are cumulative.
 //
-// Reads with dispatch_sync on the player queue, so never call it from there;
-// that makes it the main-thread channel's liveness probe for the queue.
+// Reads with dispatch_sync on the player queue, so never call it from there.
+// A debug channel on main can therefore use it as the queue's liveness probe.
 - (NSDictionary<NSString *, NSNumber *> *)debugRenderCounts;
 
 // Zeroes the cumulative counters and the render refusals, so a measurement
