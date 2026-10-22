@@ -126,7 +126,7 @@ static inline VibeAudioPrefetchDisposition VibeAudioPrefetchDispositionForState(
     if (!requestedKey) {
         return VibeAudioPrefetchDispositionClear;
     }
-    if ([requestedKey isEqualToString:prefetchedKey]) {
+    if (prefetchedKey && [requestedKey isEqualToString:prefetchedKey]) {
         if (prefetchedFileReady) {
             return VibeAudioPrefetchDispositionReuseParked;
         }
@@ -134,7 +134,7 @@ static inline VibeAudioPrefetchDisposition VibeAudioPrefetchDispositionForState(
             return VibeAudioPrefetchDispositionJoinPrefetchClaim;
         }
     }
-    if ([requestedKey isEqualToString:pendingPlaybackKey]) {
+    if (pendingPlaybackKey && [requestedKey isEqualToString:pendingPlaybackKey]) {
         return VibeAudioPrefetchDispositionJoinPlaybackClaim;
     }
     if (pendingPlaybackKey) {
