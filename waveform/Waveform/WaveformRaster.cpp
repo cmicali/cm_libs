@@ -1,6 +1,6 @@
 //
 //  WaveformRaster.cpp
-//  WaveformCore
+//  vibe-libs
 //
 
 #include "WaveformRaster.hpp"

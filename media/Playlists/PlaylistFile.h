@@ -1,6 +1,6 @@
 //
 //  PlaylistFile.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Foundation/Foundation.h>
@@ -11,8 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Readers for playlist-like files — CUE sheets and M3U playlists — and the M3U
 // writer, all in PlaylistEntry records. A CUE sheet reads as entries, each a
-// window of its FILE; an M3U reads as file references, its #EXTINF metadata
-// ignored, except that a cue entry Vibe wrote comes back as that entry.
+// window of its FILE. An M3U reads as file references, and its #EXTINF
+// metadata is ignored. A cue entry this writer wrote comes back as that entry.
 @interface PlaylistFile : NSObject
 
 // YES for a (lowercased) path extension this class expands: cue, m3u, m3u8.
@@ -48,11 +48,12 @@ NS_ASSUME_NONNULL_BEGIN
 // ask for sandbox access and call again.
 + (NSArray<PlaylistEntry *> *)entriesForPlaylistAtURL:(NSURL *)url;
 
-// The entries of M3U data this app wrote itself — m3uTextForEntries: with a
+// The entries of M3U data this writer wrote — m3uTextForEntries: with a
 // nil directory, so every entry is absolute — in order, with no resolution
 // rungs and no reads: nothing is stat'd, not even a cue entry's sheet, and a
-// relative entry is skipped. The reader for the container mirror, which runs
-// on main at launch; a user's playlist file goes through entriesForPlaylistAtURL:.
+// relative entry is skipped. It suits an app's own saved list, which may be
+// read on main at launch. A user's playlist file goes through
+// entriesForPlaylistAtURL:.
 + (NSArray<PlaylistEntry *> *)entriesInM3UData:(nullable NSData *)data;
 
 #pragma mark - Writing
@@ -70,7 +71,7 @@ NS_ASSUME_NONNULL_BEGIN
             relativeToDirectory:(nullable NSURL *)directory;
 
 // That text written atomically as UTF-8 without a BOM: the one spelling of
-// the file's encoding, for every playlist this app writes.
+// the file's encoding, for every playlist this class writes.
 + (BOOL)writeM3UForEntries:(NSArray<PlaylistEntry *> *)entries
        relativeToDirectory:(nullable NSURL *)directory
                      toURL:(NSURL *)url

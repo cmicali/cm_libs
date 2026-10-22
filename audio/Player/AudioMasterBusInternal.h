@@ -1,6 +1,6 @@
 //
 //  AudioMasterBusInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The master bus's layout. The render (AudioMasterBus.m) and the player
 //  queue's side of it (AudioPlayer+Pipeline.m) both read it.
@@ -45,9 +45,9 @@ struct VibeMasterBus {
     float volumeApplied;
     _Atomic(VibeVoiceMix *) mix;     // the bus; NULL until the first settlement
     _Atomic(VibeFXChain *) chain;    // the FX segment while it is connected; NULL otherwise
-    _Atomic(VibeLevelMeter *) meter; // the equalizer's, while wanted
+    _Atomic(VibeLevelMeter *) meter; // the level meter, while wanted
     _Atomic double hostTicksPerFrame;
-    _Atomic uint32_t channels;       // the output's, 1 or 2: what a slice carries; every output unit the app makes is stereo
+    _Atomic uint32_t channels;       // the output's, 1 or 2: what a slice carries; every output unit the player makes is stereo
     // The varispeed: hosted for ordinary playback on macOS, a bit-perfect
     // pass-through at zero pitch (AudioVarispeed.h).
     _Atomic(VibeVarispeed *) varispeed; // NULL without one

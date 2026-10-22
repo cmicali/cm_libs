@@ -1,10 +1,10 @@
 //
 //  TagLibAudioFile.h
-//  Vibe
+//  vibe-libs
 //
-//  The TagLib side of the metadata parse: the file factory, the ranged stream,
-//  the format name and the embedded art's bytes. C++, so only .mm files
-//  import it.
+//  TagLib's side of a tag read: the file factory, the ranged stream, the
+//  format name and the embedded art's bytes. C++, so only .mm files import
+//  it.
 //
 
 #import <Foundation/Foundation.h>
@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // A blocking read of `length` bytes at `offset` of the file at url, nil with
 // an error on failure. The caller supplies it for a file that is not on disk.
-// In Vibe that is a remote placeholder, read through its backend.
+// One example is a remote placeholder, whose bytes sit on a server.
 typedef NSData *_Nullable (^VibeTagByteRangeRead)(NSURL *url, uint64_t offset, uint64_t length,
                                                   NSError *__autoreleasing _Nullable *_Nullable error);
 

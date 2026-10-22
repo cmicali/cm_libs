@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+Diagnostics.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioPlayer+Diagnostics.h"

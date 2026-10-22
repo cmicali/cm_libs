@@ -183,7 +183,8 @@ targetTemplates:
   # format names and Common for the log macros. Its one source is
   # Objective-C++, which Xcode builds with -fno-cxx-modules, so its import of
   # Foundation links nothing on its own. It passes a linker flag, as Analysis
-  # does for Accelerate.
+  # does for Accelerate. It brings TagLib, whose sources are C++17, so an app
+  # builds C++ as C++17 or later.
   #
   # TRAP: an app that also takes VibeLibsVorbis or VibeLibsDecode lists this
   # template after them, as it would VibeLibsTaglib. taglib/ogg holds TagLib's
@@ -314,7 +315,8 @@ targetTemplates:
   # third_party/ itself.
 
   # A subset of TagLib 2.3.2. Its files include each other by name, so every
-  # directory that holds its headers is searched.
+  # directory that holds its headers is searched. Its sources are C++17, so an
+  # app builds C++ as C++17 or later.
   #
   # TRAP: an app that also takes VibeLibsVorbis lists it before this template
   # and before VibeLibsTags. taglib/ogg holds TagLib's own

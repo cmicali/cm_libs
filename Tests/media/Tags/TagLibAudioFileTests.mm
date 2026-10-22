@@ -1,6 +1,6 @@
 //
 //  TagLibAudioFileTests.mm
-//  VibeAudioTests
+//  vibe-libs
 //
 //  TagLibAudioFile's detection over the real TagLib: the extension's parser
 //  first, then the content sniff, and FLAC in Ogg refused. The tests write

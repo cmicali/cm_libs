@@ -1,13 +1,12 @@
 //
 //  AudioPlayer.h
-//  Vibe
+//  vibe-libs
 //
-//  The playback engine's public surface, shared by both shells: a transport
-//  over its own voice bus and render pipeline. State changes run on the player
-//  queue without waiting for fades. Delegate events are delivered on main.
-//  The platform halves are
-//  Mac/Devices/AudioPlayer+Devices.h, Mac/Devices/AudioPlayer+BitPerfect.h, and
-//  iOS/AudioPlayer+Recovery.h.
+//  The playback engine's public surface, shared by both platforms: a
+//  transport over its own voice bus and render pipeline. State changes run on
+//  the player queue without waiting for fades. Delegate events are delivered
+//  on main. The platform halves are Mac/AudioPlayer+Devices.h,
+//  Mac/AudioPlayer+BitPerfect.h, and iOS/AudioPlayer+Recovery.h.
 //
 
 #import <Foundation/Foundation.h>
@@ -54,9 +53,9 @@ NS_ASSUME_NONNULL_BEGIN
 // 1, the default, leaves every sample untouched; 0 is silence.
 @property (atomic) float volume;
 
-// Whether the meter publishes band levels; the shells enable it only for
-// counted indicator demand, modeled output audio and material visibility.
-// Main thread only.
+// Whether the meter publishes band levels. An app enables it only while a
+// visible indicator wants levels and the output is sounding. Main thread
+// only.
 @property (nonatomic) BOOL levelsEnabled;
 
 // The newest coherent band-level snapshot, 0..1. NO, `out` untouched, when no
@@ -119,9 +118,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)getPlaybackIntent:(VibePendingPlaybackIntent *)intent forTrack:(nullable id<VibePlayableItem>)track;
 
 // Starts a track at position (track seconds — into its window, which is its
-// whole file but for a cue row — clamped), optionally parked. For
-// Convert to FLAC's same-audio swap and a replacement that must land parked;
-// always declicks, never crossfades. Otherwise an ordinary play:.
+// whole file but for a cue row — clamped), optionally parked. It is for a
+// swap to the same audio in another file, such as a converted copy, and for a
+// replacement that must land parked. It always declicks and never
+// crossfades. Otherwise it is an ordinary play:.
 - (void)play:(id<VibePlayableItem>)track atPosition:(NSTimeInterval)position startPaused:(BOOL)startPaused;
 
 // Track seconds, clamped, playing or paused. didFinishSeeking: settles every
@@ -182,7 +182,8 @@ NS_ASSUME_NONNULL_BEGIN
 // file's bytes: a download or a network share's read-ahead that fell behind.
 // Never on a file read directly.
 @property (readonly, getter=isBuffering) BOOL buffering;
-// The shells show Buffering…: a hold has lasted kWaitIndicatorDelaySeconds.
+// An app shows its buffering notice now. A hold has lasted
+// kWaitIndicatorDelaySeconds.
 // A seek during it keeps it up until the new voice plays.
 @property (readonly) BOOL bufferingNoticeShown;
 
@@ -236,14 +237,14 @@ openRequestIdentifier:(uint64_t)openRequestIdentifier;
 
 @optional
 // macOS only, main thread, sent on EVERY settled device mutation, the id
-// moved or not: the shell persists the choice and drives the menu. A fallback
-// to System Output (-1) the user did NOT choose — the bound device vanished or
-// failed — carries that device's UID and name, so the shell keeps the saved
-// preference and the device is re-adopted when it returns; an explicit System
-// Output selection carries nil for both and clears it. carriedModesUID names
-// the device whose remembered modes an automatic model-match bind read (the
-// same interface on another USB port), for the shell to persist that carry;
-// nil for every other bind.
+// moved or not. The app persists the choice and updates its device list. A
+// fallback to System Output (-1) the user did NOT choose carries the UID and
+// name of the device that vanished or failed. So the app keeps the saved
+// preference, and the device is re-adopted when it returns. An explicit
+// System Output selection carries nil for both and clears it. carriedModesUID
+// names the device whose remembered modes an automatic model-match bind read
+// (the same interface on another USB port). The app persists that carry. It
+// is nil for every other bind.
 - (void)audioPlayer:(AudioPlayer *)audioPlayer
     didChangeOutputDevice:(NSInteger)newDeviceID
    involuntaryFallbackUID:(nullable NSString *)fallbackUID
@@ -252,7 +253,7 @@ openRequestIdentifier:(uint64_t)openRequestIdentifier;
 
 // macOS device settings, read on main at submission and on the player queue
 // before a bind or mode edit. The provider must support both threads.
-// No UI work: the UID can differ from the shell's last settled preference.
+// No UI work. The UID can differ from the app's last settled preference.
 // Without this provider the explicit setter arguments remain authoritative.
 - (void)audioPlayer:(AudioPlayer *)audioPlayer
     outputModesForDeviceUID:(nullable NSString *)deviceUID

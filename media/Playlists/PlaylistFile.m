@@ -1,6 +1,6 @@
 //
 //  PlaylistFile.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlaylistFile.h"
@@ -447,8 +447,9 @@ static NSString *M3UInfoName(PlaylistEntry *entry) {
     for (PlaylistEntry *entry in entries) {
         NSTimeInterval duration = entry.duration;
         [text appendFormat:@"#EXTINF:%lld,%@\n", duration > 0 ? llround(duration) : -1LL, M3UInfoName(entry)];
-        // A cue entry: VLC's window for players that honor it, then Vibe's own
-        // line, which restores the entry exactly and reads nothing to do it.
+        // A cue entry: VLC's window for players that honor it, then the
+        // #VIBE-CUE line. That line restores the entry exactly and reads
+        // nothing to do it.
         if (entry.isWindowed || entry.cueSheetURL) {
             if (entry.cueStart > 0) {
                 [text appendFormat:@"#EXTVLCOPT:start-time=%.3f\n", (double)entry.cueStart / kVibeCDFramesPerSecond];

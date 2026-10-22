@@ -385,8 +385,10 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 - no two first-party headers share a basename, since an app's headermap would pick one
 - every header is compiled by a source or test of its piece. A header-only piece imports its headers from a plain probe file in its tests, which its iOS target compiles too.
 - `Mac/` and `iOS/` are the only platform directories, and only at the top of a piece, where the template's exclude reaches them. A shared file imports AppKit or UIKit only under a platform guard. A half never imports the other platform's framework.
+- every target that builds a first-party piece, directly or through another template, sets `excludedPlatform` in its `templateAttributes`: `Mac` on iOS, `iOS` on macOS. Without it, the template's exclude names nothing, and both halves compile.
 - no `#if DEBUG` in a shipping header
 - the other app's name appears nowhere
+- no file outside `third_party/` holds a merge conflict marker. A marker is seven `<`, `=`, or `>` at a line's start, then a space or the line's end. A longer underline of `=` is not one.
 - and it lists the classes with no prefix
 
 **The checker has tests of its own.** `scripts/checks/check-pieces-test.py` copies the repo, breaks one rule per case, and fails unless the checker fails with that rule's message. Each new rule gets a case. Two cases are the ones a review reproduced against the first checker: an angled include of another piece from `core/Common`, and a map edge from `core/Common` back to a piece that uses it.
@@ -400,6 +402,8 @@ CI runs `make check-pieces`, `make test`, `make build-ios`, `make consumer`, and
 **Correct the boundaries, prove the smallest extraction, move the first path, let the other app build on it, then grow from actual reuse.** Each move is a pull request here, plus one in Vibe that bumps the submodule and deletes what moved. Each piece's `AGENTS.md` moves with it.
 
 **Every change across the repos lands in one order:** the commit here first, then the consumer's pin, then the consumer's gates. The old pin is the rollback. Each move reports the code it removed from Vibe apart from the code it added across both repos, since a relocation is not a net reduction. A plan sentence in a move's pull request names only this repo's pull request, because naming Vibe's forces a re-pin after Vibe's pull request exists. A mover adds no remote to a vibe-libs worktree, since that writes the shared repository config, and fetches from a path instead.
+
+**A piece's tests are written against its own types and fixtures before the move.** A test that holds an app's model or reads an app's fixtures cannot build here. So a prep commit in Vibe rewrites it first, under Vibe's gates, and the move then carries it unchanged. The PlayQueue and Playlists move needed two: the queue's tests moved onto a row of their own, and the readers' tests onto entries. A test of the app's own type stays in the app.
 
 ### Phase 0: setup and experiments
 

@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+State.m
-//  Vibe
+//  vibe-libs
 //
 //  Every getter copies scalars under _stateLock and computes off it; the
 //  position adds the voice's snapshot, never a player-queue wait.

@@ -1,6 +1,6 @@
 //
 //  WaveformSummary.cpp
-//  WaveformCore
+//  vibe-libs
 //
 
 #include "WaveformSummary.hpp"

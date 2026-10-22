@@ -1,6 +1,6 @@
 //
 //  AudioOutputUnit.h
-//  Vibe
+//  vibe-libs
 //
 //  One hosted output unit whose render callback pulls the player's render
 //  proc into the hardware's buffers. macOS: a HALOutput unit bound to one
