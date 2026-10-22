@@ -17,7 +17,7 @@
     AudioDeviceManager *devices = [[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[device]; } retryScheduler:nil];
     (void)devices.outputDevices;
     __block NSUInteger binds = 0;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(systemDefaultOutputDeviceID)),
@@ -56,7 +56,7 @@
     AudioDeviceManager *devices = [[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[device]; } retryScheduler:nil];
     (void)devices.outputDevices;
     NSMutableArray *announcements = [NSMutableArray array];
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(systemDefaultOutputDeviceID)),
@@ -105,7 +105,7 @@
     AudioDevice *device = [[AudioDevice alloc] initWithName:@"Saved DAC" uid:@"port-b" modelUID:@"model" deviceId:2 isSystemDefault:NO transportType:kAudioDeviceTransportTypeVirtual];
     AudioDeviceManager *devices = [[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[device]; } retryScheduler:nil];
     (void)devices.outputDevices;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method method=class_getClassMethod(AudioDeviceManager.class,@selector(sharedInstance));
     IMP replacement=imp_implementationWithBlock(^AudioDeviceManager *(id cls) { return devices; });
     IMP original=method_setImplementation(method,replacement);
@@ -153,7 +153,7 @@
     __block NSArray *snapshot = @[];
     AudioDeviceManager *devices=[[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return snapshot; } retryScheduler:nil];
     (void)devices.outputDevices;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[]={class_getClassMethod(AudioDeviceManager.class,@selector(sharedInstance)), class_getClassMethod(CoreAudioUtil.class,@selector(readSystemDefaultOutputDeviceID:))};
     IMP replacements[]={imp_implementationWithBlock(^AudioDeviceManager *(id cls) { return devices; }), imp_implementationWithBlock(^BOOL(id cls, AudioDeviceID *out) { *out=0; return YES; })};
     IMP originals[2]; for(NSUInteger i=0;i<2;i++) originals[i]=method_setImplementation(methods[i],replacements[i]);
@@ -191,7 +191,7 @@
     AudioDevice *device=[[AudioDevice alloc] initWithName:@"Saved DAC" uid:@"saved" deviceId:2 isSystemDefault:NO transportType:kAudioDeviceTransportTypeVirtual];
     AudioDeviceManager *devices=[[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[device]; } retryScheduler:nil];
     (void)devices.outputDevices;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[]={class_getClassMethod(AudioDeviceManager.class,@selector(sharedInstance)),class_getClassMethod(CoreAudioUtil.class,@selector(deviceIsConfirmedDead:))};
     IMP replacements[]={imp_implementationWithBlock(^AudioDeviceManager *(id cls) { return devices; }),imp_implementationWithBlock(^BOOL(id cls,AudioDeviceID deviceID) { return NO; })};
     IMP originals[2]; for(NSUInteger i=0;i<2;i++) originals[i]=method_setImplementation(methods[i],replacements[i]);
@@ -234,7 +234,7 @@
         dispatch_semaphore_wait(publish, dispatch_time(DISPATCH_TIME_NOW, VIBE_TEST_GATE_TIMEOUT * NSEC_PER_SEC));
         return @[device];
     } retryScheduler:nil];
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(readSystemDefaultOutputDeviceID:)),
@@ -276,7 +276,7 @@
     AudioDevice *b = [[AudioDevice alloc] initWithName:@"B" uid:@"b" deviceId:3 isSystemDefault:NO transportType:kAudioDeviceTransportTypeVirtual];
     AudioDeviceManager *devices = [[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[a,b]; } retryScheduler:nil];
     (void)devices.outputDevices;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(systemDefaultOutputDeviceID)),
@@ -316,7 +316,7 @@
     AudioDevice *a = [[AudioDevice alloc] initWithName:@"A" uid:@"a" deviceId:2 isSystemDefault:NO transportType:kAudioDeviceTransportTypeVirtual];
     AudioDeviceManager *devices = [[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[a]; } retryScheduler:nil];
     (void)devices.outputDevices;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(systemDefaultOutputDeviceID)),
@@ -349,7 +349,7 @@
 - (void)testMissingLastOutputParksWithoutFinishingTrack {
     AudioDeviceManager *devices = [[AudioDeviceManager alloc] initWithEnumerator:^NSArray *(BOOL partial) { return @[]; } retryScheduler:nil];
     (void)devices.outputDevices;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(systemDefaultOutputDeviceID)),
@@ -395,7 +395,7 @@
     (void)devices.outputDevices;
     NSMutableDictionary *savedModes = [@{@"port-a": @YES} mutableCopy];
     __block BOOL carryDelivered = NO;
-    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (AGENTS.md, Tests).
+    // TRAP: OutputDevices' methods, swizzled by selector. A rename there passes vibe-libs' checks and breaks this suite (this piece's AGENTS.md, Tests).
     Method methods[] = {
         class_getClassMethod(AudioDeviceManager.class, @selector(sharedInstance)),
         class_getClassMethod(CoreAudioUtil.class, @selector(systemDefaultOutputDeviceID)),

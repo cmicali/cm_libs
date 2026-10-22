@@ -1,6 +1,6 @@
 //
 //  AudioMasterBus.h
-//  Vibe
+//  vibe-libs
 //
 //  The render: voice bus -> [varispeed] -> [FX] -> [meter] -> [volume] -> the
 //  output unit's buffers. AudioPlayer+Pipeline is its player-queue side.

@@ -1,6 +1,6 @@
 //
 //  AudioPlayerInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The private surface AudioPlayer.m, its categories and render tests share.
 //  The PLAYER QUEUE runs every transport verb and output mutation.
@@ -71,7 +71,7 @@ static const uint64_t kDrainIntervalNanos = 10 * NSEC_PER_MSEC;
 static const uint64_t kDrainSteadyIntervalNanos = 100 * NSEC_PER_MSEC;
 
 // A wait shows its indicator once it has lasted this long: the loading
-// indicator for an open, and Buffering… for a hold. A shorter wait never
+// indicator for an open, and the buffering notice for a hold. A shorter wait never
 // flashes one. A provider's dataless verdict shows the loading indicator at
 // once. Remote streams keep this delay.
 static const NSTimeInterval kWaitIndicatorDelaySeconds = 0.5;
@@ -117,7 +117,7 @@ static inline int64_t VibeTrackEndFrameInFile(id<VibePlayableItem> track, AudioF
     BOOL                    _gaplessArmedForUI;
     BOOL                    _outputAudioActive;
     BOOL                    _buffering;         // the current voice held for its stream's bytes (updateBufferingOnQueue)
-    BOOL                    _bufferingNoticeShown; // Buffering… is due (setBufferingNoticeOnQueue:)
+    BOOL                    _bufferingNoticeShown; // the buffering notice is due (setBufferingNoticeOnQueue:)
     // The stall's park: Paused with no voice and no file, the window and rate
     // kept, which resume replays and a seek holds for it. Set only by
     // publishPausedWithoutVoiceOnQueueAtSeconds:, cleared by every other
@@ -181,7 +181,7 @@ static inline int64_t VibeTrackEndFrameInFile(id<VibePlayableItem> track, AudioF
     uint64_t                _renderStuckFrames;
     // nil under the debug pump, and on iOS until the first start.
     AudioOutputUnit         *_outputUnit;
-    // The equalizer's meter: queue-confined intent and installation; the
+    // The level meter: queue-confined intent and installation. The
     // publisher is stable for the player's lifetime.
     BOOL                    _levelsWanted;
     VibeAudioLevelNormalizationMode _levelNormalizationMode;

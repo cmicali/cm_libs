@@ -1,6 +1,6 @@
 //
 //  AudioVoiceBusInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The bus's private header: the slot and mix the audio thread reads, the
 //  record the queue and the decoder share, the ivars, and the decoder's

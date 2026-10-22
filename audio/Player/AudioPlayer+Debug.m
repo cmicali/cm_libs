@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioPlayer+Debug.h"
@@ -55,8 +55,8 @@
     }];
 }
 
-// dump_audio_loading compares the three consumers' snapshots — the
-// materialization coordinator's, the metadata cache's and this one.
+// A debug report compares three snapshots: the materialization
+// coordinator's, a metadata cache's, and this one.
 - (AudioLoadingConfiguration *)loadingConfiguration {
     __block AudioLoadingConfiguration *configuration;
     [self runSyncOnQueue:^{ configuration = self->_loadingConfiguration; }];
@@ -184,7 +184,7 @@ static NSString *VibeAudioLevelNormalizationModeName(VibeAudioLevelNormalization
     [self runSyncOnQueue:^{
         NSMutableDictionary<NSString *, id> *snapshot = [[self->_levelPublisher debugState] mutableCopy];
         snapshot[@"requested"] = @(self->_levelsWanted);
-        snapshot[@"signalProbe"] = @(self.signalProbeWanted); // beta builds' hold for a start's capture
+        snapshot[@"signalProbe"] = @(self.signalProbeWanted); // verbose logging's hold for a start's capture
         snapshot[@"meterObject"] = @(self->_levelMeter != nil);
         snapshot[@"retiredOutputCount"] = @(self->_retiringVoices.count);
         snapshot[@"outputAudioActive"] = @(self.outputAudioActive);

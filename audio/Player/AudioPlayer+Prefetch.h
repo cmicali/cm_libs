@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+Prefetch.h
-//  Vibe
+//  vibe-libs
 //
 //  The PARK is the next file opened ahead of time; the SUCCESSOR is the park
 //  queued on the current voice, continuing at the boundary with no gap.

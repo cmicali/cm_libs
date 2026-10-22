@@ -1,6 +1,6 @@
 //
 //  AudioError.h
-//  Vibe
+//  vibe-libs
 //
 //  The play path's error vocabulary — domain, userInfo key, codes — apart from
 //  the player so that a receiver deciding what to SAY about a failure need not

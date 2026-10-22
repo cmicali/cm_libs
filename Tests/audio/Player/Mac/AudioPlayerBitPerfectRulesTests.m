@@ -46,8 +46,8 @@ static VibeBitPerfectReport Perfect(void) {
     XCTAssertEqual(VibeBitPerfectFold(r), VibeBitPerfectStatusSwitchFailed);
 }
 
-// The shell is told about a report only when it differs, so every field the
-// shell renders must count — the volume is the one a user moves mid-track.
+// The app is told about a report only when it differs. So every field it
+// shows must count. The volume is the one a user moves mid-track.
 - (void)testReportEqualityCountsEveryRenderedField {
     XCTAssertTrue(VibeBitPerfectReportsEqual(Perfect(), Perfect()));
     VibeBitPerfectReport r = Perfect();

@@ -184,7 +184,7 @@
     XCTAssertTrue([self finishStream:VibeStreamCompleted]);
 }
 
-// Buffering… rises only once a hold has lasted the delay, on the player's
+// The buffering notice rises only once a hold has lasted the delay, on the player's
 // clock. A pause ends it, and so does the hold's release. A hold that ends
 // sooner never raises it.
 - (void)testBufferingNoticeWaitsOutTheDelayAndEndsWithItsHold {
@@ -216,7 +216,7 @@
     XCTAssertNil(_playError);
 }
 
-// A seek during a shown hold keeps Buffering… up. The hold ends with the old
+// A seek during a shown hold keeps the buffering notice up. The hold ends with the old
 // voice, and the new voice holds at once. A seek back into what has arrived
 // ends it once the new voice plays.
 - (void)testASeekDuringAShownHoldKeepsTheNoticeUpUntilTheNewVoicePlays {

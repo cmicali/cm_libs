@@ -1,6 +1,6 @@
 //
 //  AudioPlayer+Prefetch.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioPlayer+Prefetch.h"
@@ -117,7 +117,7 @@
     BOOL estimated = NO;
     NSRange window = VibeTrackWindowInFile(startedTrack, startedFile, &estimated);
     if (window.length == 0) {
-        return; // the shell's play: of it reports the error at the track end
+        return; // the caller's play: of it reports the error at the track end
     }
     NSTimeInterval duration = self.duration;
     NSTimeInterval nextDuration = (NSTimeInterval)window.length / startedFile.processingFormat.sampleRate;
@@ -138,7 +138,7 @@
 
 // Both auto-advances end here: the started track is current at its window's
 // start on `voice`, `baseFrames` being the bus frames that voice consumed
-// before it, and the shell is told.
+// before it, and the delegate is told.
 - (void)adoptTrack:(id<VibePlayableItem>)startedTrack file:(AudioFileHandle *)file window:(NSRange)window
          estimated:(BOOL)estimated voice:(VibeVoiceID)voice baseFrames:(uint64_t)baseFrames reason:(NSString *)reason {
     id<VibePlayableItem> finishedTrack = self.currentTrack;
