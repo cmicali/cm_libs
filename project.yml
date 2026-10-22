@@ -404,6 +404,76 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # media/PlayQueue, tested on macOS, over rows of the tests' own.
+  PlayQueueTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsPlayQueue]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/media/PlayQueue
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # media/PlayQueue built for iOS.
+  PlayQueue-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsPlayQueue]
+    templateAttributes:
+      excludedPlatform: Mac
+
+  # media/Playlists, tested on macOS, over temporary folders. The
+  # embedded-sheet and fuzz tests take their FLAC writers and their generator
+  # from Tests/Support.
+  PlaylistsTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsPlaylists]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/media/Playlists
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+
+  # media/Playlists built for iOS.
+  Playlists-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsPlaylists]
+    templateAttributes:
+      excludedPlatform: Mac
+
+  # waveform/Waveform, tested on macOS: the summary's builder, reads, deep
+  # zoom, and archive, and the raster's steps and coverage.
+  WaveformTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsWaveform]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/waveform/Waveform
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # waveform/Waveform built for iOS, where an app's scrubber draws with it.
+  Waveform-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsWaveform]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
   # Its tests draw through the shared drawn-view support in Tests/Support.
   ControlsTests:
@@ -627,6 +697,12 @@ schemes:
         Player-iOS: all
         TagsTests: [test]
         Tags-iOS: all
+        PlayQueueTests: [test]
+        PlayQueue-iOS: all
+        PlaylistsTests: [test]
+        Playlists-iOS: all
+        WaveformTests: [test]
+        Waveform-iOS: all
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
@@ -651,5 +727,6 @@ schemes:
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, TagsTests,
-                ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
-                R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
+                PlayQueueTests, PlaylistsTests, WaveformTests, ControlsTests, SettingsWindowTests,
+                ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests,
+                DrFlacTests, DrWavTests, OggTests, VorbisTests]

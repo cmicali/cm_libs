@@ -198,6 +198,52 @@ targetTemplates:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/Tags"]
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "Foundation"]
 
+  # The play queue over an app's own entries. It reads an entry only through
+  # the key blocks the app passes, so it lists no template. Nothing here logs.
+  VibeLibsPlayQueue:
+    sources:
+      - path: media/PlayQueue
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/PlayQueue"]
+
+  # CUE sheets, also embedded in FLAC, and M3U, read and written as records.
+  # It lists AudioTypes for the playable extensions and the CD frame rate,
+  # and Common for the path spelling. Nothing here logs.
+  VibeLibsPlaylists:
+    templates: [VibeLibsCommon, VibeLibsAudioTypes]
+    sources:
+      - path: media/Playlists
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/media/Playlists"]
+
+  # The waveform engine, in C++17, so an app builds C++ as C++17 or later.
+  # Nothing here logs, so it lists no template.
+  # Its summary and band split are a decode's work per sample, and its raster
+  # every picture's. So they are optimized in every configuration, as the
+  # decoders are, and a Debug build loads and draws as a shipped one does.
+  # -O3, because -Os vectorizes none of its loops. Measured in Vibe, it cut a
+  # cache read's CPU by a third and 3-Band's load frames by a quarter, for
+  # 16 KB of code. Every picture stayed byte for byte the same.
+  #
+  # TRAP: it links Accelerate and libcompression itself. Its sources are all
+  # C++, which Xcode builds with -fno-cxx-modules, so their framework imports
+  # link nothing on their own. It passes linker flags, not sdk dependencies,
+  # since XcodeGen refuses a target that lists the same sdk twice, and an app
+  # may list Accelerate too.
+  VibeLibsWaveform:
+    sources:
+      - path: waveform/Waveform
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+        compilerFlags: ["-O3"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/waveform/Waveform"]
+        OTHER_LDFLAGS: ["$(inherited)", "-framework", "Accelerate", "-lcompression"]
+
   # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
   # so the shared files it gains later move nothing.
   VibeLibsControls:
