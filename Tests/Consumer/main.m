@@ -11,10 +11,13 @@
 //  size, time and path, and keys it anew once it changes. Turns a CUE window
 //  into a file's frames. Opens a temporary file through the file loader, with
 //  a handle of its own. Roots a disk cache in a temporary directory and reads
-//  its usage back. Exits 0 when all ten hold.
+//  its usage back. Finds the tempo of a click track at 128 BPM, fed in
+//  blocks as a decode would. Exits 0 when all eleven hold.
 //
 
 #import <Foundation/Foundation.h>
+#import <math.h>
+#import "AudioBPMAnalyzer.h"
 #import "AudioFileMaterializationCoordinator.h"
 #import "AudioVarispeed.h"
 #import "CueWindowMath.h"
@@ -58,6 +61,26 @@
 @end
 
 // Runs main's loop until done says so, for at most ten seconds.
+// Thirty seconds of the analyzer tests' click track: a short decaying burst
+// on each beat over a quiet tone. Fed in 4096-frame blocks.
+static float ClickTrackTempo(double bpm) {
+    const double rate = 44100.0;
+    const size_t total = (size_t)(rate * 30.0);
+    const double period = 60.0 / bpm * rate;
+    float *audio = malloc(total * sizeof(float));
+    for (size_t i = 0; i < total; i++) {
+        double sinceBeat = fmod((double)i, period);
+        double click = exp(-sinceBeat / 200.0) * sin((double)i * 0.7);
+        audio[i] = (float)(0.9 * click + 0.05 * sin((double)i * 0.03));
+    }
+    AudioBPMAnalyzer *analyzer = [[AudioBPMAnalyzer alloc] initWithSampleRate:rate];
+    for (size_t offset = 0; offset < total; offset += 4096) {
+        [analyzer appendMonoSamples:audio + offset frameCount:MIN((size_t)4096, total - offset)];
+    }
+    free(audio);
+    return [analyzer finish];
+}
+
 static BOOL Settles(BOOL (^done)(void)) {
     NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:10];
     while (!done() && deadline.timeIntervalSinceNow > 0) {
@@ -341,6 +364,11 @@ int main(void) {
     [NSFileManager.defaultManager removeItemAtURL:directory error:NULL];
     if (!cached) {
         fprintf(stderr, "consumer: the disk cache holds %lu entries\n", (unsigned long)entries);
+        return 1;
+    }
+    float tempo = ClickTrackTempo(128.0);
+    if (fabsf(tempo - 128.0f) > 1.0f) {
+        fprintf(stderr, "consumer: the click track's tempo is %.2f\n", tempo);
         return 1;
     }
     printf("consumer OK\n");

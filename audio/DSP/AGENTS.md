@@ -1,6 +1,6 @@
 # audio/DSP
 
-Realtime signal stages a render can host. **Today it holds `AudioVarispeed`**, the pitch fader's stage, moved from Vibe. The rest of the DSP piece follows as its users move: the resampler wrapper, the fades, the FX math, the band math and the analysis framing (`docs/plan.md`).
+Realtime signal stages a render can host, and the signal math the audio pieces share. **Today it holds `AudioVarispeed`**, the pitch fader's stage, and `AnalysisFramerMath.h`, the stream framer `audio/Analysis` runs behind. Both moved from Vibe. The rest of the DSP piece follows as its users move: the resampler wrapper, the fades, the FX math, and the band math (`docs/plan.md`).
 
 ## AudioVarispeed
 
@@ -16,8 +16,18 @@ Realtime signal stages a render can host. **Today it holds `AudioVarispeed`**, t
 
 **The latency off zero is the kernel's half-width and one or two frames, and nothing else.** That is 64 input frames, and ceil(64 × ratio) above a ratio of 1. A host that reports what is heard adds it.
 
+## The analysis framer
+
+**`VibeAnalysisFrameStream` frames a mono stream into fixed windows at a fixed hop**, and calls its block once per complete frame. It is a C++ template, so only Objective-C++ and C++ can include it. It splices only the frames that straddle a buffer boundary, into a carry the caller owns. Every later frame is read in place from the caller's buffer, so a block is never copied whole. The carry stays under one frame, and the owner reserves twice the frame so the splice never reallocates.
+
+**The block sizes a caller feeds never reach the frames.** Both of `audio/Analysis`' analyzers rely on it, so a file's tempo and key do not depend on its codec's packet size. This function is the one home of that guarantee.
+
+**TRAP: `0 < hopSize <= frameSize` is a precondition of the arithmetic.** Past it, a short buffer wraps `frameCount - base` into a huge resize and an overread, and a zero hop never advances. The guard returns nothing instead, so a future caller gets no frames rather than undefined behavior.
+
 ## Tests
 
 `Tests/audio/DSP/AudioVarispeedTests.m` drives the stage alone, with random schedules of pitch and slice size, mono, and the pitch moved from another thread. Run it under the thread sanitizer when the stage's threading changes.
+
+`Tests/audio/DSP/AnalysisFramerMathTests.mm` pins the framer's arithmetic at block sizes a decoder is unlikely to produce but a caller may, and at the edges of its precondition. Analysis' tests pin the same guarantee end to end.
 
 The tests that render the stage through a player stay with that player. In Vibe they are `testPitchQuality`, which holds the stage to −145 dB of distortion and false tones, flat to 20 kHz, and the edge and position tests in its render suite. Vibe's `pitch` benchmark group measures its cost beside Apple's Varispeed unit.

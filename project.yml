@@ -136,6 +136,29 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # audio/Analysis, tested on macOS, over synthesized clicks and chords.
+  AnalysisTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsAnalysis]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/audio/Analysis
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # audio/Analysis built for iOS. Key analysis is an app's choice per
+  # platform, so the piece builds on both.
+  Analysis-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsAnalysis]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # files/FileLoading, tested on macOS. The tests drive the seams and the fake
   # cloud, which compile only under DEBUG, so the bundle defines it in every
   # configuration, the analyzer's Release build included. The coordinator's
@@ -400,6 +423,8 @@ schemes:
         AudioTypes-iOS: all
         DSPTests: [test]
         DSP-iOS: all
+        AnalysisTests: [test]
+        Analysis-iOS: all
         FileLoadingTests: [test]
         FileLoading-iOS: all
         DiskCacheTests: [test]
@@ -426,6 +451,6 @@ schemes:
         VorbisTests: [test]
         Vorbis-iOS: all
     test:
-      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, FileLoadingTests, DiskCacheTests,
-                ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests, PINOperationTests,
-                R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
+      targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, FileLoadingTests,
+                DiskCacheTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests,
+                PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]

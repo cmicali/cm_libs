@@ -55,15 +55,31 @@ DSP_IOS = """  # audio/DSP built for iOS, so an AppKit leak fails here.
       excludedPlatform: Mac
 
 """
+ANALYSIS_ROW = "| audio/Analysis | audio/AudioTypes, audio/DSP |"
+ANALYSIS_IOS = """  # audio/Analysis built for iOS. Key analysis is an app's choice per
+  # platform, so the piece builds on both.
+  Analysis-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsAnalysis]
+    templateAttributes:
+      excludedPlatform: Mac
+
+"""
 COMMON_IOS_TEMPLATES = "    templates: [VibeLibsCommon]\n    templateAttributes:\n      excludedPlatform: Mac"
 
 
 def mac_only(root):
     """audio/DSP becomes macOS only, the way a shell piece arrives: the map
-    row says so, and the piece has no iOS target."""
+    row says so, and the piece has no iOS target. So does audio/Analysis,
+    which depends on it."""
     replace(root, "docs/plan.md", DSP_ROW, "| audio/DSP | third_party/r8brain, macOS only |")
     replace(root, "project.yml", DSP_IOS, "")
     replace(root, "project.yml", "        DSP-iOS: all\n", "")
+    # Analysis lists DSP's template, so it goes macOS only with it.
+    replace(root, "docs/plan.md", ANALYSIS_ROW, "| audio/Analysis | audio/AudioTypes, audio/DSP, macOS only |")
+    replace(root, "project.yml", ANALYSIS_IOS, "")
+    replace(root, "project.yml", "        Analysis-iOS: all\n", "")
 
 
 def ios_target_listing(root, listed):
