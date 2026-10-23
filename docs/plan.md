@@ -566,7 +566,7 @@ Each remaining candidate moves when a second app needs it, with the cuts it was 
 
 - **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates. NowPlaying moved on 2026-10-22: its 5 files moved with their history (this repo's #41), their tests run here, and Vibe compiles them through the template. It takes the track's source key, title, artist, and image as values, so it needs no snapshot type and no edge to AudioTypes.
 - **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them.
-- **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date.
+- **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. Done 2026-10-23: AppOpening's 8 files moved with their history (this repo's pull request), their tests run here, and Vibe compiles them through the template. Its part of seam 21 was two values. The coordinator hands back the app's rows as an untyped array, and the argument scan takes the options whose values it skips. So it depends on nothing but `core/Common`, as its map row says. The others have no date.
 
 ## What the other app needs, and when
 
@@ -582,6 +582,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 | Full app: background analysis | WaveformLoading's scan requests | behavior | 5 | a throttled source yields within one block | |
 | Full app: leveling from tags | a gain per file through a gapless splice | behavior | 5 | the boundary-frame render test | |
 | First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | NowPlaying at 36ff73d (#41). Updates is still open. |
+| Any mac app's opens, when it needs them | AppOpening | move | 6 | the coalescer's and the coordinator's tests, and the minimal consumer's split open | this repo's pull request |
 
 Nothing else is scheduled for the other app. The shell pieces are scheduled for a third app, on the shell track. Portable rewrites wait until a consumer needs them.
 
