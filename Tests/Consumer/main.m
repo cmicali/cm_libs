@@ -39,7 +39,9 @@
 //  over the fake web server (ShareLinks.m). Answers one command through the
 //  debug channel (DebugChannel.m). Makes a folder grants' store over a
 //  defaults suite of its own, and checks that a new temporary folder is not
-//  readable (SandboxAccess.m). Exits 0 when all twenty-nine hold.
+//  readable (SandboxAccess.m).
+//  Coalesces an open split into batches into one ordered open, through the
+//  open coordinator (AppOpening.m). Exits 0 when all thirty hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -86,6 +88,8 @@ FOUNDATION_EXTERN BOOL ConsumerWaveformStylesHold(void);
 FOUNDATION_EXTERN BOOL ConsumerWaveformViewDraws(void);
 // NowPlaying.m's check, beside the delegate its commands need.
 FOUNDATION_EXTERN BOOL ConsumerPublishesNowPlaying(void);
+// AppOpening.m's check.
+FOUNDATION_EXTERN BOOL ConsumerOrdersASplitOpen(void);
 // ShareLinks.m's check, over the fake web server.
 FOUNDATION_EXTERN BOOL ConsumerFetchesFromTheFakeHost(void);
 // DebugChannel.m's check, beside its own table.
@@ -912,6 +916,9 @@ int main(void) {
         return 1;
     }
     if (!ConsumerSandboxAccessHolds()) {
+        return 1;
+    }
+    if (!ConsumerOrdersASplitOpen()) {
         return 1;
     }
     printf("consumer OK\n");

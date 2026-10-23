@@ -890,6 +890,21 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TARGETED_DEVICE_FAMILY: "1,2"
 
+  # system/AppOpening, tested on macOS with injected schedulers, so no test
+  # waits on the clock. It is macOS only, so it has no iOS target.
+  AppOpeningTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsAppOpening]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/system/AppOpening
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
   # third_party/: each library's tests build it alone and call into it once,
   # so a missing file or a broken link fails here. Each iOS target builds the
   # library for the simulator. None of them excludes a platform half.
@@ -1108,6 +1123,7 @@ schemes:
         SandboxAccessTests: [test]
         NowPlayingTests: [test]
         NowPlaying-iOS: all
+        AppOpeningTests: [test]
         UpdatesTests: [test]
         DebugChannelTests: [test]
         DebugChannel-iOS: all
@@ -1137,6 +1153,6 @@ schemes:
                 RemoteFilesTests, ShareLinksTests, DecodeTests, PlayerTests, TagsTests,
                 MetadataTests, PlayQueueTests, PlaylistsTests, FolderScanTests, WaveformTests, WaveformLoadingTests,
                 WaveformStylesTests, WaveformViewTests, ControlsTests, SettingsWindowTests, ShortcutsTests,
-                SandboxAccessTests, NowPlayingTests, UpdatesTests, DebugChannelTests, TaglibTests, PINCacheTests,
+                SandboxAccessTests, NowPlayingTests, AppOpeningTests, UpdatesTests, DebugChannelTests, TaglibTests, PINCacheTests,
                 PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests,
                 SparkleTests]
