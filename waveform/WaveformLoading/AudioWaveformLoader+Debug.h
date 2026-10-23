@@ -1,11 +1,11 @@
 //
 //  AudioWaveformLoader+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Phase timings for one waveform decode pass, so each observer's cost is
-//  measured in-process rather than inferred from the app's total CPU.
-//  The decode has no reply path, so each pass records here, and a debug
-//  build's channel reads the passes after the fact. Declaration-only, which
+//  measured in-process rather than inferred from the process's total CPU.
+//  The decode has no reply path, so each pass records here, and an app's
+//  debug build reads the passes after the fact. Declaration-only, which
 //  keeps the shipping headers free of #if DEBUG. AudioLoadTiming is
 //  implemented in AudioWaveformLoader+Debug.m, in Debug builds only. The
 //  loader records under #if DEBUG, and its clock reads 0 in Release.
@@ -25,7 +25,7 @@ typedef struct {
 NS_ASSUME_NONNULL_BEGIN
 
 // The recorded passes, newest first, capped. Thread-safe: decodes record off
-// main while the channel reads on main.
+// main while a reader reads on main.
 @interface AudioLoadTiming : NSObject
 
 // observers maps each observer's identifier to its sink's append and finish

@@ -1,6 +1,6 @@
 //
 //  AudioWaveformObserverTests.mm
-//  VibeTests
+//  vibe-libs
 //
 //  The observer contract, through the real cache and loader over a store of
 //  the test's own: what a decode feeds a sink, what a hit, a missing result,

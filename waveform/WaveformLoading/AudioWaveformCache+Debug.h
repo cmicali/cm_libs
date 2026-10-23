@@ -1,6 +1,6 @@
 //
 //  AudioWaveformCache+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Declaration-only, which keeps the shipping headers free of #if DEBUG.
 //  Implemented in AudioWaveformCache+Debug.mm, in Debug builds only.

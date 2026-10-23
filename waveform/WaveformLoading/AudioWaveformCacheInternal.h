@@ -1,6 +1,6 @@
 //
 //  AudioWaveformCacheInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The state and the lookup-or-decode path the debug seam's per-file cache
 //  control shares with the delegate path (AudioWaveformCache+Debug.mm).
