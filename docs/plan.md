@@ -568,7 +568,7 @@ Two changes of behavior, each its own pull request with its own measurements:
 Each remaining candidate moves when a second app needs it, with the cuts it was waiting for:
 
 - **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates. NowPlaying moved on 2026-10-22: its 5 files moved with their history (this repo's #41), their tests run here, and Vibe compiles them through the template. It takes the track's source key, title, artist, and image as values, so it needs no snapshot type and no edge to AudioTypes.
-- **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them. Done 2026-10-23: their 27 files and the tests' `HTTPStub` moved with their history (this repo's #PRNUM), their tests run here, and Vibe compiles them through the templates. The fake HTTP host joined ShareLinks (rule 8), so HTTP's and RemoteFiles' test bundles list ShareLinks' template for `HTTPStub`'s serving engine. The pieces never import it. The link store, the Dropbox mirror and client, and every debug verb stay in Vibe. The 2 GB link budget moved from `LinkRules.h` to Vibe's link store, since it is Vibe's choice. The error domains and queue names start `vibe-libs`. The kept part's xattr keeps Vibe's name, since parts on disk carry it.
+- **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them. Done 2026-10-23: their 27 files and the tests' `HTTPStub` moved with their history (this repo's #46), their tests run here, and Vibe compiles them through the templates. The fake HTTP host joined ShareLinks (rule 8), so HTTP's and RemoteFiles' test bundles list ShareLinks' template for `HTTPStub`'s serving engine. The pieces never import it. The link store, the Dropbox mirror and client, and every debug verb stay in Vibe. The 2 GB link budget moved from `LinkRules.h` to Vibe's link store, since it is Vibe's choice. The error domains and queue names start `vibe-libs`. The kept part's xattr keeps Vibe's name, since parts on disk carry it.
 - **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date.
 
 ## What the other app needs, and when
@@ -585,7 +585,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 | Full app: background analysis | WaveformLoading's scan requests | behavior | 5 | a throttled source yields within one block | |
 | Full app: leveling from tags | a gain per file through a gapless splice | behavior | 5 | the boundary-frame render test | |
 | First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | NowPlaying at 36ff73d (#41). Updates is still open. |
-| A server source | HTTP, RemoteFiles, and ShareLinks | move | 6 | Vibe's transfer, store, and link tests, moved here | Done 2026-10-23 (this repo's #PRNUM) |
+| A server source | HTTP, RemoteFiles, and ShareLinks | move | 6 | Vibe's transfer, store, and link tests, moved here | Done 2026-10-23 (this repo's #46) |
 
 Nothing else is scheduled for the other app. The shell pieces are scheduled for a third app, on the shell track. Portable rewrites wait until a consumer needs them.
 
@@ -604,7 +604,7 @@ Vibe already has HTTP transfers, ranged reads, remote placeholders, opens that p
 - **The original bytes.** OpenSubsonic transcodes unless asked not to, so every stream request passes `format=raw`. A transcoded stream would change the waveform, the analysis, and bit-perfect output.
 - **Compatibility tests** against Navidrome, Gonic, Airsonic, and Ampache, which answer the same API differently.
 
-That work belongs to the app that ships the source. FileLoading and Player moved in Phase 3. HTTP, RemoteFiles, and ShareLinks moved in Phase 6 (this repo's #PRNUM).
+That work belongs to the app that ships the source. FileLoading and Player moved in Phase 3. HTTP, RemoteFiles, and ShareLinks moved in Phase 6 (this repo's #46).
 
 ## New types
 
