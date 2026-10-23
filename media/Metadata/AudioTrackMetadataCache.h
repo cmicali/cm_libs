@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nullable, weak) id <AudioTrackMetadataCacheDelegate> delegate;
 
+// The versioned store name. An app reads it to remove older stores.
++ (NSString *)cacheName;
+
 // The disk cache under rootPath. Nil is the user's Caches directory, which
 // init uses. Another app passes its own path, or an app group's to share it.
 - (instancetype)initWithRootPath:(nullable NSString *)rootPath NS_DESIGNATED_INITIALIZER;
