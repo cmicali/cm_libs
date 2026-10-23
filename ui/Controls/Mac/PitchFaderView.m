@@ -123,7 +123,7 @@ static const float   kDefaultMaxPitch = 8;
         };
     });
 
-    // The collapsed window has only a few points per percent.
+    // A short fader has only a few points per percent.
     CGFloat pointsPerPercent = (self.travelBottom - self.travelTop) / (2 * _maxPitch);
     int tickStep = pointsPerPercent >= 4 ? 1 : 2;
     int labelStep = 2;
