@@ -51,6 +51,7 @@ NSNotificationName const AudioTrackMetadataThumbnailDidLoadNotification =
 @property (copy, nullable, readwrite) NSString *musicBrainzReleaseID;
 @property (copy, nullable, readwrite) NSString *musicBrainzRecordingID;
 @property (copy, nullable, readwrite) NSString *isrc;
+@property (copy, nullable, readwrite) NSData *audioMD5;
 @property (copy, nullable, readwrite) NSNumber *replayGainTrackGain;
 @property (copy, nullable, readwrite) NSNumber *replayGainTrackPeak;
 @property (copy, nullable, readwrite) NSNumber *replayGainAlbumGain;
@@ -258,6 +259,7 @@ static NSNumber *_Nullable SoundCheckGain(NSString *_Nullable text) {
     copy.musicBrainzReleaseID = self.musicBrainzReleaseID;
     copy.musicBrainzRecordingID = self.musicBrainzRecordingID;
     copy.isrc = self.isrc;
+    copy.audioMD5 = self.audioMD5;
     copy.replayGainTrackGain = self.replayGainTrackGain;
     copy.replayGainTrackPeak = self.replayGainTrackPeak;
     copy.replayGainAlbumGain = self.replayGainAlbumGain;
@@ -301,6 +303,7 @@ static NSNumber *_Nullable SoundCheckGain(NSString *_Nullable text) {
     [coder encodeObject:self.musicBrainzReleaseID forKey:@"musicBrainzReleaseID"];
     [coder encodeObject:self.musicBrainzRecordingID forKey:@"musicBrainzRecordingID"];
     [coder encodeObject:self.isrc forKey:@"isrc"];
+    [coder encodeObject:self.audioMD5 forKey:@"audioMD5"];
     [coder encodeObject:self.replayGainTrackGain forKey:@"replayGainTrackGain"];
     [coder encodeObject:self.replayGainTrackPeak forKey:@"replayGainTrackPeak"];
     [coder encodeObject:self.replayGainAlbumGain forKey:@"replayGainAlbumGain"];
@@ -351,6 +354,7 @@ static NSInteger DecodedCount(NSCoder *coder, NSString *key) {
         self.musicBrainzReleaseID = DecodedObject(coder, @"musicBrainzReleaseID", NSString.class, &wrong);
         self.musicBrainzRecordingID = DecodedObject(coder, @"musicBrainzRecordingID", NSString.class, &wrong);
         self.isrc = DecodedObject(coder, @"isrc", NSString.class, &wrong);
+        self.audioMD5 = DecodedObject(coder, @"audioMD5", NSData.class, &wrong);
         self.replayGainTrackGain = DecodedObject(coder, @"replayGainTrackGain", NSNumber.class, &wrong);
         self.replayGainTrackPeak = DecodedObject(coder, @"replayGainTrackPeak", NSNumber.class, &wrong);
         self.replayGainAlbumGain = DecodedObject(coder, @"replayGainAlbumGain", NSNumber.class, &wrong);
@@ -520,6 +524,7 @@ static NSInteger DecodedCount(NSCoder *coder, NSString *key) {
                     [NSString stringWithStdString:keyValues.front().to8Bit(true)]);
         }
         [self readFieldsFromProperties:properties];
+        self.audioMD5 = audioMD5FromTagLibFile(file);
 
         self.fileType = fileTypeForTagLibFile(file);
         [self.artwork adoptParsedArtData:albumArtDataFromTagLibFile(file)];

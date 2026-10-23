@@ -49,6 +49,9 @@ private:
 
 VibeAudioFileFormat _Nullable fileTypeForTagLibFile(TagLib::File *file);
 NSData *_Nullable albumArtDataFromTagLibFile(TagLib::File *file);
+// A FLAC's audio MD5 from STREAMINFO. nil for another format, and for the
+// zeros an encoder writes when it computed none.
+NSData *_Nullable audioMD5FromTagLibFile(TagLib::File *file);
 
 // The embedded art's bytes, read without audio properties. NO is a failed
 // read: no parser took the file, or TagLib threw. YES with nil art is a file

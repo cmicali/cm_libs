@@ -58,6 +58,10 @@ FOUNDATION_EXPORT NSNotificationName const AudioTrackMetadataThumbnailDidLoadNot
 @property (copy, nullable, readonly) NSString *musicBrainzRecordingID;
 @property (copy, nullable, readonly) NSString *isrc;
 
+// The MD5 of a FLAC's decoded audio, from its STREAMINFO block. nil for
+// every other format, and when the encoder wrote none.
+@property (copy, nullable, readonly) NSData *audioMD5;
+
 // The loudness tags, nil when untagged. Gains are in dB, and peaks are
 // linear, with 1 at full scale. Each gain keeps its own reference level.
 // ReplayGain's track and album gain and peak:
