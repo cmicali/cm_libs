@@ -565,7 +565,7 @@ Two changes of behavior, each its own pull request with its own measurements:
 
 Each remaining candidate moves when a second app needs it, with the cuts it was waiting for:
 
-- **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates. NowPlaying moved on 2026-10-22: its 5 files moved with their history (this repo's #41), their tests run here, and Vibe compiles them through the template. It takes the track's source key, title, artist, and image as values, so it needs no snapshot type and no edge to AudioTypes. Done 2026-10-23: Updates' 3 files and the Sparkle framework moved with their history (this repo's #N), their tests run here, and Vibe compiles them through the two templates. A prep commit in Vibe turned its category on the app's delegate into `VibeUpdater`, one class the app makes, feeds, and starts. The app passes the feed override and the beta switch, sets the check interval, and targets Check for Updates… at the class's controller. The framework is unmodified. Its template links, embeds, and signs it, and a configuration with no updater excludes it and `VibeUpdater.m` by name.
+- **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates. NowPlaying moved on 2026-10-22: its 5 files moved with their history (this repo's #41), their tests run here, and Vibe compiles them through the template. It takes the track's source key, title, artist, and image as values, so it needs no snapshot type and no edge to AudioTypes. Done 2026-10-23: Updates' 3 files and the Sparkle framework moved with their history (this repo's #45), their tests run here, and Vibe compiles them through the two templates. A prep commit in Vibe turned its category on the app's delegate into `VibeUpdater`, one class the app makes, feeds, and starts. The app passes the feed override and the beta switch, sets the check interval, and targets Check for Updates… at the class's controller. The framework is unmodified. Its template links, embeds, and signs it, and a configuration with no updater excludes it and `VibeUpdater.m` by name.
 - **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them.
 - **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date.
 
@@ -582,7 +582,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 | Full app: song matching and leveling | the tag fields, identifiers, audio MD5, and loudness tags | behavior | 4 | a parse fixture for each field | |
 | Full app: background analysis | WaveformLoading's scan requests | behavior | 5 | a throttled source yields within one block | |
 | Full app: leveling from tags | a gain per file through a gapless splice | behavior | 5 | the boundary-frame render test | |
-| First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | NowPlaying at 36ff73d (#41). Updates in #N. |
+| First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | NowPlaying at 36ff73d (#41). Updates in #45. |
 
 Nothing else is scheduled for the other app. The shell pieces are scheduled for a third app, on the shell track. Portable rewrites wait until a consumer needs them.
 
