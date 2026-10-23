@@ -16,9 +16,9 @@ concurrency:
 jobs:
   pieces:
     runs-on: macos-26
-    # Checks the piece rules, tests every piece on macOS, builds every piece
-    # for iOS, and builds and runs the minimal consumer. The analyzer runs in
-    # the analyze job beside it. The limit grows with the piece count.
+    # Checks the piece rules, tests the strings tools, tests every piece on
+    # macOS, builds every piece for iOS, and builds and runs the minimal
+    # consumer. The analyzer runs in the analyze job beside it. The limit grows with the piece count.
     timeout-minutes: 60
 
     steps:

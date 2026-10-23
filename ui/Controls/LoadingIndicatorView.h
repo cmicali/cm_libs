@@ -1,13 +1,12 @@
 //
 //  LoadingIndicatorView.h
-//  Vibe
+//  vibe-libs
 //
 //  The row gutter's host for LoadingIndicator's row style: the small loading
-//  bar a playlist row shows while a provider transfer is really
-//  running for its file. SHARED for the same reason EqualizerIndicatorView is
-//  — the bar is the app's transferring marker and both platforms draw the
-//  same one in the same 16pt number gutter. Only the superclass, the layout
-//  and appearance hooks differ.
+//  bar a row shows while a transfer is really running for its file. It is
+//  SHARED for the same reason EqualizerIndicatorView is. The bar is an app's
+//  transferring marker, and both platforms draw the same one in the same 16pt
+//  gutter. Only the superclass, the layout and appearance hooks differ.
 //
 //  Much cheaper than the equalizer: the row style's only motion, the pulse, is
 //  one repeating CABasicAnimation on one layer, run by the compositor — no
@@ -43,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) float progress;
 
 // Overrides the appearance-derived colour, as EqualizerIndicatorView.barColor
-// does. The mac playlist forces white in the number gutter.
+// does. A row may force white.
 @property (nonatomic, strong, nullable) VibeColor *barColor;
 
 @end

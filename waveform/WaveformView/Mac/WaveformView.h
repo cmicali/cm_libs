@@ -1,6 +1,6 @@
 //
 //  WaveformView.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <AppKit/AppKit.h>
@@ -12,15 +12,15 @@ NS_ASSUME_NONNULL_BEGIN
 @class CodableAudioWaveform;
 
 // A pure rendering surface: draws what it is handed and reports seeks.
-// Loading and caching are MainPlayerController's AudioWaveformCache.
+// The app loads and caches each waveform.
 @interface WaveformView : NSView
 
 @property (nullable, weak) id <WaveformViewDelegate> delegate;
 
 @property CGFloat progress;
 
-// setProgress:'s repaint step count, and the input MainPlayerController scales
-// its UI tick by, so drive rate and draw resolution cannot drift apart.
+// setProgress:'s repaint step count, and the input an app scales its UI tick
+// by, so drive rate and draw resolution cannot drift apart.
 @property (readonly) CGFloat devicePixelWidth;
 
 // For the album_art theme; nil until one settles. The writer matches it
@@ -28,14 +28,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, strong) NSColor *artworkThemeColor;
 
 // Resolves the theme on every resolution: the style change, the appearance
-// flip, refreshThemeColors. Installed once by the shell.
+// flip, refreshThemeColors. The app installs it once.
 @property (nonatomic, copy, nullable) WaveformThemeProvider themeProvider;
 
 // Re-resolves the theme and repaints.
 - (void)refreshThemeColors;
 
-// The renderer's geometry and level mapping, pushed by the shell
-// (MainPlayerController.applyWaveformSettings) and never read from a store.
+// The renderer's geometry and level mapping. The app pushes them, and the
+// view never reads them from a store.
 // Each lands on the next setWaveformStyle:, which draws: the bars ease to
 // the new heights.
 @property (nonatomic) CGFloat barDensity;
@@ -49,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL dragSeeks;
 
 // A WaveformRendererRegistry key, never a display name. Also the one draw
-// for the pushed properties above, so the shell sets it last.
+// for the pushed properties above, so the app sets it last.
 - (void)setWaveformStyle:(NSString *)identifier;
 
 // Clears the previous track's waveform ahead of a new load.
@@ -59,9 +59,9 @@ NS_ASSUME_NONNULL_BEGIN
 // the renderers read.
 - (void)showWaveform:(CodableAudioWaveform *)waveform;
 
-// Convert to FLAC progress: the bars between the previous fraction and this
-// one dip to the midline and ease back. A smaller value just moves the front;
-// every presentation reset zeroes it.
+// A conversion's progress sweep. The bars between the previous fraction and
+// this one dip to the midline and ease back. A smaller value just moves the
+// front; every presentation reset zeroes it.
 @property (nonatomic) double convertSweepFraction;
 
 @end

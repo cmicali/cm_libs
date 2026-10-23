@@ -1,6 +1,6 @@
 //
 //  WaveformView.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "WaveformViewInternal.h"
@@ -17,7 +17,7 @@ static const CGFloat kWaveformDragHysteresis = 4;
     NSString                    *_styleIdentifier;
     CGFloat                     _progress;
     NSUInteger                  _progressTracker;
-    // The convert sweep's front: bars left of it have already been dipped.
+    // The progress sweep's front: bars left of it have already been dipped.
     double                      _convertSweepFraction;
     BOOL                        _didClickInside;
     NSTrackingArea*             _hoverTrackingArea;
@@ -274,7 +274,7 @@ static const CGFloat kWaveformDragHysteresis = 4;
     if (_hoverTrackingArea) {
         [self removeTrackingArea:_hoverTrackingArea];
     }
-    // ActiveAlways, like the window's hover-reveal chrome.
+    // ActiveAlways, so the hover shows in an inactive window too.
     _hoverTrackingArea = [[NSTrackingArea alloc]
             initWithRect:NSZeroRect
                  options:NSTrackingActiveAlways | NSTrackingInVisibleRect |
@@ -440,7 +440,7 @@ static const CGFloat kWaveformDragHysteresis = 4;
 
 #pragma mark - Accessibility
 
-// A slider over the track: the only pointer seek. The shell labels it.
+// A slider over the track: the only pointer seek. The app labels it.
 
 - (BOOL)isAccessibilityElement {
     return YES;

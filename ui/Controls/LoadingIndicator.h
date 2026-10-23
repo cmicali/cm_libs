@@ -1,11 +1,11 @@
 //
 //  LoadingIndicator.h
-//  Vibe
+//  vibe-libs
 //
-//  The loading control, owned by both waveform views and — through
-//  LoadingIndicatorView — both platforms' row number gutters. It is pure
-//  CALayer work with no view, no window and no trait collection, so it is one
-//  object rather than one per platform, and the platforms cannot drift apart.
+//  The loading control. Both waveform views own one, and LoadingIndicatorView
+//  hosts one in a row's gutter on both platforms. It is pure CALayer work
+//  with no view, no window and no trait collection, so it is one object
+//  rather than one per platform, and the platforms cannot drift apart.
 //
 //  IT IS ONE CONTROL ACROSS TWO STYLES AND BOTH MODES, not a shimmer with a
 //  progress bar added: a faint track across the bounds it is given, a solid
@@ -64,9 +64,9 @@ NS_ASSUME_NONNULL_BEGIN
 // stalled download parked rather than creeping ahead of the truth.
 - (void)setProgress:(float)fraction inBounds:(CGRect)bounds;
 
-// Overrides the appearance-derived black/white base. The mac playlist forces
-// white in the number gutter, as it does for the EQ bars beside it. nil
-// returns to the appearance default. The waveform sites never set it.
+// Overrides the appearance-derived black/white base. A row may force white,
+// as it may for the equalizer bars beside it. nil returns to the appearance
+// default. The waveform sites never set it.
 @property (nonatomic, strong, nullable) VibeColor *colorOverride;
 
 // Re-asserts the palette after a light/dark flip, and the backing scale after

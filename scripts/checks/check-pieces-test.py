@@ -4,6 +4,7 @@ repo and expects check-pieces.py to fail with that rule's message.
 Usage: python3 -I scripts/checks/check-pieces-test.py   (from the repo root)
 """
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -75,6 +76,18 @@ def mac_only(root):
     replace(root, "docs/plan.md", LEAF_ROW, LEAF_MAC_ROW)
     replace(root, "project.yml", LEAF_IOS, "")
     replace(root, "project.yml", "        Analysis-iOS: all\n", "")
+
+
+def recount(root, path, word):
+    """Rewrites the piece count's word in one doc, or the sentence away."""
+    full = os.path.join(root, path)
+    text = open(full).read()
+    sentence = re.compile(r"The first [a-z]+(?:-[a-z]+)? pieces are here")
+    if not sentence.search(text):
+        raise AssertionError(f"{path}: the mutation's text is gone: the piece count")
+    new = f"The first {word} pieces are here" if word else "Some pieces are here"
+    with open(full, "w") as f:
+        f.write(sentence.sub(new, text, count=1))
 
 
 def ios_target_listing(root, listed):
@@ -215,6 +228,13 @@ CASES = [
     ("a tools piece with no AGENTS.md",
      lambda r: os.remove(os.path.join(r, "tools/strings/AGENTS.md")),
      "tools/strings: no AGENTS.md"),
+    # The count is whatever main holds, so the cases rewrite the word they find.
+    ("a README whose piece count is wrong",
+     lambda r: recount(r, "README.md", "one"),
+     'README.md: the piece count says "one"'),
+    ("an AGENTS.md with no piece count",
+     lambda r: recount(r, "AGENTS.md", None),
+     'AGENTS.md: no "The first <number> pieces are here" sentence'),
 ]
 
 
