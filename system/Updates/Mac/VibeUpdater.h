@@ -1,31 +1,34 @@
 //
-//  AppDelegate+Updates.h
-//  Vibe
+//  VibeUpdater.h
+//  vibe-libs
 //
-//  Sparkle, the direct download's updater (Mac/App/AGENTS.md, Updates).
+//  Sparkle for a direct-download build: the standard updater controller, and
+//  the updater's delegate. It is created unstarted, and the app starts it.
 //
 
-#if VIBE_DIRECT_DISTRIBUTION
-
-#import "AppDelegate.h"
+#import <Foundation/Foundation.h>
 #import <Sparkle/Sparkle.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface AppDelegate (Updates) <SPUUpdaterDelegate>
+@interface VibeUpdater : NSObject <SPUUpdaterDelegate>
 
-// Settings > General's check frequency in seconds, 0 for never. Sparkle
-// stores it, started or not.
-@property (nonatomic) NSTimeInterval updateCheckInterval;
+// feedURLString replaces the Info.plist's SUFeedURL when it is not nil.
+// betaUpdates is asked at every check, so a change needs no push.
+- (instancetype)initWithFeedURLString:(nullable NSString *)feedURLString
+                          betaUpdates:(BOOL (^)(void))betaUpdates NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
-// The updater controller, unstarted.
-- (SPUStandardUpdaterController *)makeUpdaterController;
+// The target of Check for Updates…, which validates it. Unstarted, it
+// refuses the check and logs.
+@property (nonatomic, readonly) SPUStandardUpdaterController *controller;
 
-// Starts it, except in a Debug build launched without --update-feed.
-- (void)startUpdaterIfConfigured;
+// The automatic check interval in seconds, 0 for never. Sparkle stores it,
+// started or not.
+@property (nonatomic) NSTimeInterval checkInterval;
+
+- (void)start;
 
 @end
 
 NS_ASSUME_NONNULL_END
-
-#endif
