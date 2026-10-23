@@ -4,7 +4,7 @@
 PROJECT := vibe-libs.xcodeproj
 DERIVED := build/DerivedData
 
-.PHONY: help project test build-ios consumer check-pieces analyze clean
+.PHONY: help project test build-ios consumer check-pieces test-strings analyze clean
 
 # Every target, with the first sentence of its comment.
 help:
@@ -37,6 +37,10 @@ consumer:
 check-pieces:
 	python3 -I scripts/checks/check-pieces.py
 	python3 -I scripts/checks/check-pieces-test.py
+
+# Runs the strings tools' self-test over a tiny app of their own.
+test-strings:
+	Tests/tools/strings/strings-test.sh
 
 # Runs clang's static analyzer over every piece's macOS test bundle, in Release by default.
 analyze: project

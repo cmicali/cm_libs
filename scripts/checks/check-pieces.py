@@ -3,7 +3,9 @@
 Usage: python3 -I scripts/checks/check-pieces.py [repo root]
 
 Reads the spec through `xcodegen dump`, so templates are read as XcodeGen
-reads them. A piece is a directory under one of the groups below.
+reads them. A piece is a directory under one of the groups below. A tools/
+piece is scripts: it has an AGENTS.md and a row in the map, and no template
+or target.
 
 For each piece:
   - it has an AGENTS.md, a row in the dependency map, and a template named
@@ -52,7 +54,7 @@ import re
 import subprocess
 import sys
 
-GROUPS = ["core", "files", "audio", "media", "waveform", "ui", "system", "dev", "third_party"]
+GROUPS = ["core", "files", "audio", "media", "waveform", "ui", "system", "dev", "tools", "third_party"]
 SOURCE = (".m", ".mm", ".c", ".cc", ".cpp")
 HEADER = (".h", ".hpp")
 CODE = SOURCE + HEADER
@@ -211,7 +213,8 @@ for piece in pieces:
     if piece not in allowed:
         fail(f"{piece}: missing from the dependency map in docs/plan.md")
     if template is None:
-        fail(f"{piece}: vibe-libs.yml has no template {name}")
+        if not piece.startswith("tools/"):
+            fail(f"{piece}: vibe-libs.yml has no template {name}")
         continue
     for source in template.get("sources", []):
         path = source if isinstance(source, str) else source.get("path", "")
