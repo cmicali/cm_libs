@@ -63,7 +63,6 @@ PIECES = [
     ("app", "Vibe/Mac/Controls/ArtworkImageView"),
     ("ui/Controls", "Vibe/Mac/Controls/"),
     ("ui/Controls", "Vibe/Controls/"),
-    ("system/NowPlaying", "Vibe/NowPlaying/"),
     ("system/AppOpening", "Vibe/Mac/App/OpenBurstCoalescer"),
     ("system/AppOpening", "Vibe/Mac/App/OpenRequestCoordinator"),
     ("media/FolderScan", "Vibe/iOS/Search/FileSearch"),
