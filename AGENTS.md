@@ -2,7 +2,7 @@
 
 Guidance for any coding agent working in this repository.
 
-vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first thirty-five pieces are here**: `core/Common`, `core/Graphics`, `files/FileLoading`, `files/DiskCache`, `audio/AudioTypes`, `audio/DSP`, `audio/Analysis`, `audio/OutputDevices`, `audio/FX`, `audio/Meter`, `audio/Decode`, `audio/Player`, `media/Tags`, `media/Metadata`, `media/PlayQueue`, `media/Playlists`, `media/FolderScan`, `waveform/Waveform`, `waveform/WaveformLoading`, `waveform/WaveformStyles`, `waveform/WaveformView`, `ui/Controls`, `ui/SettingsWindow`, `ui/Shortcuts`, `system/NowPlaying`, `tools/strings`, and nine vendored libraries under `third_party/`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
+vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces are being extracted from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, playlists, waveforms, controls, and app plumbing. **The first thirty-seven pieces are here**: `core/Common`, `core/Graphics`, `files/FileLoading`, `files/DiskCache`, `audio/AudioTypes`, `audio/DSP`, `audio/Analysis`, `audio/OutputDevices`, `audio/FX`, `audio/Meter`, `audio/Decode`, `audio/Player`, `media/Tags`, `media/Metadata`, `media/PlayQueue`, `media/Playlists`, `media/FolderScan`, `waveform/Waveform`, `waveform/WaveformLoading`, `waveform/WaveformStyles`, `waveform/WaveformView`, `ui/Controls`, `ui/SettingsWindow`, `ui/Shortcuts`, `system/NowPlaying`, `dev/DebugChannel`, `dev/iOSDriver`, `tools/strings`, and nine vendored libraries under `third_party/`. The plan for the rest is [docs/plan.md](docs/plan.md). Read it, and the `AGENTS.md` of every piece you touch, before changing anything here.
 
 ## Building
 
@@ -27,7 +27,7 @@ CI runs all six on every pull request.
 
 ## Pieces
 
-**A piece is one directory, one template in `vibe-libs.yml`, a macOS test bundle and an iOS target in `project.yml`, and one `AGENTS.md`.** A macOS-only piece, marked in the plan's map, has no iOS target. That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added. **A `tools/` piece is scripts**: one directory and one `AGENTS.md`, with no template and no targets. Its self-test has a make target, which CI runs.
+**A piece is one directory, one template in `vibe-libs.yml`, a macOS test bundle and an iOS target in `project.yml`, and one `AGENTS.md`.** A macOS-only piece, marked in the plan's map, has no iOS target. An iOS-only piece has no macOS test bundle. That is the whole cost of a new piece, audio or not. Nothing else in the repo changes when one is added. **A `tools/` piece is scripts**: one directory and one `AGENTS.md`, with no template and no targets. Its self-test has a make target, which CI runs.
 
 - **Pieces sit in groups by what they are about**: `core/`, `files/`, `audio/`, `media/`, `waveform/`, `ui/`, `system/`, `dev/`, `tools/`, and `third_party/`. A group is only a directory. It has no template and no build of its own.
 - **Anything general enough for another app to use belongs here, once a second app needs it.** Code that names an app's settings, strings, or model stays in the app.

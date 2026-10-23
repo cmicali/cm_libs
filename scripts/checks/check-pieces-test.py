@@ -67,6 +67,9 @@ EXCLUDE_MAC = "    templateAttributes:\n      excludedPlatform: Mac\n"
 EXCLUDE_IOS = "    templateAttributes:\n      excludedPlatform: iOS\n"
 DSP_IOS = "  DSP-iOS:\n    type: library.static\n    platform: iOS\n    templates: [VibeLibsDSP]\n" + EXCLUDE_MAC
 DSP_TESTS = "  DSPTests:\n    type: bundle.unit-test\n    platform: macOS\n    templates: [VibeLibsDSP]\n" + EXCLUDE_IOS
+# The iOS-only cases use the touch driver, the first such piece.
+DRIVER_SOURCE = "dev/iOSDriver/VibeiOSDriverTests.m"
+COMMON_TESTS_TEMPLATES = "  CommonTests:\n    type: bundle.unit-test\n    platform: macOS\n    templates: [VibeLibsCommon]"
 
 
 def mac_only(root):
@@ -174,6 +177,16 @@ CASES = [
      None),
     ("a macOS-only piece importing AppKit with no guard",
      lambda r: (mac_only(r), append(r, LEAF_SOURCE, "\n#import <AppKit/AppKit.h>\n")),
+     None),
+    ("a macOS target listing an iOS-only template",
+     lambda r: replace(r, "project.yml", COMMON_TESTS_TEMPLATES,
+                       COMMON_TESTS_TEMPLATES.replace("VibeLibsCommon]", "VibeLibsCommon, VibeLibsIOSDriver]")),
+     "CommonTests builds for macOS and lists VibeLibsIOSDriver, but dev/iOSDriver is iOS only"),
+    ("an iOS-only piece with a Mac/ half",
+     lambda r: write(r, "dev/iOSDriver/Mac/Thing.m", "int VibeThing(void) { return 0; }\n"),
+     "dev/iOSDriver is iOS only and has no Mac/ half"),
+    ("an iOS-only piece importing UIKit with no guard",
+     lambda r: append(r, DRIVER_SOURCE, "\n#import <UIKit/UIKit.h>\n"),
      None),
     ("a first-party template searching third_party/",
      lambda r: replace(r, "vibe-libs.yml", '"$(VIBE_LIBS_ROOT)/audio/DSP"]', '"$(VIBE_LIBS_ROOT)/audio/DSP", "$(VIBE_LIBS_ROOT)/third_party"]'),
