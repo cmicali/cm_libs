@@ -1,6 +1,6 @@
 //
 //  SettingsFormViews+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  The settings walker's seam: every control in a pane, each named by the
 //  form row it sits in. A row's title labels the controls beside it, and a

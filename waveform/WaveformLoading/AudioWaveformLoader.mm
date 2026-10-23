@@ -1,6 +1,6 @@
 //
 //  AudioWaveformLoader.mm
-//  Vibe
+//  vibe-libs
 //
 // One decode of one file, in four phases — the methods below, in the order
 // decode: calls them: open and validate, start the summary, run the
@@ -387,7 +387,7 @@ static inline uint64_t VibeLoadClockNow(void) {
     // drain, so no lock is needed. The phase accumulators are split by
     // ownership for the same reason: the processing side writes procNanos
     // and appendNanos, the decode loop writes only nanos->read.
-    dispatch_queue_t processQueue = dispatch_queue_create("com.vibe.waveform.process",
+    dispatch_queue_t processQueue = dispatch_queue_create("vibe-libs.waveformloading.process",
             dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
     __block VibeLoadPhaseNanos procNanos = {};
     // A local decode accumulates a full interval before its first snapshot.

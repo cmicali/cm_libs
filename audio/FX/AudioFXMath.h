@@ -1,6 +1,6 @@
 //
 //  AudioFXMath.h
-//  Vibe
+//  vibe-libs
 //
 //  The numbers AudioFX's toggles resolve to, tested without a pipeline.
 //

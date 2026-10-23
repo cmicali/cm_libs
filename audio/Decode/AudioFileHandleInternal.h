@@ -1,6 +1,6 @@
 //
 //  AudioFileHandleInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The private header AudioFileHandle.m and its decodes share: dr_mp3's
 //  (AudioFileHandle+MPEG.m), and dr_flac's, dr_wav's and libvorbis's

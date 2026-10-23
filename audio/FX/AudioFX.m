@@ -1,6 +1,6 @@
 //
 //  AudioFX.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioFX+Pipeline.h"

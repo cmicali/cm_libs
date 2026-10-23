@@ -1,6 +1,6 @@
 //
 //  AudioWorkScheduler.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioWorkScheduler.h"

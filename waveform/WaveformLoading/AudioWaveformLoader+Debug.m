@@ -1,6 +1,6 @@
 //
 //  AudioWaveformLoader+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioWaveformLoader+Debug.h"

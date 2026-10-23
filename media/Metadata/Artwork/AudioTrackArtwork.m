@@ -1,6 +1,6 @@
 //
 // AudioTrackArtwork.m
-// Vibe
+// vibe-libs
 //
 // One row's embedded-art state. Every transition takes the artwork monitor;
 // no monitor spans I/O or a decode.
@@ -24,7 +24,7 @@ static AudioWorkScheduler *VibeEmbeddedThumbnailDecodeScheduler(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         scheduler = [[AudioWorkScheduler alloc]
-                initWithLabel:@"com.vibe.embedded-thumbnail-decode"
+                initWithLabel:@"vibe-libs.metadata.embedded-thumbnail-decode"
                 qualityOfService:QOS_CLASS_USER_INITIATED
                 maximumRunningCount:kEmbeddedThumbnailDecodeRunningCount
                 maximumPendingCount:kEmbeddedThumbnailDecodePendingCount
@@ -40,7 +40,7 @@ ArtworkLoadRegistry *VibeSharedArtworkLoadRegistry(void) {
     @synchronized ([AudioTrackArtwork class]) {
         if (!sArtworkLoadRegistry) {
             AudioWorkScheduler *scheduler = [[AudioWorkScheduler alloc]
-                    initWithLabel:@"com.vibe.artwork"
+                    initWithLabel:@"vibe-libs.metadata.artwork"
                     qualityOfService:QOS_CLASS_USER_INITIATED
                     maximumRunningCount:kArtworkLoadMaximumRunningCount
                     maximumPendingCount:kArtworkLoadMaximumPendingCount

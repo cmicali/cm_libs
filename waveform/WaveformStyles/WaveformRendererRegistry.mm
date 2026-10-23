@@ -182,8 +182,8 @@ static AudioWaveform *VibePreviewWaveform(void) {
     return chosen != nil ? chosen.boolValue : [self readsBandsForIdentifier:identifier];
 }
 
-// Hosts the REAL renderer in a detached layer, so the Settings preview and the
-// widget strip cannot drift from what the views draw.
+// Hosts the REAL renderer in a detached layer, so a settings preview and a
+// widget's strip cannot drift from what the views draw.
 + (CGImageRef)newBakedImageForWaveform:(AudioWaveform *)waveform
                             identifier:(NSString *)identifier
                              pointSize:(CGSize)size scale:(CGFloat)scale

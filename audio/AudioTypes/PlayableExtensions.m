@@ -1,6 +1,6 @@
 //
 //  PlayableExtensions.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlayableExtensions.h"

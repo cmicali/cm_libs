@@ -1,6 +1,6 @@
 //
 //  CloudTransferRegistry.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "CloudTransferRegistry.h"

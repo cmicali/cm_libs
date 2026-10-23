@@ -1,6 +1,6 @@
 //
 //  SonicCirrusWaveformRenderer.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "SonicCirrusWaveformRenderer.h"

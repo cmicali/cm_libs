@@ -1,6 +1,6 @@
 //
 //  SettingsFormViews+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "SettingsFormViews+Debug.h"

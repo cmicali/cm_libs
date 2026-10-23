@@ -1,6 +1,6 @@
 //
 //  AudioLevelMeter.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioLevelMeter.h"

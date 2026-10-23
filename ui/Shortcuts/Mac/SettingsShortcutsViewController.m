@@ -1,6 +1,6 @@
 //
 //  SettingsShortcutsViewController.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "SettingsShortcutsViewController.h"

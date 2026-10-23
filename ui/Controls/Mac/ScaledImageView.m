@@ -1,6 +1,6 @@
 //
 //  ScaledImageView.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "ScaledImageView.h"

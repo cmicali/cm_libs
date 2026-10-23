@@ -1,6 +1,6 @@
 //
 //  AudioWaveform.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioWaveform.h"

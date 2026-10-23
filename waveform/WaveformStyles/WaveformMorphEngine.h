@@ -1,6 +1,6 @@
 //
 //  WaveformMorphEngine.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <QuartzCore/QuartzCore.h>

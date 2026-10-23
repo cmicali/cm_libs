@@ -1,6 +1,6 @@
 //
 //  CoreAudioUtil+BitPerfect.m
-//  Vibe
+//  vibe-libs
 //
 //  Bit-perfect output: transport, rate, physical format, volume, hog.
 //

@@ -1,6 +1,6 @@
 //
 //  FadeMath.h
-//  Vibe
+//  vibe-libs
 //
 //  Every fade exists because a gain step at a non-zero sample clicks. The
 //  ≤10 ms declick is linear, which keeps its per-sample step small at every

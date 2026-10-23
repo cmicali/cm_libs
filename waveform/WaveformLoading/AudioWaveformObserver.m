@@ -1,6 +1,6 @@
 //
 //  AudioWaveformObserver.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioWaveformObserver.h"

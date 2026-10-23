@@ -1,6 +1,6 @@
 //
 //  AudioVarispeedTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The pitch stage on its own, through its C API, against a sawtooth ramp:
 //  each source frame's value is its position in a period of 65536 frames,

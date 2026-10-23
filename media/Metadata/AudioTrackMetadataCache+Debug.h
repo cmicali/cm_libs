@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataCache+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  What the health oracle reads from background metadata materialization.
 //  The Debug category is declaration-only: the shipping class implements it.

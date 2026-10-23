@@ -1,6 +1,6 @@
 //
 //  CloudFileMaterializerInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The state and calls the debug seam's fake transfer shares with the real
 //  ones (CloudFileMaterializer+Debug.m).

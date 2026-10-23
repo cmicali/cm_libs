@@ -1,6 +1,6 @@
 //
 //  DrawnControls.h
-//  Vibe
+//  vibe-libs
 //
 //  TRAP: use custom drawing to avoid AppKit's SwiftUI control hosts and
 //  their Metal startup cost on macOS 26. See this piece's AGENTS.md.

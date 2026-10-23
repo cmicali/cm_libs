@@ -1,6 +1,6 @@
 //
 //  FLACFixtures.h
-//  Vibe
+//  vibe-libs
 //
 //  What the embedded-sheet reader reads: VibeWriteFLACHeader writes a FLAC's
 //  metadata blocks, and VibeFLACCueSheetBlock a binary CUESHEET block. They

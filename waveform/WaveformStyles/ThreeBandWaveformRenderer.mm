@@ -1,6 +1,6 @@
 //
 //  ThreeBandWaveformRenderer.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "ThreeBandWaveformRenderer.h"

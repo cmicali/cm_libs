@@ -1,6 +1,6 @@
 //
 //  PlaceholderFiles+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  The dataless probe: makes chosen files answer isDatalessFile: as
 //  placeholders, so a stress run can drive the cloud lane with no file provider

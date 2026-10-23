@@ -1,6 +1,6 @@
 //
 //  CupertinoWaveformRenderer.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "CupertinoWaveformRenderer.h"

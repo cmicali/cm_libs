@@ -1,6 +1,6 @@
 //
 //  CoreAudioUtilInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The HAL helpers CoreAudioUtil.m shares with its +BitPerfect and
 //  +Diagnostics categories.

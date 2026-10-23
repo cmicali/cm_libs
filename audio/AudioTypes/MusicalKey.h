@@ -1,6 +1,6 @@
 //
 //  MusicalKey.h
-//  Vibe
+//  vibe-libs
 //
 //  A key is one NSInteger: pitch class 0-11 (C..B) for major, 12 + pitch
 //  class for minor, VibeMusicalKeyNone when unknown. The encoding is archived

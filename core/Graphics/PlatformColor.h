@@ -1,6 +1,6 @@
 //
 //  PlatformColor.h
-//  Vibe
+//  vibe-libs
 //
 //  #RRGGBB[AA] hex ↔ VibeColor, the persisted form of a stored color. Free
 //  functions because the class differs per platform.

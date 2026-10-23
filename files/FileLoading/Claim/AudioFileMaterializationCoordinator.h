@@ -1,6 +1,6 @@
 //
 //  AudioFileMaterializationCoordinator.h
-//  Vibe
+//  vibe-libs
 //
 //  One path-keyed claim from dataless placeholder to an open handle: stage 1
 //  makes the contents readable, stage 2 is the purpose-keyed handle opens riding

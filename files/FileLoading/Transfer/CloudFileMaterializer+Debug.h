@@ -1,6 +1,6 @@
 //
 //  CloudFileMaterializer+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  A stand-in transfer of a fixed duration, for stress runs with no file
 //  provider in reach: materializeURL: waits instead of coordinating a read, and

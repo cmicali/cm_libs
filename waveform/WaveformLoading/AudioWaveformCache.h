@@ -1,6 +1,6 @@
 //
 //  AudioWaveformCache.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Foundation/Foundation.h>
@@ -32,12 +32,12 @@ typedef VibeWaveformAnalysis (^VibeWaveformAnalysisProvider)(void);
 // the lookup and the decode agree. Unset is none of it. A cached entry
 // without the bands or an observer's result misses for a request asking for
 // it, so an owner that comes to want more asks for its track again
-// (AGENTS.md).
+// (this piece's AGENTS.md).
 @property (nullable, copy) VibeWaveformAnalysisProvider analysisProvider;
 
 // The PINCache store name, derived from the entry format version; see the
 // implementation. It is the single source for init and for anything that
-// reports the name, such as the debug clear_caches reply.
+// reports the name, such as a debug report.
 + (NSString *)cacheName;
 
 // The store under rootPath rather than the user's caches: the tests' own.

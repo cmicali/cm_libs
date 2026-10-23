@@ -1,6 +1,6 @@
 //
 //  SettingsPaneViewController.h
-//  Vibe
+//  vibe-libs
 //
 //  A pane subclass builds its sections (SettingsFormViews.h) in loadView,
 //  hands them to loadPaneWithSections:, and reloads control state in

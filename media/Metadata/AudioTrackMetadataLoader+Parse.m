@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataLoader+Parse.m
-//  Vibe
+//  vibe-libs
 //
 //  Stage 2 and the cache: the disk-cache read, the parse and its cache write,
 //  installation, settlement and publication, and the display-art
