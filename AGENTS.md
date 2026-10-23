@@ -12,7 +12,7 @@ The Xcode project is generated from `project.yml` by XcodeGen and is not checked
 | --- | --- |
 | `make test` | Every piece's tests on macOS, Debug, each piece built with the headermap off and no prefix header. |
 | `make build-ios` | Every piece built for the iOS simulator, so an AppKit leak fails. |
-| `make check-pieces` | The piece rules below, the dependency map in the plan, each target's excluded platform, no `#if DEBUG` in a header, the other app's name nowhere, no merge conflict marker, and the piece count this file and the README give. Then it breaks each rule in a copy of the repo and fails unless the check catches it. |
+| `make check-pieces` | The piece rules below, the dependency map in the plan, each target's excluded platform, no `#if DEBUG` in a header, the other app's name nowhere, no merge conflict marker, and the piece count this file and the README give. Then it breaks each rule in a copy of the repo and fails unless the check catches it. Last, it tests the message filter a move runs. |
 | `make consumer` | A minimal app outside this repo's project includes `vibe-libs.yml` as an app would, builds with no prefix header and no headermap, and runs. |
 | `make test-strings` | The strings tools' self-test, over a tiny app of their own. |
 | `make analyze [CONFIG=Debug]` | clang's static analyzer over every piece's macOS test bundle, Release by default. It fails on any finding outside `third_party/`. |
@@ -49,7 +49,7 @@ CI runs all six on every pull request.
 ## How work moves between the repos
 
 - **Decoupling happens in Vibe first**, under Vibe's gates. Then a move here is mechanical.
-- **A move carries history with `git filter-repo`.** It arrives as one merge with `--allow-unrelated-histories`.
+- **A move carries history with `git filter-repo`.** It arrives as one merge with `--allow-unrelated-histories`. Its message callback, `scripts/plan/filter-messages.py`, rewrites `Closes #45` as `Closes Vibe #45`, and every other closing keyword before `#<number>` the same way (the plan's recipe, in The work, in order).
 - **A move is measured, not assumed free.** Between fixed before and after commits, Vibe's `perf.py compare` keeps each affected benchmark's retired instructions inside its own no-change band, and the pull request reports every outlier and rerun. Vibe's `make test-audio` time stays within noise. The plan's build audit compares what every target compiles.
 - **A change across the repos lands here first**, then in the consumer's pin, then through the consumer's gates. The old pin is the rollback.
 
