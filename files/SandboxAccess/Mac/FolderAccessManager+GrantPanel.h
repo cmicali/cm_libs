@@ -1,6 +1,6 @@
 //
 //  FolderAccessManager+GrantPanel.h
-//  Vibe
+//  vibe-libs
 //
 //  The one place a grant is ASKED for: the folder picker a playlist file
 //  raises when its entries lie outside every grant. A modal run loop that

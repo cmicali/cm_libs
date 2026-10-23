@@ -1,6 +1,6 @@
 //
 //  OpenBurstCoalescer.h
-//  Vibe
+//  vibe-libs
 //
 //  Launch Services can split one multi-file open into several events, and a
 //  burst can straddle launch. The first batch replaces and plays at once;

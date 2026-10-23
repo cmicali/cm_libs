@@ -1,6 +1,6 @@
 //
 //  FolderAccessManager.h
-//  Vibe
+//  vibe-libs
 //
 //  Every folder the user opens, drops or adds is stored as an app-scoped
 //  security bookmark and re-opened at launch. ~/Music needs none: the app's

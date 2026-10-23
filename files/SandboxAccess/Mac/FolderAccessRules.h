@@ -1,6 +1,6 @@
 //
 //  FolderAccessRules.h
-//  Vibe
+//  vibe-libs
 //
 //  Path-coverage rules, testable without the manager or the sandbox.
 //

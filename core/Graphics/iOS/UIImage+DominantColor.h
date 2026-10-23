@@ -1,6 +1,6 @@
 //
 //  UIImage+DominantColor.h
-//  Vibe (iOS)
+//  vibe-libs
 //
 
 #import <UIKit/UIKit.h>

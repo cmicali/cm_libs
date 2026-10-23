@@ -1,6 +1,6 @@
 //
 //  AudioSessionController.h
-//  Vibe (iOS)
+//  vibe-libs
 //
 //  The iOS audio session for a player: activation and idle release, and the
 //  route, interruption and media-services events, each mapped to a delegate

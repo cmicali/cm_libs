@@ -1,6 +1,6 @@
 //
 //  FolderAccessManager.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "FolderAccessManagerInternal.h"

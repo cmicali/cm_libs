@@ -1,6 +1,6 @@
 //
 //  FolderAccessManager+GrantPanel.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "FolderAccessManager+GrantPanel.h"
