@@ -48,7 +48,7 @@
 //  defaults suite of its own, and checks that a new temporary folder is not
 //  readable (SandboxAccess.m).
 //  Coalesces an open split into batches into one ordered open, through the
-//  open coordinator (AppOpening.m). Exits 0 when all thirty-two hold.
+//  open coordinator (AppOpening.m). Exits 0 when all thirty-three hold.
 //
 
 #import <Foundation/Foundation.h>
