@@ -39,6 +39,38 @@ FOUNDATION_EXPORT NSNotificationName const AudioTrackMetadataThumbnailDidLoadNot
 // it, since the zero default is C major.
 @property (assign, readonly) VibeMusicalKey key;
 
+// The album's tags, as tagged. Every number is 0 when untagged. The year is
+// the date tag's leading year. A count comes from "3/12" or from its own tag.
+@property (copy, nullable, readonly) NSString *album;
+@property (copy, nullable, readonly) NSString *albumArtist;
+@property (copy, nullable, readonly) NSString *genre;
+@property (copy, nullable, readonly) NSString *composer;
+@property (assign, readonly) NSInteger year;
+@property (assign, readonly) NSInteger trackNumber;
+@property (assign, readonly) NSInteger trackCount;
+@property (assign, readonly) NSInteger discNumber;
+@property (assign, readonly) NSInteger discCount;
+@property (readonly, getter=isCompilation) BOOL compilation;
+
+// The identifiers a file may carry: MusicBrainz's release and recording, and
+// the recording's ISRC. nil when untagged.
+@property (copy, nullable, readonly) NSString *musicBrainzReleaseID;
+@property (copy, nullable, readonly) NSString *musicBrainzRecordingID;
+@property (copy, nullable, readonly) NSString *isrc;
+
+// The loudness tags, nil when untagged. Gains are in dB, and peaks are
+// linear, with 1 at full scale. Each gain keeps its own reference level.
+// ReplayGain's track and album gain and peak:
+@property (copy, nullable, readonly) NSNumber *replayGainTrackGain;
+@property (copy, nullable, readonly) NSNumber *replayGainTrackPeak;
+@property (copy, nullable, readonly) NSNumber *replayGainAlbumGain;
+@property (copy, nullable, readonly) NSNumber *replayGainAlbumPeak;
+// Opus's R128 gains, toward -23 LUFS, on top of the header's output gain:
+@property (copy, nullable, readonly) NSNumber *r128TrackGain;
+@property (copy, nullable, readonly) NSNumber *r128AlbumGain;
+// Apple's Sound Check, the gain its iTunNORM tag gives:
+@property (copy, nullable, readonly) NSNumber *soundCheckGain;
+
 // YES after a completed TagLib or CoreAudio parse. Never cache a NO instance:
 // its fallback or partial facts would shadow real tags until the key changes.
 @property (readonly) BOOL parsedOK;
