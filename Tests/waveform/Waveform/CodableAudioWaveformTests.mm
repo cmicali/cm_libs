@@ -1,6 +1,6 @@
 //
 //  CodableAudioWaveformTests.mm
-//  VibeTests
+//  vibe-libs
 //
 //  The cache entry: the summary's archive under its version, and the
 //  observers' results that ride along, each a property-list object under its
