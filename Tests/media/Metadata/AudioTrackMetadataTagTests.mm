@@ -3,8 +3,9 @@
 //  The metadata tests
 //
 //  The real tag parse over the real TagLib: each format's tags and facts, the
-//  tagged tempo and key, embedded art through the bounded decode, and the
-//  parse of a file whose extension misleads. vibe-libs' media/Tags tests the
+//  tagged tempo and key, each tag field alone and all of them at once, FLAC's
+//  audio MD5, embedded art through the bounded decode, and the parse of a file
+//  whose extension misleads. vibe-libs' media/Tags tests the
 //  detection itself. Every file is written here
 //  (AudioTrackMetadataTagFixtures.h), except Ogg's audio, which comes from the
 //  generated fixtures VIBE_AUDIO_FIXTURES names. Those tests skip without them.
@@ -16,6 +17,8 @@
 #import "AudioTrackMetadataTagFixtures.h"
 #import "PlatformImage.h"
 #import "CloudFileMaterializer.h"
+
+#import <CommonCrypto/CommonDigest.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -93,6 +96,91 @@ static VibeEmbeddedArtExtractionResult Extract(NSURL *url, NSData *__autoreleasi
     return VibeTagLibArtExtractor()(url.path, art);
 }
 
+// The metadata cache's own round trip: PINDiskCache's default archive, and
+// its unarchive without secure coding.
+static AudioTrackMetadata *CacheRoundTrip(AudioTrackMetadata *metadata) {
+    NSData *archive = [NSKeyedArchiver archivedDataWithRootObject:metadata requiringSecureCoding:NO error:NULL];
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:archive error:NULL];
+    unarchiver.requiresSecureCoding = NO;
+    return [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+}
+
+// The MD5 FLAC's STREAMINFO holds for the fixtures' tone: its samples
+// interleaved, little-endian, two bytes each.
+static NSData *ToneMD5(void) {
+    AVAudioPCMBuffer *tone = VibeToneBuffer(22050, 44100, 2, AVAudioPCMFormatInt16);
+    uint8_t digest[CC_MD5_DIGEST_LENGTH];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    CC_MD5(tone.int16ChannelData[0], (CC_LONG)(tone.frameLength * 2 * sizeof(int16_t)), digest);
+#pragma clang diagnostic pop
+    return [NSData dataWithBytes:digest length:sizeof digest];
+}
+
+// Every field in `tagged` reads as the fixtures write it. Every other field
+// reads as untagged: nil, 0, or NO.
+- (void)assertFields:(NSIndexSet *)tagged of:(AudioTrackMetadata *)metadata fixture:(VibeTagFixture)fixture
+               label:(NSString *)label {
+    BOOL counts = VibeTagFixtureHasCounts(fixture);
+    for (NSInteger index = 0; index < VibeTagFieldCount; index++) {
+        VibeTagField field = (VibeTagField)index;
+        BOOL on = [tagged containsIndex:(NSUInteger)field];
+        NSString *name = [NSString stringWithFormat:@"%@: %@", label, VibeTagFieldName(field)];
+        void (^text)(NSString *, NSString *) = ^(NSString *value, NSString *expected) {
+            XCTAssertEqualObjects(value, on ? expected : nil, @"%@", name);
+        };
+        void (^number)(NSNumber *, double) = ^(NSNumber *value, double expected) {
+            if (on) {
+                XCTAssertNotNil(value, @"%@", name);
+                XCTAssertEqualWithAccuracy(value.doubleValue, expected, 1e-9, @"%@", name);
+            }
+            else {
+                XCTAssertNil(value, @"%@", name);
+            }
+        };
+        switch (field) {
+            case VibeTagFieldAlbum: text(metadata.album, kVibeTagAlbum); break;
+            case VibeTagFieldAlbumArtist: text(metadata.albumArtist, kVibeTagAlbumArtist); break;
+            case VibeTagFieldGenre: text(metadata.genre, kVibeTagGenre); break;
+            case VibeTagFieldComposer: text(metadata.composer, kVibeTagComposer); break;
+            case VibeTagFieldYear: XCTAssertEqual(metadata.year, on ? kVibeTagYear : 0, @"%@", name); break;
+            case VibeTagFieldTrack:
+                XCTAssertEqual(metadata.trackNumber, on ? 3 : 0, @"%@", name);
+                XCTAssertEqual(metadata.trackCount, on && counts ? 12 : 0, @"%@", name);
+                break;
+            case VibeTagFieldDisc:
+                XCTAssertEqual(metadata.discNumber, on ? 1 : 0, @"%@", name);
+                XCTAssertEqual(metadata.discCount, on ? 2 : 0, @"%@", name);
+                break;
+            case VibeTagFieldCompilation: XCTAssertEqual(metadata.isCompilation, on, @"%@", name); break;
+            case VibeTagFieldReleaseID: text(metadata.musicBrainzReleaseID, kVibeTagReleaseID); break;
+            case VibeTagFieldRecordingID: text(metadata.musicBrainzRecordingID, kVibeTagRecordingID); break;
+            case VibeTagFieldISRC: text(metadata.isrc, kVibeTagISRC); break;
+            case VibeTagFieldReplayGainTrackGain: number(metadata.replayGainTrackGain, -6.54); break;
+            case VibeTagFieldReplayGainTrackPeak: number(metadata.replayGainTrackPeak, 0.988547); break;
+            case VibeTagFieldReplayGainAlbumGain: number(metadata.replayGainAlbumGain, 1.25); break;
+            case VibeTagFieldReplayGainAlbumPeak: number(metadata.replayGainAlbumPeak, 1); break;
+            case VibeTagFieldR128TrackGain: number(metadata.r128TrackGain, -1234 / 256.0); break;
+            case VibeTagFieldR128AlbumGain: number(metadata.r128AlbumGain, -2); break;
+            case VibeTagFieldSoundCheck: number(metadata.soundCheckGain, kVibeTagSoundCheckGain); break;
+            case VibeTagFieldCount: break;
+        }
+    }
+}
+
+// The fields `fixture` carries.
+static NSIndexSet *CarriedFields(VibeTagFixture fixture) {
+    NSMutableIndexSet *fields = [NSMutableIndexSet indexSet];
+    for (NSInteger field = 0; field < VibeTagFieldCount; field++) {
+        if (VibeTagFixtureCarries(fixture, (VibeTagField)field)) [fields addIndex:(NSUInteger)field];
+    }
+    return fields;
+}
+
+static BOOL IsFLAC(VibeTagFixture fixture) {
+    return fixture == VibeTagFixtureFLAC || fixture == VibeTagFixtureFLACCueSheet;
+}
+
 - (void)assertFixture:(VibeTagFixture)fixture fileType:(VibeAudioFileFormat)fileType rate:(int)rate
              duration:(NSTimeInterval)duration {
     NSURL *url = [self write:fixture art:sArt];
@@ -121,6 +209,19 @@ static VibeEmbeddedArtExtractionResult Extract(NSURL *url, NSData *__autoreleasi
         XCTAssertEqual(metadata.bpm, 0.0f, @"%@", name);
         XCTAssertEqual(metadata.key, VibeMusicalKeyNone, @"%@: untagged is None, never C major", name);
     }
+
+    // Every field the format carries, at once, and through the cache's
+    // archive and a copy.
+    NSIndexSet *fields = CarriedFields(fixture);
+    [self assertFields:fields of:metadata fixture:fixture label:name];
+    AudioTrackMetadata *restored = CacheRoundTrip(metadata);
+    XCTAssertNotNil(restored, @"%@", name);
+    [self assertFields:fields of:restored fixture:fixture label:[name stringByAppendingString:@" archived"]];
+    [self assertFields:fields of:[metadata copy] fixture:fixture label:[name stringByAppendingString:@" copied"]];
+    NSData *md5 = IsFLAC(fixture) ? ToneMD5() : nil;
+    XCTAssertEqualObjects(metadata.audioMD5, md5, @"%@", name);
+    XCTAssertEqualObjects(restored.audioMD5, md5, @"%@ archived", name);
+    XCTAssertEqualObjects(((AudioTrackMetadata *)[metadata copy]).audioMD5, md5, @"%@ copied", name);
 
     NSData *extracted = nil;
     VibeEmbeddedArtExtractionResult result = Extract(url, &extracted);
@@ -247,6 +348,129 @@ static const NSTimeInterval kMP3Duration = 38 * 1152 / 44100.0;
 
 - (void)testW64 {
     [self assertFixture:VibeTagFixtureW64 fileType:VibeAudioFileFormatW64 rate:44100 duration:0.5];
+}
+
+#pragma mark - Each field alone
+
+// The field alone, in each format that carries it, so no other field's tag
+// can answer for it. Ogg's formats need the render fixtures. Without them
+// only FLAC's Xiph comment is read here.
+- (void)assertFieldAlone:(VibeTagField)field {
+    NSUInteger formats = 0;
+    for (NSInteger index = 0; index < VibeTagFixtureCount; index++) {
+        VibeTagFixture fixture = (VibeTagFixture)index;
+        if (!VibeTagFixtureCarries(fixture, field)) {
+            continue;
+        }
+        NSString *label = [NSString stringWithFormat:@"%@ alone in %@", VibeTagFieldName(field),
+                                                     VibeTagFixtureName(fixture)];
+        NSURL *url = VibeWriteTagFieldFixture(_dir, fixture, field);
+        if (!url && (fixture == VibeTagFixtureVorbis || fixture == VibeTagFixtureOpus)) {
+            continue;
+        }
+        XCTAssertNotNil(url, @"%@", label);
+        AudioTrackMetadata *metadata = Parse(url, NULL);
+        XCTAssertTrue(metadata.parsedOK, @"%@", label);
+        NSIndexSet *tagged = [NSIndexSet indexSetWithIndex:(NSUInteger)field];
+        [self assertFields:tagged of:metadata fixture:fixture label:label];
+        [self assertFields:tagged of:CacheRoundTrip(metadata) fixture:fixture
+                     label:[label stringByAppendingString:@" archived"]];
+        formats++;
+    }
+    XCTAssertGreaterThan(formats, 0u, @"%@", VibeTagFieldName(field));
+}
+
+- (void)testAlbum { [self assertFieldAlone:VibeTagFieldAlbum]; }
+- (void)testAlbumArtist { [self assertFieldAlone:VibeTagFieldAlbumArtist]; }
+- (void)testGenre { [self assertFieldAlone:VibeTagFieldGenre]; }
+- (void)testComposer { [self assertFieldAlone:VibeTagFieldComposer]; }
+- (void)testYear { [self assertFieldAlone:VibeTagFieldYear]; }
+- (void)testTrackNumberAndCount { [self assertFieldAlone:VibeTagFieldTrack]; }
+- (void)testDiscNumberAndCount { [self assertFieldAlone:VibeTagFieldDisc]; }
+- (void)testCompilation { [self assertFieldAlone:VibeTagFieldCompilation]; }
+- (void)testMusicBrainzReleaseID { [self assertFieldAlone:VibeTagFieldReleaseID]; }
+- (void)testMusicBrainzRecordingID { [self assertFieldAlone:VibeTagFieldRecordingID]; }
+- (void)testISRC { [self assertFieldAlone:VibeTagFieldISRC]; }
+- (void)testReplayGainTrackGain { [self assertFieldAlone:VibeTagFieldReplayGainTrackGain]; }
+- (void)testReplayGainTrackPeak { [self assertFieldAlone:VibeTagFieldReplayGainTrackPeak]; }
+- (void)testReplayGainAlbumGain { [self assertFieldAlone:VibeTagFieldReplayGainAlbumGain]; }
+- (void)testReplayGainAlbumPeak { [self assertFieldAlone:VibeTagFieldReplayGainAlbumPeak]; }
+- (void)testR128TrackGain { [self assertFieldAlone:VibeTagFieldR128TrackGain]; }
+- (void)testR128AlbumGain { [self assertFieldAlone:VibeTagFieldR128AlbumGain]; }
+- (void)testSoundCheck { [self assertFieldAlone:VibeTagFieldSoundCheck]; }
+
+// STREAMINFO's MD5 is the decoded audio's. An encoder that computed none
+// writes zeros, which read as no MD5.
+- (void)testFLACAudioMD5 {
+    NSURL *url = [self write:VibeTagFixtureFLAC art:sArt];
+    XCTAssertEqualObjects(Parse(url, NULL).audioMD5, ToneMD5());
+    NSMutableData *bytes = [NSMutableData dataWithContentsOfURL:url];
+    // fLaC, the block header, then STREAMINFO, whose MD5 starts at its byte 18.
+    XCTAssertEqual(memcmp((const uint8_t *)bytes.bytes + 26, ToneMD5().bytes, 16), 0, @"the fixture's layout moved");
+    [bytes resetBytesInRange:NSMakeRange(26, 16)];
+    XCTAssertTrue([bytes writeToURL:url atomically:NO]);
+    AudioTrackMetadata *metadata = Parse(url, NULL);
+    XCTAssertTrue(metadata.parsedOK);
+    XCTAssertNil(metadata.audioMD5);
+}
+
+// A tag that holds no number reads as untagged, and a count may stand alone.
+- (void)testUnreadableFieldValuesStayUntagged {
+    NSURL *url = [self write:VibeTagFixtureFLAC art:sArt];
+    {
+        TagLib::FLAC::File file(url.fileSystemRepresentation);
+        TagLib::PropertyMap properties = file.properties();
+        for (const char *key : {"DATE", "TRACKNUMBER", "DISCNUMBER", "COMPILATION", "REPLAYGAIN_TRACK_GAIN",
+                                "REPLAYGAIN_TRACK_PEAK", "R128_TRACK_GAIN"}) {
+            properties[key] = TagLib::StringList("none");
+        }
+        properties["R128_ALBUM_GAIN"] = TagLib::StringList("40000");
+        properties["DISCTOTAL"] = TagLib::StringList("0");
+        properties["ALBUM"] = TagLib::StringList(" ");
+        file.setProperties(properties);
+        XCTAssertTrue(file.save());
+    }
+    AudioTrackMetadata *metadata = Parse(url, NULL);
+    XCTAssertTrue(metadata.parsedOK);
+    XCTAssertNil(metadata.album, @"whitespace is no album");
+    XCTAssertEqual(metadata.year, 0);
+    XCTAssertEqual(metadata.trackNumber, 0);
+    XCTAssertEqual(metadata.trackCount, 12, @"its own tag still counts");
+    XCTAssertEqual(metadata.discNumber, 0);
+    XCTAssertEqual(metadata.discCount, 0);
+    XCTAssertFalse(metadata.isCompilation);
+    XCTAssertNil(metadata.replayGainTrackGain);
+    XCTAssertNil(metadata.replayGainTrackPeak);
+    XCTAssertNil(metadata.r128TrackGain);
+    XCTAssertNil(metadata.r128AlbumGain, @"past Q7.8's range");
+}
+
+// Sound Check's louder channel sets the gain. All zero, or fewer than two
+// words, is no gain.
+- (void)testSoundCheckReadsTheLouderChannel {
+    NSURL *url = [self write:VibeTagFixtureM4A art:sArt];
+    NSDictionary<NSString *, NSNumber *> *cases = @{
+            @" 000007D0 000003E8": @(kVibeTagSoundCheckGain),
+            @"00000064 00000064 0 0 0 0 0 0 0 0": @(10.0),
+            @" 00000000 00000000": @(NAN),
+            @"000003E8": @(NAN),
+            @"loud": @(NAN),
+    };
+    for (NSString *value in cases) {
+        {
+            TagLib::MP4::File file(url.fileSystemRepresentation);
+            file.tag()->setItem("----:com.apple.iTunes:iTunNORM",
+                                TagLib::MP4::Item(TagLib::StringList(VibeTagString(value))));
+            XCTAssertTrue(file.save());
+        }
+        NSNumber *gain = Parse(url, NULL).soundCheckGain;
+        if (isnan(cases[value].doubleValue)) {
+            XCTAssertNil(gain, @"%@", value);
+        }
+        else {
+            XCTAssertEqualWithAccuracy(gain.doubleValue, cases[value].doubleValue, 1e-9, @"%@", value);
+        }
+    }
 }
 
 #pragma mark - Tags beat analysis
