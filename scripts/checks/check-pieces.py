@@ -22,6 +22,10 @@ For each piece:
     no iOS/ directory, its template need not exclude one, and its files
     import AppKit with no platform guard. It may keep its files in a Mac/
     half, so the shared files it gains later move nothing.
+  - a piece whose map row ends in "iOS only" is the mirror: no macOS target
+    lists its template, so it has no macOS test bundle. Its iOS target is
+    its build. It has no Mac/ directory, and its files import UIKit with no
+    platform guard.
   - every header is compiled by one of its sources or tests. A header-only
     piece imports its headers from its tests.
   - every include, quoted or angled, resolves as the compiler would: its own
@@ -141,6 +145,7 @@ plan = open("docs/plan.md").read()
 section = re.search(r"^### The dependency map\n(.*?)(?=^\*\*|^#)", plan, re.M | re.S)
 allowed = {}
 mac_only = set()   # the pieces whose row ends in "macOS only"
+ios_only = set()   # the pieces whose row ends in "iOS only"
 every_other_third_party = None
 for name, deps in re.findall(r"^\| (.+?) \| (.+?) \|$", section.group(1) if section else "", re.M):
     named = re.findall(r"\b[a-z_]+/[A-Za-z0-9_]+\b", deps)
@@ -150,6 +155,8 @@ for name, deps in re.findall(r"^\| (.+?) \| (.+?) \|$", section.group(1) if sect
         allowed[name] = set(named)
         if re.search(r"\bmacOS only\s*$", deps):
             mac_only.add(name)
+        elif re.search(r"\biOS only\s*$", deps):
+            ios_only.add(name)
 if not allowed:
     fail("docs/plan.md: no dependency map found under '### The dependency map'")
 for piece in pieces:
@@ -224,7 +231,7 @@ for piece in pieces:
         if not inside(path, piece):
             fail(f"vibe-libs.yml: {name} compiles {path}, outside {piece}")
         excludes = [] if isinstance(source, str) else source.get("excludes", [])
-        if first_party(piece) and piece not in mac_only and "${excludedPlatform}/**" not in excludes:
+        if first_party(piece) and piece not in mac_only | ios_only and "${excludedPlatform}/**" not in excludes:
             fail(f"vibe-libs.yml: {name}'s source {path} does not exclude ${{excludedPlatform}}/**")
     paths = template.get("settings", {}).get("base", {}).get("HEADER_SEARCH_PATHS", [])
     for entry in [paths] if isinstance(paths, str) else paths:
@@ -272,17 +279,20 @@ def reached_by(listed):
     return through
 
 
-# No iOS target builds a macOS-only piece, directly or through a stack.
+# No iOS target builds a macOS-only piece, and no macOS target an iOS-only
+# one, directly or through a stack.
+ONLY = {"iOS": (mac_only, "macOS"), "macOS": (ios_only, "iOS")}
 for target, v in sorted(targets.items()):
-    if v.get("platform") != "iOS":
+    if v.get("platform") not in ONLY:
         continue
+    banned, other = ONLY[v["platform"]]
     reached = reached_by(v.get("templates", []))
-    for piece in sorted(mac_only):
+    for piece in sorted(banned):
         name = template_name(piece)
         if name in reached:
             via = reached[name]
             how = f"reaches {name} through {via}" if via else f"lists {name}"
-            fail(f"project.yml: {target} builds for iOS and {how}, but {piece} is macOS only")
+            fail(f"project.yml: {target} builds for {v['platform']} and {how}, but {piece} is {other} only")
 
 
 # Every target that builds a first-party piece names the platform it leaves
@@ -395,6 +405,8 @@ for piece in pieces:
                     here = os.path.relpath(os.path.join(dirpath, d), directory)
                     if d == "iOS" and piece in mac_only:
                         fail(f"{os.path.join(dirpath, d)}: {piece} is macOS only and has no iOS/ half")
+                    elif d == "Mac" and piece in ios_only:
+                        fail(f"{os.path.join(dirpath, d)}: {piece} is iOS only and has no Mac/ half")
                     elif d in PLATFORMS and os.sep in here:
                         fail(f"{os.path.join(dirpath, d)}: a platform half sits at the top of its piece, where the template's exclude reaches it")
                     elif d not in PLATFORMS and LOOKALIKE.match(d):
@@ -411,6 +423,8 @@ for piece in pieces:
                     fail(f"{f}:{number}: imports {spelling} in the {platform}/ half")
                 elif piece in mac_only and wants == "Mac":
                     pass   # the piece never builds for iOS
+                elif piece in ios_only and wants == "iOS":
+                    pass   # the piece never builds for macOS
                 elif not platform and not guarded_for(stack, wants):
                     fail(f"{f}:{number}: a shared file imports {spelling} with no platform guard")
             found = resolve(spelling, quoted, f)
@@ -454,7 +468,7 @@ for piece in pieces:
         bundles = [t for t, v in targets.items() if v.get("type") == "bundle.unit-test"
                    and v.get("platform") == "macOS" and name in v.get("templates", [])
                    and any((s if isinstance(s, str) else s.get("path")) == test_dir for s in v.get("sources", []))]
-        if not bundles:
+        if not bundles and piece not in ios_only:
             fail(f"{piece}: no macOS test bundle in project.yml lists {name} and compiles {test_dir}")
         if piece not in mac_only and not [t for t, v in targets.items() if v.get("platform") == "iOS"
                                            and name in v.get("templates", [])]:

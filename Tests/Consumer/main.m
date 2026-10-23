@@ -35,7 +35,8 @@
 //  when they leave their window. Plays another WAV of a ramp through a player
 //  on the manual render pump, and reads every frame back exactly. Publishes a
 //  title and a duration to Now Playing and reads them back (NowPlaying.m).
-//  Exits 0 when all twenty-six hold.
+//  Answers one command through the debug channel (DebugChannel.m). Exits 0
+//  when all twenty-seven hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -82,6 +83,8 @@ FOUNDATION_EXTERN BOOL ConsumerWaveformStylesHold(void);
 FOUNDATION_EXTERN BOOL ConsumerWaveformViewDraws(void);
 // NowPlaying.m's check, beside the delegate its commands need.
 FOUNDATION_EXTERN BOOL ConsumerPublishesNowPlaying(void);
+// DebugChannel.m's check, beside its own table.
+FOUNDATION_EXTERN BOOL ConsumerDebugChannelAnswers(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -896,6 +899,9 @@ int main(void) {
         return 1;
     }
     if (!ConsumerPublishesNowPlaying()) {
+        return 1;
+    }
+    if (!ConsumerDebugChannelAnswers()) {
         return 1;
     }
     printf("consumer OK\n");
