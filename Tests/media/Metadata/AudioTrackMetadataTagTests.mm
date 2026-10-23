@@ -365,10 +365,10 @@ static const NSTimeInterval kMP3Duration = 38 * 1152 / 44100.0;
         NSString *label = [NSString stringWithFormat:@"%@ alone in %@", VibeTagFieldName(field),
                                                      VibeTagFixtureName(fixture)];
         NSURL *url = VibeWriteTagFieldFixture(_dir, fixture, field);
-        if (!url && (fixture == VibeTagFixtureVorbis || fixture == VibeTagFixtureOpus)) {
+        if (!url) {
+            XCTAssertTrue(fixture == VibeTagFixtureVorbis || fixture == VibeTagFixtureOpus, @"%@", label);
             continue;
         }
-        XCTAssertNotNil(url, @"%@", label);
         AudioTrackMetadata *metadata = Parse(url, NULL);
         XCTAssertTrue(metadata.parsedOK, @"%@", label);
         NSIndexSet *tagged = [NSIndexSet indexSetWithIndex:(NSUInteger)field];

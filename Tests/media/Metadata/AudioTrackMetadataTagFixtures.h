@@ -392,7 +392,7 @@ static inline BOOL VibeWriteTagFixtureAudio(NSURL *url, VibeTagFixture fixture) 
         }
         case VibeTagFixtureWAVID3: case VibeTagFixtureWAVInfo: case VibeTagFixtureAIFF:
         case VibeTagFixtureCAF: case VibeTagFixtureW64:
-            return VibeWriteFixture(url, VibeToneBuffer(22050, 44100, 2, AVAudioPCMFormatInt16), &error);
+            return VibeWriteFixture(url, VibeToneBuffer(22050, 44100, 2, AVAudioPCMFormatInt16), &error) != nil;
         case VibeTagFixtureCount:
             return NO;
     }
