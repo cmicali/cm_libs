@@ -404,6 +404,22 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/Shortcuts/Mac"]
 
+  # Now Playing info and remote commands, over MediaPlayer. It lists Graphics
+  # for the image alias and the mac's artwork resize, PlayQueue for the
+  # repeat mode, and Common for the log and main-thread macros. Its sources
+  # are Objective-C, so their MediaPlayer import links the framework. It lists
+  # no sdk dependency, since XcodeGen refuses a target that lists the same
+  # sdk twice, and an app lists MediaPlayer too. Its seam compiles in every
+  # configuration and wraps its body in #if DEBUG.
+  VibeLibsNowPlaying:
+    templates: [VibeLibsCommon, VibeLibsGraphics, VibeLibsPlayQueue]
+    sources:
+      - path: system/NowPlaying
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/system/NowPlaying"]
+
   # ---- third_party/: other authors' code, one piece per library ----
   #
   # Each template carries the compiler flags its library builds with, so an
