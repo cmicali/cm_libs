@@ -42,8 +42,6 @@ GROUPS = ("core", "files", "audio", "media", "waveform", "ui", "system", "dev", 
 
 # Files still in Vibe: (piece, path prefix relative to root). First match wins.
 PIECES = [
-    # third_party: Sparkle is still Vibe's
-    ("third_party/Sparkle", "Vibe/ThirdParty/Sparkle/"),
     # files
     ("app", "Vibe/Loading/iOS/"),
     # media
