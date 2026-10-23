@@ -1,6 +1,6 @@
 //
 //  PitchControlPanel.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PitchControlPanel.h"

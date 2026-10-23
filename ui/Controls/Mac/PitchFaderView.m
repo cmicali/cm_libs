@@ -1,6 +1,6 @@
 //
 //  PitchFaderView.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PitchFaderView.h"

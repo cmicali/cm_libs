@@ -1,6 +1,6 @@
 //
 //  PitchFaderViewTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The pitch fader drawn into a bitmap, and its gestures, with no window
 //  server. The window is deferred and never ordered front. Then what the app
