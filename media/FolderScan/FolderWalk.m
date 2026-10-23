@@ -1,6 +1,6 @@
 //
 //  FolderWalk.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "FolderWalkInternal.h"
@@ -567,13 +567,13 @@ static NSMutableArray<NSURL *> *VibeListedAudioURLs(NSURL *dir, VibeFolderOpenSo
 
 // Concurrent, so one dead mount cannot hold every later open; bounded, so a
 // burst of blocked walks cannot spawn a thread each. Callers order overlapping
-// results (OpenRequestCoordinator).
+// results.
 + (NSOperationQueue *)expansionQueue {
     static NSOperationQueue *queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         queue = [[NSOperationQueue alloc] init];
-        queue.name = @"com.vibe.urlexpansion";
+        queue.name = @"vibe-libs.folderscan.expansion";
         queue.maxConcurrentOperationCount = 4;
         queue.qualityOfService = NSQualityOfServiceUserInitiated;
     });

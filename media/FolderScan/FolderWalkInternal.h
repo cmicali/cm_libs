@@ -1,6 +1,6 @@
 //
 //  FolderWalkInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  Synchronous expansion steps for FolderWalk.m, its tests and the bench harness.
 //

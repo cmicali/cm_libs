@@ -1,6 +1,6 @@
 //
 //  FolderOpenSort.h
-//  Vibe
+//  vibe-libs
 //
 //  The order a folder's tracks land in the playlist when the user opens it.
 //  Its own header because FolderWalk takes it as a walk parameter and may not

@@ -144,7 +144,7 @@
 // com.microsoft.waveform-audio alone declares wav, wave AND bwf, and a claimed
 // type takes in every type conforming to it (public.mpeg-4-audio the m4r
 // ringtone, public.aac-audio adts); a spelling missing here lets Finder offer
-// Vibe a file the filter silently discards.
+// an app a file the filter silently discards.
 - (void)testSupportedExtensionsCoverEveryClaimedSpelling {
     NSSet<NSString *> *supported = [FolderWalk supportedExtensions];
 
@@ -587,8 +587,8 @@ static const unsigned long long kLargeFLACBytes = 100ULL * 1024 * 1024 + 1;
 }
 
 // An opened playlist listing nothing playable adds no rows, never the
-// playlist itself, so the shell keeps the playlist in place and says why.
-// A readable image in a format Vibe does not play lists nothing too.
+// playlist itself, so an app can keep the playlist in place and say why.
+// A readable image in a format the walk does not play lists nothing too.
 - (void)testAnOpenedPlaylistListingNothingPlayableAddsNoRows {
     NSURL *sheet = [self makeText:[kTwoTrackSheet stringByReplacingOccurrencesOfString:@"mix.flac" withString:@"gone.flac"]
                                at:@"broken.cue"];
