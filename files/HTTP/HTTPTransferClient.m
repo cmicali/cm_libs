@@ -23,8 +23,8 @@ NSErrorUserInfoKey const VibeHTTPErrorStatusCodeKey = @"VibeHTTPErrorStatusCode"
 static const NSInteger kMaximumNetworkRetries = 2;
 static const NSTimeInterval kNetworkRetryDelay = 1;
 
-// What a failure's body keeps for handleFailureStatus:. A Dropbox error is a
-// small JSON object.
+// What a failure's body keeps for handleFailureStatus:. A web API's error is
+// a small JSON object.
 static const NSUInteger kErrorBodyMaxBytes = 64 * 1024;
 
 // The version a download's file holds bytes of, on the file itself, so the

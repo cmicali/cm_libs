@@ -1,6 +1,6 @@
 //
 //  UIImage+Blur.m
-//  Vibe (iOS)
+//  vibe-libs
 //
 
 #import "UIImage+Blur.h"

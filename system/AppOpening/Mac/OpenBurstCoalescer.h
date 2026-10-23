@@ -1,11 +1,10 @@
 //
 //  OpenBurstCoalescer.h
-//  Vibe
+//  vibe-libs
 //
 //  Launch Services can split one multi-file open into several events, and a
-//  burst can straddle launch. The first batch replaces and plays at once;
-//  later batches inside the quiet period append. A deliberate open ends any
-//  burst.
+//  burst can straddle launch. The first batch replaces at once. Later batches
+//  inside the quiet period append. A deliberate open ends any burst.
 //
 
 #import <Foundation/Foundation.h>
@@ -29,8 +28,8 @@ typedef void (^OpenBurstSink)(NSArray<NSURL *> *urls, BOOL append);
 // Drains the queue as a burst's first batch, so the rest of an open that
 // straddled launch appends. YES when a batch drained.
 - (BOOL)startAndDrainQueue;
-// After grant restoration: an explicit queued open wins, then the saved
-// session, then empty state. Restoration itself never arms an open burst.
+// Once the opens may start: a queued open wins, then restore, then
+// revealEmpty. A restore is not an open, so it never arms a burst.
 - (void)finishLaunchRestoring:(BOOL (^)(void))restore revealEmpty:(dispatch_block_t)revealEmpty;
 // The paths among a process's arguments, after its name. A dash-prefixed
 // argument is skipped, and so is the value after each of valueOptions.

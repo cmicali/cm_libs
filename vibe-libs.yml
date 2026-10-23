@@ -474,9 +474,11 @@ targetTemplates:
 
   # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
   # as SettingsWindow's do. It lists Sparkle, which links and embeds the
-  # framework. An app's configuration without the updater excludes both by
-  # file name: EXCLUDED_SOURCE_FILE_NAMES of Sparkle.framework and
-  # VibeUpdater.m.
+  # framework. An app's configuration without the updater must exclude by
+  # file name the framework and every source here that links Sparkle, in
+  # EXCLUDED_SOURCE_FILE_NAMES. That is Sparkle.framework and VibeUpdater.m.
+  # check-pieces fails when another source here reaches Sparkle, so the list
+  # stays those two names.
   VibeLibsUpdates:
     templates: [VibeLibsSparkle]
     sources:

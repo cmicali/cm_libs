@@ -54,12 +54,12 @@ NS_ASSUME_NONNULL_BEGIN
 // opens a file under the root.
 - (void)installAsRemoteBackend;
 
-// What the downloaded songs take on disk, counted on the store's queue.
+// What the downloaded files take on disk, counted on the store's queue.
 // Completion on main.
 - (void)measureDownloadsWithCompletion:(void (^)(long long bytes))completion;
 
-// Turns every downloaded song back into its placeholder. A player still
-// reading one keeps its open file. Completion on main.
+// Turns every downloaded file back into its placeholder. A reader with one
+// open keeps it. Completion on main.
 - (void)removeDownloadsWithCompletion:(dispatch_block_t)completion;
 
 // CloudFileMaterializer's remote fetch: blocks until url's bytes have

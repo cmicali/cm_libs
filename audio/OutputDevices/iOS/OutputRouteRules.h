@@ -1,6 +1,6 @@
 //
 //  OutputRouteRules.h
-//  Vibe (iOS)
+//  vibe-libs
 //
 //  What the audio is coming out of, as a route indicator draws it, and the
 //  fold onto the coarser kind AudioSessionRecoveryRules.h decides with.
