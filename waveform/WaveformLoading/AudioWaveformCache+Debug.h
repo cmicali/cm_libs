@@ -29,8 +29,9 @@
                      columns:(NSUInteger)columns
                   completion:(void (^)(NSDictionary *dump))completion;
 
-// Removes one track's entry. The key derives from the file's current size and
-// mtime, so the file must still exist unchanged. Main-thread completion.
+// Removes one track's entry, which for a cue row is its window's alone. The
+// key derives from the file's current size and mtime, so the file must still
+// exist unchanged. Main-thread completion.
 - (void)clearCachedWaveformForTrack:(id<VibePlayableItem>)track
                          completion:(void (^)(BOOL wasPresent))completion;
 

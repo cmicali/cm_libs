@@ -893,6 +893,75 @@ static NSUInteger MatchingBins(CodableAudioWaveform *waveform, CodableAudioWavef
     XCTAssertTrue([self eventually:^BOOL { return settled; }]);
 }
 
+// The seam keys a cue row as the cache does, by its window. Its decode is
+// filed and found under the window's key, its dump is the window's, and its
+// clear leaves the whole file's entry.
+- (void)testTheSeamKeysACueRowByItsWindow {
+    NSURL *url = [NSURL fileURLWithPath:[self writeWAVNamed:@"rows.wav" seconds:3.0 quietFrom:1.0]];
+    AudioWaveformCache *cache = [self cacheWithRecorder:[[WaveformCacheRecorder alloc] init]];
+    VibeTestTrack *whole = [VibeTestTrack withURL:url];
+    VibeTestTrack *cue = [[VibeTestTrack alloc] initWithURL:url cueStart:75 cueEnd:150];
+    __block BOOL ok = NO, wasCached = NO, settled = NO;
+    void (^cacheTrack)(VibeTestTrack *) = ^(VibeTestTrack *track) {
+        settled = NO;
+        [cache cacheWaveformForTrack:track completion:^(BOOL done, BOOL hit, NSDictionary *results) {
+            ok = done;
+            wasCached = hit;
+            settled = YES;
+        }];
+        XCTAssertTrue([self eventually:^BOOL { return settled; }]);
+    };
+
+    cacheTrack(cue);
+    XCTAssertTrue(ok, @"the window's own decode is not judged stale");
+    XCTAssertFalse(wasCached);
+    cacheTrack(cue);
+    XCTAssertTrue(ok);
+    XCTAssertTrue(wasCached, @"the window's entry is found");
+    cacheTrack(whole);
+    XCTAssertTrue(ok);
+    XCTAssertFalse(wasCached, @"the whole file's entry is apart from the window's");
+
+    __block NSDictionary *dump = nil;
+    [cache dumpWaveformForTrack:cue columns:0 completion:^(NSDictionary *result) {
+        dump = result;
+    }];
+    XCTAssertTrue([self eventually:^BOOL { return dump != nil; }]);
+    XCTAssertEqualObjects(dump[@"wasCached"], @YES);
+    XCTAssertEqualObjects(dump[@"frames"], @44100, @"the window is one second");
+    NSUInteger wrongLevel = 0;
+    for (NSNumber *level in dump[@"loudest"]) {
+        if (fabsf(level.floatValue - 0.25f) > 1e-3f) {
+            wrongLevel++;
+        }
+    }
+    XCTAssertEqual(wrongLevel, (NSUInteger)0, @"every column is the window's ±0.25 second");
+    dump = nil;
+    [cache dumpWaveformForTrack:whole columns:0 completion:^(NSDictionary *result) {
+        dump = result;
+    }];
+    XCTAssertTrue([self eventually:^BOOL { return dump != nil; }]);
+    XCTAssertEqualObjects(dump[@"frames"], @132300, @"the whole file is three seconds");
+
+    __block BOOL present = NO;
+    settled = NO;
+    [cache clearCachedWaveformForTrack:cue completion:^(BOOL wasPresent) {
+        present = wasPresent;
+        settled = YES;
+    }];
+    XCTAssertTrue([self eventually:^BOOL { return settled; }]);
+    XCTAssertTrue(present);
+    cacheTrack(whole);
+    XCTAssertTrue(ok);
+    XCTAssertTrue(wasCached, @"clearing the window leaves the whole file's entry");
+    settled = NO;
+    [cache cachedWaveformForTrack:cue completion:^(CodableAudioWaveform *waveform) {
+        XCTAssertNil(waveform, @"the window's entry is gone");
+        settled = YES;
+    }];
+    XCTAssertTrue([self eventually:^BOOL { return settled; }]);
+}
+
 - (void)testBlockedPreviewStatsLeaveThePlayingLookupFree {
     NSURL *url = [self writeNoiseWAVNamed:@"foreground.wav" seconds:1.0 seed:17];
     WaveformCacheRecorder *recorder = [[WaveformCacheRecorder alloc] init];

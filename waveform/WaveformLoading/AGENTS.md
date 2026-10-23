@@ -9,7 +9,7 @@ Decoding without caching has no second user, so the two are one piece. The summa
 | `AudioWaveformLoader` | one decode of one file or window: the open, the pipelined pass, the observers' sinks, the progressive snapshots, the completeness rule, and deep zoom's block reads |
 | `AudioWaveformLoaderInternal.h` | the pass's phases, declared so the tests can reach them one at a time |
 | `AudioWaveformCache` | the loaders' lifecycle: the claims, the lanes, the detached decodes, the store, the version check, and the deliveries on main |
-| `AudioWaveformCacheInternal.h` | the state and the lookup-or-decode path the cache's seam shares |
+| `AudioWaveformCacheInternal.h` | the state, the entry key, and the lookup-or-decode path the cache's seam shares |
 | `AudioWaveformObserver` | what rides the decode beside the summary: an identifier and a block that makes one sink per decode |
 | `AudioWaveformCache+Debug` | the cache's seam: the decode pace, and per-track cache control |
 | `AudioWaveformLoader+Debug` | the loader's seam: each pass's phase timings |
@@ -51,7 +51,7 @@ Only a style that draws the bands reads them. So **a decode splits them only whe
 
 ## A cue row's waveform is its window
 
-The loader decodes only the item's window (`cueStart`/`cueEnd` through `VibeCueWindow`), and the observers' sinks see only its frames. A DJ mix gets a waveform, a tempo and a key per track. Everything keyed per file is keyed per window here. The claim (the standardized path), the detached-loader pool and the disk entry all append the window through `VibeKeyByAppendingCueWindow` (`VibePlayableItem.h`).
+The loader decodes only the item's window (`cueStart`/`cueEnd` through `VibeCueWindow`), and the observers' sinks see only its frames. A DJ mix gets a waveform, a tempo and a key per track. Everything keyed per file is keyed per window here. The claim (the standardized path), the detached-loader pool and the disk entry all append the window through `VibeKeyByAppendingCueWindow` (`VibePlayableItem.h`). The disk entry's key is `VibeWaveformEntryKey` (`AudioWaveformCacheInternal.h`), the one home of that rule. The shared lookup-or-decode path sets the decode's window from the same item.
 
 ## Admission
 
@@ -99,11 +99,11 @@ The cache captures the item when the load starts (`_currentLoadTrack`). **The re
 
 Both headers are declaration-only, with no `#if DEBUG`. Each implementation wraps its body in `#if DEBUG`, so a release build ships none of it.
 
-- **`AudioWaveformCache+Debug.h`** paces every decode that starts after it is set (`debugDecodeSeconds`), so a view's progressive fill-in can be watched on any file. The loader reads it in a debug build. It also decodes, dumps, and clears one item's entry through the normal lookup-or-decode path, without touching the current load. The app makes the item.
+- **`AudioWaveformCache+Debug.h`** paces every decode that starts after it is set (`debugDecodeSeconds`), so a view's progressive fill-in can be watched on any file. The loader reads it in a debug build. It also decodes, dumps, and clears one item's entry through the normal lookup-or-decode path, without touching the current load. The app makes the item. A cue row's entry is its window's, keyed and decoded as a load's is.
 - **`AudioWaveformLoader+Debug.h`** is `AudioLoadTiming`: each pass's phase timings, recorded by the loader in a debug build and read afterwards, since a pass has no reply path. The phases are the read, the mix and the summary, each observer's appends and finish, and the whole pass. They can sum past the whole, since the read is pipelined against the rest. The loader's clock reads 0 in Release, so its call sites need no `#if`.
 
 ## Tests
 
-`Tests/waveform/WaveformLoading/` holds the loader's and the observers' tests, which came from Vibe with the code. They write their own WAV files, so none needs an app's generated audio. They run over `Tests/Support`'s `VibeTestTrack`. The re-key test memoizes its key in a track of its own, as an app's row may. They cover the pass's phases and the completeness rule, the progressive snapshots, a streaming file and a network mount's read-ahead, the cancel and the detach, the claims and the lanes, the previews, deep zoom's reads, the version check, the entry's coverage, and, for the observers, a decode, a cache hit, a missing result, a joined decode, a cancellation, a late completion, and a CUE window. `WaveformLoadingTests` defines `DEBUG` in every configuration, since the tests drive both seams. The minimal consumer writes a WAV of a tone, loads it through the loader, and reads its length and peaks back. It also roots a cache of its own with an observer of its own, loads the tone twice, and reads the second load's hit from the cache's seam.
+`Tests/waveform/WaveformLoading/` holds the loader's and the observers' tests, which came from Vibe with the code. They write their own WAV files, so none needs an app's generated audio. They run over `Tests/Support`'s `VibeTestTrack`. The re-key test memoizes its key in a track of its own, as an app's row may. They cover the pass's phases and the completeness rule, the progressive snapshots, a streaming file and a network mount's read-ahead, the cancel and the detach, the claims and the lanes, the previews, deep zoom's reads, the version check, the entry's coverage, the seam's keying of a cue row, and, for the observers, a decode, a cache hit, a missing result, a joined decode, a cancellation, a late completion, and a CUE window. `WaveformLoadingTests` defines `DEBUG` in every configuration, since the tests drive both seams. The minimal consumer writes a WAV of a tone, loads it through the loader, and reads its length and peaks back. It also roots a cache of its own with an observer of its own, loads the tone twice, and reads the second load's hit from the cache's seam. A CUE window of the tone then loads through the seam twice, and its second load is a hit too.
 
 **Measuring.** A change that could move cost is measured in Vibe, with its `vibe-perf` skill, before and after: the `waveform` and `chunker` groups. A change that could move a picture is drawn with its `vibe-waveform` skill at both commits, and the pictures are compared with `cmp`.
