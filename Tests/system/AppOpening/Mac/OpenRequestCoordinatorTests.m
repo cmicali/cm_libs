@@ -36,7 +36,7 @@
     deadline();
 }
 
-// Records deliveries so assertions read as the playlist-facing sequence.
+// Records deliveries so assertions read as the sequence the list sees.
 - (OpenRequestToken *)beginAppending:(BOOL)append tagged:(NSString *)tag {
     NSMutableArray<NSString *> *deliveries = _deliveries;
     return [_coordinator beginRequestAppending:append
@@ -117,7 +117,7 @@ static NSArray<NSURL *> *OpenRows(NSUInteger count) {
     [_coordinator abandonStalledRequests];
     XCTAssertEqualObjects(_deliveries, (@[@"second:append:2:0", @"third:append:3:0"]));
 
-    // A late answer is dropped rather than reordering the playlist.
+    // A late answer is dropped rather than reordering the list.
     [_coordinator finishRequest:wedged rows:OpenRows(9) folderCount:1];
     XCTAssertEqualObjects(_deliveries, (@[@"second:append:2:0", @"third:append:3:0"]));
 }

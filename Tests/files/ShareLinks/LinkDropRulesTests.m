@@ -57,7 +57,7 @@ static NSData *Webloc(id plist, NSPropertyListFormat format) {
         XCTAssertFalse(VibeLinkIsWebLink(U(link)), @"%@", link);
     }
     // Plain http to a public host is a link. Its resolve refuses it before
-    // any request, as the prompt's does.
+    // any request, as a typed link's does.
     NSURL *insecure = U(@"http://example.com/a.mp3");
     XCTAssertEqualObjects(VibeDropURLsOfItems(@[@{kVibeDropTypeURL: insecure.absoluteString}]), @[insecure]);
     XCTAssertEqual(VibeLinkURLAcceptance(insecure), VibeLinkErrorInsecure);

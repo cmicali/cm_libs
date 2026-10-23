@@ -9,7 +9,7 @@
 
 @implementation FolderAccessManager (GrantPanel)
 
-// The walk's worker waits for main to run the panel. Main never waits on
+// The calling worker waits for main to run the panel. Main never waits on
 // that worker. A private gate prevents stacked prompts without locking the
 // manager that main may need.
 - (BOOL)requestAccessForPlaylistFolder:(NSURL *)playlistURL
@@ -35,8 +35,8 @@
         granted = [panel runModal] == NSModalResponseOK && panel.URL != nil;
         if (granted) {
             LogInfo(@"Playlist folder access granted: %@", panel.URL.path);
-            // The extension lasts only this process, and the auto-add funnel
-            // sees the playlist file, not this folder.
+            // The extension lasts only this process. The app's opens note the
+            // playlist file, not this folder, so the folder is noted here.
             [self noteOpenedURLs:@[panel.URL]];
         }
         else {
