@@ -3,8 +3,7 @@
 Usage: python3 -I scripts/plan/derive-deps.py <root> [--sites]
 
 <root> is a Vibe checkout with its vibe-libs submodule checked out. The
-script reads its Vibe/, Tests/iOSDriver/, vibe-libs/, and
-project.yml. Run it after each cut and each move, and update the map in
+script reads its Vibe/, vibe-libs/, and project.yml. Run it after each cut and each move, and update the map in
 docs/plan.md in the same change.
 
 Each source file is assigned to a piece ("app" for code that stays in Vibe).
@@ -47,7 +46,6 @@ PIECES = [
     ("third_party/Sparkle", "Vibe/ThirdParty/Sparkle/"),
     # debug seams and simulators go with the class they open
     ("files/ShareLinks", "Vibe/Debug/Simulators/VibeFakeHTTP"),
-    ("dev/DebugChannel", "Vibe/Debug/Channel/"),
     # files
     ("files/HTTP", "Vibe/Loading/Net/HTTPTransfer"),
     ("files/RemoteFiles", "Vibe/Loading/Net/RemotePlaceholderStore"),
@@ -60,7 +58,6 @@ PIECES = [
     ("app", "Vibe/Mac/Controls/ArtworkImageView"),
     ("ui/Controls", "Vibe/Mac/Controls/"),
     ("media/FolderScan", "Vibe/iOS/Search/FileSearch"),
-    ("dev/iOSDriver", "Tests/iOSDriver/"),
     ("app", ""),
 ]
 
@@ -76,7 +73,7 @@ def piece_of(rel):
 
 
 SRC = (".h", ".hpp", ".hh", ".m", ".mm", ".c", ".cc", ".cpp", ".inc", ".tcc")
-tops = ["Vibe", "Tests/iOSDriver"] + [f"{LIBS}/{g}" for g in GROUPS]
+tops = ["Vibe"] + [f"{LIBS}/{g}" for g in GROUPS]
 files = []
 for top in tops:
     for dirpath, _, names in os.walk(os.path.join(root, top)):

@@ -35,8 +35,9 @@
 //  when they leave their window. Plays another WAV of a ramp through a player
 //  on the manual render pump, and reads every frame back exactly. Publishes a
 //  title and a duration to Now Playing and reads them back (NowPlaying.m).
+//  Answers one command through the debug channel (DebugChannel.m).
 //  Coalesces an open split into batches into one ordered open, through the
-//  open coordinator (AppOpening.m). Exits 0 when all twenty-seven hold.
+//  open coordinator (AppOpening.m). Exits 0 when all twenty-eight hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -85,6 +86,8 @@ FOUNDATION_EXTERN BOOL ConsumerWaveformViewDraws(void);
 FOUNDATION_EXTERN BOOL ConsumerPublishesNowPlaying(void);
 // AppOpening.m's check.
 FOUNDATION_EXTERN BOOL ConsumerOrdersASplitOpen(void);
+// DebugChannel.m's check, beside its own table.
+FOUNDATION_EXTERN BOOL ConsumerDebugChannelAnswers(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -899,6 +902,9 @@ int main(void) {
         return 1;
     }
     if (!ConsumerPublishesNowPlaying()) {
+        return 1;
+    }
+    if (!ConsumerDebugChannelAnswers()) {
         return 1;
     }
     if (!ConsumerOrdersASplitOpen()) {
