@@ -1,6 +1,6 @@
 //
 //  WaveformView.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <AppKit/AppKit.h>

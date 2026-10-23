@@ -1,6 +1,6 @@
 //
 //  NowPlayingController.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NowPlayingController.h"

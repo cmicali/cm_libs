@@ -1,6 +1,6 @@
 //
 //  EqualizerLevelSource.h
-//  Vibe
+//  vibe-libs
 //
 //  The narrow boundary between the playing-row indicator and the playback
 //  model that owns its audio levels. It lives beside the control so neither

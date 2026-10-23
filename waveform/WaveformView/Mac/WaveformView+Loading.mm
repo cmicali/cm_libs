@@ -1,6 +1,6 @@
 //
 //  WaveformView+Loading.mm
-//  Vibe
+//  vibe-libs
 //
 //  When to show LoadingIndicator, and the empty line — that control at rest,
 //  so it reads its height and colour from LoadingIndicatorMath.h.

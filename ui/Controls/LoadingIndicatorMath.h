@@ -1,6 +1,6 @@
 //
 //  LoadingIndicatorMath.h
-//  Vibe
+//  vibe-libs
 //
 //  The loading indicator's per-style metrics: one control, two sizes. The
 //  waveform style is the hairline midline, the shimmer peaking at an unplayed waveform bar's on-screen worth

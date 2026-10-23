@@ -1,6 +1,6 @@
 //
 //  WaveformView.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "WaveformViewInternal.h"

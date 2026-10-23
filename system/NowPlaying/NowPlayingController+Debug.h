@@ -1,6 +1,6 @@
 //
 //  NowPlayingController+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Implemented beside the controller, whose publish state is private to it.
 //

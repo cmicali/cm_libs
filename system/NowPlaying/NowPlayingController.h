@@ -1,6 +1,6 @@
 //
 //  NowPlayingController.h
-//  Vibe
+//  vibe-libs
 //
 //  The MPRemoteCommandCenter / MPNowPlayingInfoCenter bridge. It owns no
 //  playback state: each shell's +NowPlaying category drives it and takes the

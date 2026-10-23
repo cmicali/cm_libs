@@ -1,6 +1,6 @@
 //
 //  NowPlayingRules.h
-//  Vibe
+//  vibe-libs
 //
 //
 

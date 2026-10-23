@@ -1,6 +1,6 @@
 //
 //  LoadingIndicator.h
-//  Vibe
+//  vibe-libs
 //
 //  The loading control, owned by both waveform views and — through
 //  LoadingIndicatorView — both platforms' row number gutters. It is pure

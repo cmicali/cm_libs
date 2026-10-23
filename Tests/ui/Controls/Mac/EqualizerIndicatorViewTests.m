@@ -1,6 +1,6 @@
 //
 //  EqualizerIndicatorViewTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The view's half of the equalizer guarantee: it polls only while every gate
 //  holds, and each running poller declares exactly one balanced consumer.

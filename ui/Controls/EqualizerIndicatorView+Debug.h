@@ -1,6 +1,6 @@
 //
 //  EqualizerIndicatorView+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Process-wide renderer counters for dump_equalizer. Implemented beside the
 //  view, whose hot paths increment them as relaxed atomics.

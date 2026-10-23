@@ -1,6 +1,6 @@
 //
 //  LoadingIndicatorView.h
-//  Vibe
+//  vibe-libs
 //
 //  The row gutter's host for LoadingIndicator's row style: the small loading
 //  bar a playlist row shows while a provider transfer is really

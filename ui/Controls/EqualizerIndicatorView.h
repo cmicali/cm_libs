@@ -1,6 +1,6 @@
 //
 //  EqualizerIndicatorView.h
-//  Vibe
+//  vibe-libs
 //
 //  The playing-row indicator: five vertically centered pill bars, the app
 //  icon's waveform, that grow and shrink independently. Five retained CALayers

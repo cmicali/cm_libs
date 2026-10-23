@@ -1,6 +1,6 @@
 //
 //  WaveformAccessibility.h
-//  Vibe
+//  vibe-libs
 //
 //  The waveform slider's spoken contract, shared by both views. Each shell
 //  labels its view where it builds it.

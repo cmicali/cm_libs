@@ -1,6 +1,6 @@
 //
 //  WaveformViewTests.mm
-//  VibeTests
+//  vibe-libs
 //
 //  The mac waveform view as drawn: its layer tree rendered into a bitmap with
 //  no window server. The renderers' own geometry is WaveformStyles'
