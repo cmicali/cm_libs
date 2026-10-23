@@ -2,10 +2,11 @@
 //  Metadata.mm
 //
 //  Roots a metadata cache of its own and tags a WAV with a title and a PNG
-//  picture through TagLib's own writer. Loads the WAV through the cache, into
-//  a holder of its own, as an app's row is. Reads the title back, the
-//  picture's bytes through the artwork's extractor, and waits for the row
-//  thumbnail. Objective-C++, since TagLib's writer is C++.
+//  picture through TagLib's own writer. Loads the WAV through the cache into
+//  the consumer's row. Reads the title back, the picture's bytes through the
+//  artwork's extractor, and waits for the row thumbnail. Then reopens the
+//  cache over the same root and loads a fresh row from the disk cache alone,
+//  which hits. Objective-C++, since TagLib's writer is C++.
 //
 
 #import <AppKit/AppKit.h>
@@ -14,7 +15,7 @@
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "AudioTrackMetadataCache.h"
 #import "AudioTrackMetadataInternal.h"
-#import "NSURL+Hash.h"
+#import "ConsumerTrack.h"
 #import "PlatformImage.h"
 
 #include <attachedpictureframe.h>
@@ -55,69 +56,15 @@ static NSData *SolidPNG(size_t side) {
     return data;
 }
 
-// The consumer's own item: the whole of one file, and the metadata the cache
-// installs, checked and stored under the item's own monitor.
-@interface ConsumerMetadataTrack : NSObject <AudioTrackMetadataHolder>
-@property (atomic, strong, nullable, readwrite) AudioTrackMetadata *metadata;
-- (instancetype)initWithURL:(NSURL *)url;
-@end
-
-@implementation ConsumerMetadataTrack
-
-@synthesize url = _url;
-
-- (instancetype)initWithURL:(NSURL *)url {
-    if ((self = [super init])) {
-        _url = [url copy];
-    }
-    return self;
-}
-
-- (NSUInteger)cueStart {
-    return 0;
-}
-
-- (NSUInteger)cueEnd {
-    return 0;
-}
-
-- (NSString *)sourceKey {
-    return self.url.path;
-}
-
-- (NSString *)cacheKey {
-    return self.url.cacheKey;
-}
-
-- (BOOL)installMetadataIfUnresolved:(AudioTrackMetadata *)metadata {
-    @synchronized (self) {
-        AudioTrackMetadata *installed = self.metadata;
-        if (installed.parsedOK && [installed.cacheKey isEqualToString:metadata.cacheKey]) {
-            return NO;
-        }
-        self.metadata = metadata;
-        return YES;
-    }
-}
-
-- (BOOL)deliverIfMetadataStillInstalled:(AudioTrackMetadata *)metadata usingBlock:(NS_NOESCAPE dispatch_block_t)delivery {
-    @synchronized (self) {
-        if (self.metadata != metadata) {
-            return NO;
-        }
-        delivery();
-        return YES;
-    }
-}
-
-@end
-
+// The cache's deliveries, on main, and the row the last one carried.
 @interface ConsumerMetadataDelegate : NSObject <AudioTrackMetadataCacheDelegate>
 @property (atomic) NSUInteger deliveries;
+@property (atomic, strong) id<AudioTrackMetadataHolder> delivered;
 @end
 
 @implementation ConsumerMetadataDelegate
 - (void)didLoadMetadata:(id<AudioTrackMetadataHolder>)track {
+    self.delivered = track;
     self.deliveries++;
 }
 @end
@@ -166,15 +113,27 @@ BOOL ConsumerLoadsMetadata(void) {
         Fail("could not write and tag the WAV");
     }
     else {
-        AudioTrackMetadataCache *cache = [[AudioTrackMetadataCache alloc]
-                initWithRootPath:[root URLByAppendingPathComponent:@"cache"].path];
+        NSString *cachePath = [root URLByAppendingPathComponent:@"cache"].path;
+        AudioTrackMetadataCache *cache = [[AudioTrackMetadataCache alloc] initWithRootPath:cachePath];
         ConsumerMetadataDelegate *delegate = [[ConsumerMetadataDelegate alloc] init];
         cache.delegate = delegate;
-        ConsumerMetadataTrack *track = [[ConsumerMetadataTrack alloc] initWithURL:url];
-        [cache loadMetadataNow:track];
+        // The store is made off main, and a parse before it lands is never
+        // filed. The usage count waits behind it, and finds it empty.
+        __block NSInteger entries = -1;
+        [cache diskUsageWithCompletion:^(NSUInteger fileCount, unsigned long long totalBytes) {
+            entries = (NSInteger)fileCount;
+        }];
+        ConsumerTrack *track = [ConsumerTrack withURL:url];
         NSData *art = nil;
         __block VibeImage *thumbnail = nil;
-        if (!Spin(^BOOL { return delegate.deliveries > 0; })) {
+        BOOL empty = Spin(^BOOL { return entries >= 0; }) && entries == 0;
+        if (empty) {
+            [cache loadMetadataNow:track];
+        }
+        if (!empty) {
+            Fail("the new metadata cache is not empty");
+        }
+        else if (!Spin(^BOOL { return delegate.deliveries > 0; })) {
             Fail("the metadata cache delivered nothing");
         }
         else if (!track.metadata.parsedOK || ![track.metadata.title isEqualToString:@"Consumer"]) {
@@ -191,7 +150,25 @@ BOOL ConsumerLoadsMetadata(void) {
             Fail("the row thumbnail is not at most 128 px");
         }
         else {
-            holds = YES;
+            // A second cache over the same root, as the app's next launch
+            // makes, loads a fresh row of the file from the disk cache alone.
+            // That path never parses, so a miss would deliver nothing.
+            AudioTrackMetadataCache *reopened = [[AudioTrackMetadataCache alloc] initWithRootPath:cachePath];
+            ConsumerMetadataDelegate *hits = [[ConsumerMetadataDelegate alloc] init];
+            reopened.delegate = hits;
+            ConsumerTrack *again = [ConsumerTrack withURL:url];
+            [reopened loadCachedMetadata:@[again]];
+            if (!Spin(^BOOL { return hits.deliveries > 0; }) || hits.delivered != again) {
+                Fail("the reopened metadata cache did not hit");
+            }
+            else if (!again.metadata.parsedOK || ![again.metadata.title isEqualToString:@"Consumer"]
+                     || again.metadata == track.metadata) {
+                Fail("the reopened metadata cache did not read the tagged title back from disk");
+            }
+            else {
+                holds = YES;
+            }
+            reopened.delegate = nil;
         }
         cache.delegate = nil;
     }

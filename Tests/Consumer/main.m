@@ -12,7 +12,9 @@
 //  shortcut from a key event sent through NSApp. Keys a temporary file by its
 //  size, time and path, and keys it anew once it changes. Turns a CUE window
 //  into a file's frames. Opens a temporary file through the file loader, with
-//  a handle of its own. Roots a disk cache in a temporary directory and reads
+//  a handle of its own. Cancels a placeholder's open over the fake cloud while
+//  it downloads, and checks that the claim and the transfer let go
+//  (FileLoading.m). Roots a disk cache in a temporary directory and reads
 //  its usage back. Lists the output devices through the device manager and
 //  prints the default one's name, changing nothing. It skips that, and says
 //  so, only when the HAL cannot read its device list. Writes a WAV of a ramp,
@@ -20,20 +22,24 @@
 //  Finds the tempo of a click track at 128 BPM, fed in blocks as a decode
 //  would. Tags a WAV through TagLib, and reads its title and its picture back
 //  through the tag wrapper, the picture by range (Tags.mm). Roots a metadata
-//  cache of its own, loads a tagged WAV through it into a holder of its own,
-//  and reads its title, its picture's bytes, and its row thumbnail back
-//  (Metadata.mm). Queues plain URLs,
+//  cache of its own, loads a tagged WAV through it into the consumer's row
+//  (ConsumerTrack.h), and reads its title, its picture's bytes, and its row
+//  thumbnail back. A second cache over the same root then hits for a fresh
+//  row (Metadata.mm). Queues plain URLs,
 //  two of them for one file, and walks what follows each track's end under
 //  repeat and shuffle. Writes an M3U, reads it back, and reads a small CUE
 //  sheet. Walks a folder of two tracks and an M3U in each folder order, and
 //  opens the M3U in its own order. Summarizes a tone and draws it, and loads
-//  a WAV of it through the waveform loader (Waveform.mm). Draws the tone in
+//  a WAV of it through the waveform loader. Roots a waveform cache of its
+//  own, and loads the tone through it twice. The second load is a hit
+//  (Waveform.mm). Draws the tone in
 //  every waveform style and reads back that each drew (WaveformStyles.mm).
 //  Lays the mac waveform view out with the tone's summary and reads back that
 //  both sides drew (WaveformView.mm). Draws the equalizer bars from a level
 //  source of its own, and checks the bars ask it for levels once and let go
-//  when they leave their window. Plays another WAV of a ramp through a player
-//  on the manual render pump, and reads every frame back exactly. Publishes a
+//  when they leave their window. Plays a queue of two rows of one WAV and a
+//  CUE window of another through a player on the manual render pump, and
+//  reads every frame back exactly (Player.m). Publishes a
 //  title and a duration to Now Playing and reads them back (NowPlaying.m).
 //  Downloads a file and reads a range of it through an HTTP transfer client
 //  over the fake web server (ShareLinks.m). Answers one command through the
@@ -41,18 +47,17 @@
 //  defaults suite of its own, and checks that a new temporary folder is not
 //  readable (SandboxAccess.m).
 //  Coalesces an open split into batches into one ordered open, through the
-//  open coordinator (AppOpening.m). Exits 0 when all thirty hold.
+//  open coordinator (AppOpening.m). Exits 0 when all thirty-two hold.
 //
 
 #import <Foundation/Foundation.h>
 #import <math.h>
 #import "AudioBPMAnalyzer.h"
+#import "AudioError.h"
 #import "AudioFileHandle.h"
-#import "AudioFileMaterializationCoordinator.h"
 #import "AudioDeviceManager.h"
 #import "AudioFX+Pipeline.h"
 #import "AudioLevelMeter.h"
-#import "AudioPlayer+Debug.h"
 #import "AudioVarispeed.h"
 #import "CueWindowMath.h"
 #import "PINCache+VibeAudioCache.h"
@@ -82,6 +87,12 @@ FOUNDATION_EXTERN BOOL ConsumerLoadsMetadata(void);
 // Waveform.mm's check, since the waveform's headers are C++.
 FOUNDATION_EXTERN BOOL ConsumerWaveformHolds(void);
 FOUNDATION_EXTERN BOOL ConsumerLoadsAWaveform(void);
+FOUNDATION_EXTERN BOOL ConsumerHitsTheWaveformCache(void);
+// FileLoading.m's checks.
+FOUNDATION_EXTERN BOOL ConsumerOpensAFile(void);
+FOUNDATION_EXTERN BOOL ConsumerCancelsACloudOpen(void);
+// Player.m's check, beside the delegate that drives its queue.
+FOUNDATION_EXTERN BOOL ConsumerPlaysAQueue(void);
 // WaveformStyles.mm's check, since the renderers' headers are C++.
 FOUNDATION_EXTERN BOOL ConsumerWaveformStylesHold(void);
 // WaveformView.mm's check, since the summary's header is C++.
@@ -110,77 +121,12 @@ FOUNDATION_EXTERN BOOL ConsumerSandboxAccessHolds(void);
 }
 @end
 
-// The handle the file loader serves. It reads no stream, so it ignores the
-// hold.
-@interface ConsumerFile : NSObject <ServedFileHandle>
-@property (nonatomic, strong) NSURL *url;
-@end
-
-@implementation ConsumerFile
-- (void)holdStream {
-}
-@end
-
-// The player's item: a whole file. The player reads it and hands it back.
-@interface ConsumerTrack : NSObject <VibePlayableItem>
-@property (copy) NSURL *url;
-@end
-
-@implementation ConsumerTrack
-- (NSUInteger)cueStart {
-    return 0;
-}
-- (NSUInteger)cueEnd {
-    return 0;
-}
-- (NSString *)sourceKey {
-    return self.url.path;
-}
-- (NSString *)cacheKey {
-    return self.url.cacheKey;
-}
-@end
-
-// What the player tells its app, on main.
-@interface ConsumerListener : NSObject <AudioPlayerDelegate>
-@property (nonatomic) BOOL initialized;
-@property (nonatomic) BOOL started;
-@property (nonatomic, strong) NSError *error;
-@end
-
-@implementation ConsumerListener
-- (void)audioPlayerDidInitialize:(AudioPlayer *)audioPlayer {
-    self.initialized = YES;
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer didBeginLoading:(id<VibePlayableItem>)track
-    openRequestIdentifier:(uint64_t)openRequestIdentifier {
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer didChangeLoadingPaused:(BOOL)paused
-           forTrack:(id<VibePlayableItem>)track {
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer didStartPlaying:(id<VibePlayableItem>)track {
-    self.started = YES;
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer didPausePlaying:(id<VibePlayableItem>)track {
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer didResumePlaying:(id<VibePlayableItem>)track {
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer didFinishSeeking:(id<VibePlayableItem>)track {
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer didFinishPlaying:(id<VibePlayableItem>)track {
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer didAutoAdvanceFromTrack:(id<VibePlayableItem>)finishedTrack
-            toTrack:(id<VibePlayableItem>)startedTrack {
-}
-- (void)audioPlayer:(AudioPlayer *)audioPlayer error:(NSError *)error {
-    self.error = error;
-}
-@end
-
 // A canonical 16-bit stereo WAV in a temporary file, its bytes written here,
 // so no reader is its own oracle. Frame i's left sample is first + i, and its
 // right sample the negation.
-static NSURL *RampWAV(uint32_t rate, int16_t count, int16_t first) {
+FOUNDATION_EXTERN NSURL *ConsumerRampWAV(uint32_t rate, int16_t count, int16_t first);
+
+NSURL *ConsumerRampWAV(uint32_t rate, int16_t count, int16_t first) {
     NSMutableData *wav = [NSMutableData dataWithBytes:"RIFF" length:4];
     uint32_t chunk = 36 + (uint32_t)count * 4, fmtSize = 16, byteRate = rate * 4, dataSize = (uint32_t)count * 4;
     uint16_t pcm = 1, channels = 2, align = 4, bits = 16;
@@ -206,54 +152,6 @@ static NSURL *RampWAV(uint32_t rate, int16_t count, int16_t first) {
 }
 
 static BOOL Settles(BOOL (^done)(void));
-
-// A ramp at the pump's rate, played by a player on the manual render pump,
-// frame-driven, with Declick off, so the play's edge is a cut. Every frame
-// comes back exactly, after silence, and silence follows the last.
-static BOOL PlaysAWAVThroughThePump(void) {
-    enum { kRampFrames = 1000, kBlock = 512, kBlocks = 8 };
-    NSURL *url = RampWAV(48000, kRampFrames, 1);
-    ConsumerListener *listener = [ConsumerListener new];
-    AVAudioFormat *format = [[AVAudioFormat alloc] initStandardFormatWithSampleRate:48000 channels:2];
-    AudioPlayer *player = [[AudioPlayer alloc] initForManualRendering:format enableFX:NO automatic:NO
-                                                             delegate:listener];
-    BOOL initialized = Settles(^BOOL { return listener.initialized; });
-    player.declick = NO;
-    ConsumerTrack *track = [ConsumerTrack new];
-    track.url = url;
-    [player play:track];
-    BOOL started = initialized && Settles(^BOOL { return listener.started || listener.error; }) && !listener.error;
-    static float left[kBlock * kBlocks], right[kBlock * kBlocks];
-    AVAudioFrameCount rendered = 0;
-    NSError *renderError = nil;
-    for (int block = 0; started && block < kBlocks; block++) {
-        AVAudioPCMBuffer *buffer = [player debugRenderFrames:kBlock error:&renderError];
-        if (buffer.frameLength != kBlock) {
-            break;
-        }
-        memcpy(left + rendered, buffer.floatChannelData[0], kBlock * sizeof(float));
-        memcpy(right + rendered, buffer.floatChannelData[1], kBlock * sizeof(float));
-        rendered += kBlock;
-    }
-    [player debugShutdown];
-    [NSFileManager.defaultManager removeItemAtURL:url error:NULL];
-    AVAudioFrameCount start = 0;
-    while (start < rendered && left[start] == 0 && right[start] == 0) {
-        start++;
-    }
-    BOOL exact = rendered == kBlock * kBlocks && start + kRampFrames <= rendered;
-    for (AVAudioFrameCount i = 0; exact && i < rendered; i++) {
-        float want = i >= start && i < start + kRampFrames ? (float)(i - start + 1) / 32768.0f : 0;
-        exact = left[i] == want && right[i] == -want;
-    }
-    if (!started || !exact) {
-        fprintf(stderr, "consumer: the player started %d (%s), rendered %u frames from %u, exact %d (%s)\n", started,
-                listener.error.localizedDescription.UTF8String, rendered, start, exact,
-                renderError.localizedDescription.UTF8String);
-        return NO;
-    }
-    return YES;
-}
 
 // A queue of plain URLs, keyed by themselves. Two URLs for one file stay two
 // rows. Off parks at the end, All wraps, One replays, and a shuffled cycle
@@ -799,32 +697,13 @@ int main(void) {
         fprintf(stderr, "consumer: the window is %s\n", NSStringFromRange(window).UTF8String);
         return 1;
     }
+    if (!ConsumerOpensAFile() || !ConsumerCancelsACloudOpen()) {
+        return 1;
+    }
     NSURL *directory = [NSURL fileURLWithPath:[NSTemporaryDirectory()
             stringByAppendingPathComponent:NSUUID.UUID.UUIDString] isDirectory:YES];
     [NSFileManager.defaultManager createDirectoryAtURL:directory withIntermediateDirectories:YES
                                             attributes:nil error:NULL];
-    NSURL *track = [directory URLByAppendingPathComponent:@"track.bin"];
-    [[NSData dataWithBytes:"bytes" length:5] writeToURL:track atomically:YES];
-    __block ConsumerFile *served = nil;
-    __block NSError *openError = nil;
-    __block BOOL opened = NO;
-    [AudioFileMaterializationCoordinator.sharedCoordinator openURL:track
-            purpose:VibeAudioFileOpenPurposePlayback
-             opener:^id<ServedFileHandle>(NSURL *url, BOOL (^interrupted)(void), NSError **error) {
-        ConsumerFile *file = [[ConsumerFile alloc] init];
-        file.url = url;
-        return file;
-    } completionQueue:dispatch_get_main_queue() onDataless:nil
-         completion:^(id<ServedFileHandle> file, NSError *error, NSTimeInterval elapsed) {
-        served = (ConsumerFile *)file;
-        openError = error;
-        opened = YES;
-    }];
-    if (!Settles(^BOOL { return opened; }) || ![served.url isEqual:track]) {
-        fprintf(stderr, "consumer: the loader served %s (%s)\n", served.url.path.UTF8String,
-                openError.localizedDescription.UTF8String);
-        return 1;
-    }
     PINCache *cache = [PINCache audioCacheWithName:@"consumer" rootPath:directory.path];
     [cache.diskCache setObject:@"entry" forKey:@"key"];
     __block NSUInteger entries = 0;
@@ -871,7 +750,7 @@ int main(void) {
     }
     // Each frame's left sample is its index, and its right sample the negation.
     enum { kFrames = 1000 };
-    NSURL *wavURL = RampWAV(44100, kFrames, 0);
+    NSURL *wavURL = ConsumerRampWAV(44100, kFrames, 0);
     NSError *readError = nil;
     AudioFileHandle *handle = [[AudioFileHandle alloc] initForReading:wavURL error:&readError];
     AVAudioPCMBuffer *frames = handle ? [[AVAudioPCMBuffer alloc] initWithPCMFormat:handle.processingFormat
@@ -897,7 +776,7 @@ int main(void) {
         !FolderScanWalksATree()) {
         return 1;
     }
-    if (!ConsumerWaveformHolds() || !ConsumerLoadsAWaveform()) {
+    if (!ConsumerWaveformHolds() || !ConsumerLoadsAWaveform() || !ConsumerHitsTheWaveformCache()) {
         return 1;
     }
     if (!ConsumerWaveformStylesHold() || !ConsumerWaveformViewDraws()) {
@@ -906,7 +785,7 @@ int main(void) {
     if (!EqualizerDrawsFromItsSource()) {
         return 1;
     }
-    if (!PlaysAWAVThroughThePump()) {
+    if (!ConsumerPlaysAQueue()) {
         return 1;
     }
     if (!ConsumerPublishesNowPlaying()) {
