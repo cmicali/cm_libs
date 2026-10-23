@@ -35,9 +35,11 @@
 //  when they leave their window. Plays another WAV of a ramp through a player
 //  on the manual render pump, and reads every frame back exactly. Publishes a
 //  title and a duration to Now Playing and reads them back (NowPlaying.m).
-//  Answers one command through the debug channel (DebugChannel.m).
+//  Downloads a file and reads a range of it through an HTTP transfer client
+//  over the fake web server (ShareLinks.m). Answers one command through the
+//  debug channel (DebugChannel.m).
 //  Coalesces an open split into batches into one ordered open, through the
-//  open coordinator (AppOpening.m). Exits 0 when all twenty-eight hold.
+//  open coordinator (AppOpening.m). Exits 0 when all twenty-nine hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -86,6 +88,8 @@ FOUNDATION_EXTERN BOOL ConsumerWaveformViewDraws(void);
 FOUNDATION_EXTERN BOOL ConsumerPublishesNowPlaying(void);
 // AppOpening.m's check.
 FOUNDATION_EXTERN BOOL ConsumerOrdersASplitOpen(void);
+// ShareLinks.m's check, over the fake web server.
+FOUNDATION_EXTERN BOOL ConsumerFetchesFromTheFakeHost(void);
 // DebugChannel.m's check, beside its own table.
 FOUNDATION_EXTERN BOOL ConsumerDebugChannelAnswers(void);
 
@@ -904,7 +908,7 @@ int main(void) {
     if (!ConsumerPublishesNowPlaying()) {
         return 1;
     }
-    if (!ConsumerDebugChannelAnswers()) {
+    if (!ConsumerFetchesFromTheFakeHost() || !ConsumerDebugChannelAnswers()) {
         return 1;
     }
     if (!ConsumerOrdersASplitOpen()) {
