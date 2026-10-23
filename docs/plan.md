@@ -80,7 +80,8 @@ vibe-libs/
 │   ├── RemoteFiles      a local placeholder for a file on a server, fetched by range
 │   ├── ShareLinks       Dropbox, Google Drive and iCloud share links turned into direct URLs,
 │   │                    and the fake HTTP host that stands in for those services in tests
-│   └── SandboxAccess    security-scoped bookmarks and folder grants, with the grant panel
+│   └── SandboxAccess    macOS only: security-scoped bookmarks and folder grants, with the
+│                        grant panel
 │
 ├── audio/
 │   ├── AudioTypes ●     the words every audio piece shares: file format identifiers, the
@@ -566,7 +567,7 @@ Each remaining candidate moves when a second app needs it, with the cuts it was 
 
 - **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates. NowPlaying moved on 2026-10-22: its 5 files moved with their history (this repo's #41), their tests run here, and Vibe compiles them through the template. It takes the track's source key, title, artist, and image as values, so it needs no snapshot type and no edge to AudioTypes.
 - **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them.
-- **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date.
+- **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. SandboxAccess moved on 2026-10-23: its 7 files moved with their history (this repo's #N), their tests run here, and Vibe compiles them through the template. Its part of seam 21 was three reaches. The app now passes the grant panel's text, and the defaults and the key its grants are stored under. The store has no shared instance, so the app keeps the one it makes. The store still treats ~/Music as granted, which assumes the app holds the music entitlement. The others have no date.
 
 ## What the other app needs, and when
 
