@@ -1,9 +1,9 @@
 //
 //  WaveformZoomMath.h
-//  Vibe
+//  vibe-libs
 //
-//  How deep the iOS scrubber's pinch zoom may go. Shared only because it has
-//  no UIKit in it; the mac view has no zoom.
+//  How deep a view's pinch zoom may go. It has no UIKit in it, so it builds
+//  on both platforms.
 //
 
 #import <Foundation/Foundation.h>
