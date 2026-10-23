@@ -652,6 +652,29 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
 
+  # system/NowPlaying, tested on macOS through its publication path, with an
+  # injected clock and sinks in place of the system's centers.
+  NowPlayingTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsNowPlaying]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/system/NowPlaying
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
+  # system/NowPlaying built for iOS.
+  NowPlaying-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsNowPlaying]
+    templateAttributes:
+      excludedPlatform: Mac
+
   # third_party/: each library's tests build it alone and call into it once,
   # so a missing file or a broken link fails here. Each iOS target builds the
   # library for the simulator. None of them excludes a platform half.
@@ -846,6 +869,8 @@ schemes:
         ControlsTests: [test]
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
+        NowPlayingTests: [test]
+        NowPlaying-iOS: all
         TaglibTests: [test]
         Taglib-iOS: all
         PINCacheTests: [test]
@@ -868,5 +893,5 @@ schemes:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, TagsTests,
                 MetadataTests, PlayQueueTests, PlaylistsTests, FolderScanTests, WaveformTests, WaveformLoadingTests,
-                WaveformStylesTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests,
-                PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]
+                WaveformStylesTests, ControlsTests, SettingsWindowTests, ShortcutsTests, NowPlayingTests, TaglibTests,
+                PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]

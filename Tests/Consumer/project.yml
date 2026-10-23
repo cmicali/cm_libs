@@ -41,7 +41,7 @@ targets:
                 VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsPlayer, VibeLibsTags, VibeLibsMetadata,
                 VibeLibsWaveform, VibeLibsWaveformLoading, VibeLibsWaveformStyles, VibeLibsDiskCache, VibeLibsGraphics,
                 VibeLibsPlayQueue, VibeLibsPlaylists, VibeLibsFolderScan, VibeLibsControls, VibeLibsSettingsWindow,
-                VibeLibsShortcuts]
+                VibeLibsShortcuts, VibeLibsNowPlaying]
     templateAttributes:
       excludedPlatform: iOS
     sources:
@@ -50,4 +50,5 @@ targets:
       - path: Metadata.mm
       - path: Waveform.mm
       - path: WaveformStyles.mm
+      - path: NowPlaying.m
     scheme: {}

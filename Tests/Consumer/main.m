@@ -30,7 +30,9 @@
 //  a WAV of it through the waveform loader (Waveform.mm). Draws the tone in
 //  every waveform style and reads back that each drew (WaveformStyles.mm).
 //  Plays another WAV of a ramp through a player on the manual render pump,
-//  and reads every frame back exactly. Exits 0 when all twenty-three hold.
+//  and reads every frame back exactly. Publishes a title and a duration to
+//  Now Playing and reads them back (NowPlaying.m). Exits 0 when all
+//  twenty-four hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -72,6 +74,8 @@ FOUNDATION_EXTERN BOOL ConsumerWaveformHolds(void);
 FOUNDATION_EXTERN BOOL ConsumerLoadsAWaveform(void);
 // WaveformStyles.mm's check, since the renderers' headers are C++.
 FOUNDATION_EXTERN BOOL ConsumerWaveformStylesHold(void);
+// NowPlaying.m's check, beside the delegate its commands need.
+FOUNDATION_EXTERN BOOL ConsumerPublishesNowPlaying(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -825,6 +829,9 @@ int main(void) {
         return 1;
     }
     if (!PlaysAWAVThroughThePump()) {
+        return 1;
+    }
+    if (!ConsumerPublishesNowPlaying()) {
         return 1;
     }
     printf("consumer OK\n");
