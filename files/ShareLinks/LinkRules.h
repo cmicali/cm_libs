@@ -25,8 +25,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Why a link did not open. An app turns each into a string of its own.
-// The names follow the string keys. Cancelled has none: the user's own
-// cancel shows nothing.
+// Cancelled needs none: the user's own cancel shows nothing.
 typedef NS_ENUM(NSInteger, VibeLinkError) {
     VibeLinkErrorNone,
     VibeLinkErrorInvalid,
@@ -146,8 +145,8 @@ static inline NSURL *_Nullable VibeLinkURLFromString(NSString *_Nullable text) {
     return trimmed.length > 0 ? [NSURL URLWithString:trimmed] : nil;
 }
 
-// Whether the prompt's Open does nothing: the text is empty, or only spaces
-// and newlines. Nothing typed is the same as Cancel. It is no address to
+// Whether a link typed into an app's prompt opens nothing: the text is
+// empty, or only spaces and newlines. Nothing typed is the same as Cancel. It is no address to
 // refuse.
 static inline BOOL VibeLinkTextIsBlank(NSString *_Nullable text) {
     return [text stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length == 0;
@@ -157,8 +156,8 @@ static inline BOOL VibeLinkTextIsBlank(NSString *_Nullable text) {
 
 // A share link to a file as the address that answers its bytes. Each host's
 // rules are in its own file (DropboxLinkRules.h, GoogleDriveLinkRules.h).
-// Every other URL comes back unchanged. Vibe's docs/future/share-links.md
-// has the probes.
+// Every other URL comes back unchanged. Each host's file says what its
+// probes measured.
 static inline NSURL *VibeLinkDirectDownloadURL(NSURL *url) {
     return VibeDropboxLinkDownloadURL(url) ?: VibeGoogleDriveLinkDownloadURL(url) ?: url;
 }

@@ -87,7 +87,7 @@ static inline NSURL *_Nullable VibeLinkURLOfWebloc(NSData *_Nullable data) {
 // What a drop on the link road opens, in drop order: its files, and its
 // links. Each .webloc is swapped for its link. read answers its first bytes,
 // or nil. A .webloc with no web link opens nothing. A link the drop already
-// holds is not added again, by the store's normalized URL.
+// holds is not added again, by its normalized URL (VibeLinkNormalizedURLString).
 static inline NSArray<NSURL *> *VibeDropOpenOrder(NSArray<NSURL *> *urls,
                                                   NSData *_Nullable (^read)(NSURL *webloc)) {
     NSMutableArray<NSURL *> *order = [NSMutableArray array];

@@ -1,6 +1,6 @@
 //
 //  AudioSessionController.m
-//  Vibe (iOS)
+//  vibe-libs
 //
 
 #import "AudioSessionController.h"

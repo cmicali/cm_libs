@@ -248,6 +248,17 @@ CASES = [
     ("an AGENTS.md with no piece count",
      lambda r: recount(r, "AGENTS.md", None),
      'AGENTS.md: no "The first <number> pieces are here" sentence'),
+    # An app's no-updater configuration excludes VibeUpdater.m by name.
+    ("a second updater source that reaches Sparkle through the piece's header",
+     lambda r: write(r, "system/Updates/Mac/VibeUpdaterMenu.m", '#import "VibeUpdater.h"\n'),
+     "the sources that reach Sparkle are VibeUpdater.m, VibeUpdaterMenu.m"),
+    ("the updater's source renamed",
+     lambda r: os.rename(os.path.join(r, "system/Updates/Mac/VibeUpdater.m"),
+                         os.path.join(r, "system/Updates/Mac/Updater.m")),
+     "the sources that reach Sparkle are Updater.m"),
+    ("a second updater source that reaches no Sparkle",
+     lambda r: write(r, "system/Updates/Mac/UpdaterRules.m", '#import "UpdaterRules.h"\n'),
+     None),
 ]
 
 

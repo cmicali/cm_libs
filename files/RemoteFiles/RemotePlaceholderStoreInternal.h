@@ -93,7 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
 // file it keeps whole, such as a playlist it reads. The disk queue.
 - (NSArray<NSDictionary *> *)downloadsUnder:(NSURL *)root;
 // The downloads now take `total` bytes: a fetch landed, the budget changed,
-// or Remove Downloads settled. Any thread. The default does nothing.
+// or removeDownloadsWithCompletion: settled. Any thread. The default does nothing.
 - (void)downloadsDidChangeWithTotal:(long long)total;
 // The log lines' prefix.
 - (NSString *)logName;

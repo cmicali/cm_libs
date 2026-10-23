@@ -1,6 +1,6 @@
 //
 //  UIView+DarkMode.m
-//  Vibe (iOS)
+//  vibe-libs
 //
 
 #import "UIView+DarkMode.h"
