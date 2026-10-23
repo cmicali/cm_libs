@@ -1,6 +1,6 @@
 //
 //  WaveformScrubberViewInternal.h
-//  Vibe (iOS)
+//  vibe-libs
 //
 //  Private to WaveformScrubberView.mm and its Loading and Gestures
 //  categories. ObjC++ only, since it brings in WaveformRenderer.h.

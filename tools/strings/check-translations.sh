@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Fail if any key in any catalog (the config's STRINGS_CATALOGS) is missing a
-# catalog language. Both of Vibe's release paths run it.
+# catalog language. An app's release scripts run it.
 #
 # Nothing else catches this. `extract-strings.sh --check` only asks whether the
 # catalog matches the source, and sync never writes a language other than en;

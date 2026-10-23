@@ -46,6 +46,9 @@ Across the repo:
   - the other app's name appears nowhere
   - no file outside third_party/ holds a merge conflict marker: a line that
     starts with seven <, =, or > and ends there or goes on after a space
+  - AGENTS.md and README.md each say "The first <number> pieces are here",
+    with the number in words. It is the count of pieces with an AGENTS.md,
+    third_party/ included.
 Lists the classes with no prefix. Exits 1 and lists every failure.
 """
 import json
@@ -475,6 +478,33 @@ for path in walk("."):
         for m in CONFLICT.finditer(text):
             fail(f"{path}:{text.count(chr(10), 0, m.start()) + 1}: a merge conflict marker")
 
+# The piece count, in words, in the sentence AGENTS.md and README.md share.
+# Every move changes it, so the check keeps it true.
+ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
+        "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+
+def in_words(n):
+    if n < 20:
+        return ONES[n]
+    if n < 100:
+        return TENS[n // 10] + ("-" + ONES[n % 10] if n % 10 else "")
+    return str(n)
+
+
+COUNT_SENTENCE = re.compile(r"The first ([a-z]+(?:-[a-z]+)?) pieces are here")
+piece_count = sum(1 for piece in pieces if os.path.isfile(os.path.join(piece, "AGENTS.md")))
+for doc in ["AGENTS.md", "README.md"]:
+    said = COUNT_SENTENCE.findall(open(doc).read()) if os.path.isfile(doc) else []
+    if not said:
+        fail(f'{doc}: no "The first <number> pieces are here" sentence; '
+             f'write "The first {in_words(piece_count)} pieces are here"')
+    for word in said:
+        if word != in_words(piece_count):
+            fail(f'{doc}: the piece count says "{word}", but {piece_count} pieces have an AGENTS.md; '
+                 f'write "{in_words(piece_count)}"')
+
 unprefixed = sorted({m for piece in pieces if first_party(piece) for f in walk(piece) if f.endswith(HEADER)
                      for m in re.findall(r"^@(?:interface|protocol)\s+([A-Za-z_]\w*)\b(?!\s*\()",
                                          open(f, errors="replace").read(), re.M)
@@ -483,6 +513,6 @@ unprefixed = sorted({m for piece in pieces if first_party(piece) for f in walk(p
 if failures:
     print("\n".join(failures))
     sys.exit(1)
-print(f"pieces OK: {', '.join(pieces)}")
+print(f"pieces OK, {piece_count} of them: {', '.join(pieces)}")
 if unprefixed:
     print(f"classes with no prefix: {', '.join(unprefixed)}")

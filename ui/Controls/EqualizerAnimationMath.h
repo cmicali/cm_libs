@@ -1,6 +1,6 @@
 //
 //  EqualizerAnimationMath.h
-//  Vibe
+//  vibe-libs
 //
 //  The target and timing decisions for the five equalizer bars. The control
 //  polls level snapshots on a slower clock and hands each material target change

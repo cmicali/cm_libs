@@ -1,6 +1,6 @@
 //
 //  WaveformView+Loading.h
-//  Vibe
+//  vibe-libs
 //
 //  What the strip shows with no waveform: LoadingIndicator's waveform style
 //  while a slow open is pending, and the static placeholder line when nothing

@@ -1,6 +1,6 @@
 //
 //  WaveformView+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Declaration-only: the implementation is in the class's own .mm, which keeps
 //  the shipping header free of #if DEBUG.

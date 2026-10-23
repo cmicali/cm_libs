@@ -1,6 +1,6 @@
 //
 //  LoadingIndicator.m
-//  Vibe
+//  vibe-libs
 //
 //  See the header for what the control is. The style-dependent numbers live in
 //  LoadingIndicatorMath.h; nothing here branches on style directly.
