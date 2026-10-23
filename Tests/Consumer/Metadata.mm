@@ -1,17 +1,19 @@
 //
 //  Metadata.mm
 //
-//  Roots a metadata cache of its own and tags a WAV with a title and a PNG
-//  picture through TagLib's own writer. Loads the WAV through the cache, into
-//  a holder of its own, as an app's row is. Reads the title back, the
-//  picture's bytes through the artwork's extractor, and waits for the row
-//  thumbnail. Objective-C++, since TagLib's writer is C++.
+//  Roots a metadata cache of its own and tags a WAV with a title, an album,
+//  and a PNG picture through TagLib's own writer. Loads the WAV through the
+//  cache, into a holder of its own, as an app's row is. Reads the title and
+//  the album back, groups the album, reads the picture's bytes through the
+//  artwork's extractor, and waits for the row thumbnail. Objective-C++, since
+//  TagLib's writer is C++.
 //
 
 #import <AppKit/AppKit.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#import "AlbumGroupingRules.h"
 #import "AudioTrackMetadataCache.h"
 #import "AudioTrackMetadataInternal.h"
 #import "NSURL+Hash.h"
@@ -153,6 +155,7 @@ BOOL ConsumerLoadsMetadata(void) {
     if (saved) {
         TagLib::RIFF::WAV::File file(url.fileSystemRepresentation);
         file.ID3v2Tag()->setTitle(TagLib::String("Consumer", TagLib::String::UTF8));
+        file.ID3v2Tag()->setAlbum(TagLib::String("Consumer Album", TagLib::String::UTF8));
         auto frame = new TagLib::ID3v2::AttachedPictureFrame();
         frame->setMimeType("image/png");
         frame->setType(TagLib::ID3v2::AttachedPictureFrame::FrontCover);
@@ -179,6 +182,12 @@ BOOL ConsumerLoadsMetadata(void) {
         }
         else if (!track.metadata.parsedOK || ![track.metadata.title isEqualToString:@"Consumer"]) {
             Fail("the metadata cache did not read the tagged title");
+        }
+        else if (![track.metadata.album isEqualToString:@"Consumer Album"]
+                 || !VibeAlbumGroupKey(track.metadata.musicBrainzReleaseID, track.metadata.album,
+                                       track.metadata.albumArtist, track.metadata.artist, track.metadata.year,
+                                       track.metadata.isCompilation)) {
+            Fail("the metadata cache did not read the tagged album, or it groups under no album");
         }
         else if (VibeTagLibArtExtractor()(url.path, &art) != VibeEmbeddedArtExtractionFoundArt
                  || ![art isEqualToData:picture]) {

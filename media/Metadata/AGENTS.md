@@ -13,11 +13,12 @@ The tag record and its CoreAudio fallback, the disk cache of tags, the backgroun
 - `AudioTrackMetadataHolder` is what the loader takes of an item. It extends `VibePlayableItem` with the installed metadata, the install that happens only while the item has no answer from the same version, and the delivery that runs only while that answer is still installed. The holder keeps the check and the store under its own monitor, which must be recursive. It is this piece's own protocol (the plan's seam 22), so the playable item stays free of metadata.
 - `MetadataParseCoordinator` is the per-path owner/waiter table and nothing else.
 - `AudioTrackMetadata` is the immutable tags plus the display-facing art API. `AudioTrackMetadataInternal.h` is the loader's construction surface: the parse, the artwork, and the version stamp.
-- The TagLib side of the parse is `media/Tags`: `TagLibAudioFile`, the file factory, the ranged stream, the format name and the embedded art's bytes. It reads from disk, or through a byte-range reader the caller passes. `AudioTrackMetadata.mm` chooses the reader and turns the art read into the artwork's extractor (`VibeTagLibArtExtractor`). It still reads the title, the artist, the audio properties, the tempo, and the key from TagLib's own types, which the map allows. Moving those reads behind the wrapper needs a record of tag fields, which is the plan's Phase 4. The wrapper's header is C++, so only `.mm` files import it. `NSString+CPPStrings` turns TagLib's UTF-8 into a string, embedded NULs kept.
+- The TagLib side of the parse is `media/Tags`: `TagLibAudioFile`, the file factory, the ranged stream, the format name and the embedded art's bytes. It reads from disk, or through a byte-range reader the caller passes. `AudioTrackMetadata.mm` chooses the reader and turns the art read into the artwork's extractor (`VibeTagLibArtExtractor`). The parse reads the tags from TagLib's own types, which the map allows. The title and the artist come from the tag, and every other field from one property map (The tag fields, below). The wrapper answers what no tag holds: the format, the art, and FLAC's audio MD5. The wrapper's header is C++, so only `.mm` files import it. `NSString+CPPStrings` turns TagLib's UTF-8 into a string, embedded NULs kept.
 - `AudioTrackArtwork` is one row's art lifecycle (private behind the metadata). `ArtworkLoadRegistry` is its admission counters, a file boundary, not a second owner.
 - `AudioTrackArtwork` is one object in two files. `AudioTrackArtwork.m` is the art state, adoption, the archived display art, demotion and the row thumbnails. `+Loading.m` is the full-art load: the extraction gate, the blocking read ladder and the async load the registry admits. `AudioTrackArtworkInternal.h` holds the ivars and the methods both files share.
 - `EmbeddedThumbnailCache` is the decoded thumbnails every row shares, in one bounded LRU.
 - `NSURL+FilenameTitle` is the title a file's name gives, which a parse without a tagged title keeps.
+- `AlbumGroupingRules.h` is which album a track belongs to (The tag fields, below).
 - `Artwork/FolderArt/` is the cover fallback (Folder art, below).
 
 **Do not add a runner, driver or second coordinator.** Straight-line metadata work goes in the loader, per-row art work in `AudioTrackArtwork`. The lettered items the comments cite (`spec A1`, `J4`, `J6`) are Vibe's `docs/file-loading-spec.md`'s.
@@ -65,6 +66,41 @@ A loader snapshots `AudioLoadingConfiguration`, so a settings change reaches onl
 
 **Every delivery runs on main and revalidates the exact installed object while holding the track monitor through the delegate call.** Delegates may update UI synchronously. They must never wait on a metadata worker.
 
+## The tag fields
+
+**The record holds the fields a library app reads.** Vibe reads none of them. Beside the title, the artist, the tempo, and the key, it holds the album, the album artist, the genre, the composer, the year, the track and disc numbers and counts, and the compilation flag. It holds MusicBrainz's release and recording identifiers and the ISRC. It holds FLAC's audio MD5. It holds the loudness tags: ReplayGain's track and album gain and peak, Opus's R128 track and album gain, and Apple's Sound Check. A field the file lacks is nil, 0, or NO.
+
+**The parse reads them from the property map it builds once for the tempo and the key.** TagLib turns each format's frame or atom into one key, and its keys ignore case. So one lookup serves every format. These are the names each format's tag carries:
+
+| Field | ID3v2: MP3, WAV, AIFF | MP4: AAC, ALAC | Xiph comment: FLAC, Vorbis, Opus | APE on MP3 | RIFF INFO | ID3v1 |
+| --- | --- | --- | --- | --- | --- | --- |
+| album | `TALB` | `©alb` | `ALBUM` | `Album` | `IPRD` | album |
+| album artist | `TPE2` | `aART` | `ALBUMARTIST` | `Album Artist` | | |
+| genre | `TCON` | `©gen` or `gnre` | `GENRE` | `Genre` | `IGNR` | genre |
+| composer | `TCOM` | `©wrt` | `COMPOSER` | `Composer` | `IMUS` | |
+| year | `TDRC`, or v2.3's `TYER` | `©day` | `DATE` | `Year` | `ICRD` | year |
+| track number and count | `TRCK` | `trkn` | `TRACKNUMBER`, then `TRACKTOTAL` or `TOTALTRACKS` | `Track` | `IPRT` | track |
+| disc number and count | `TPOS` | `disk` | `DISCNUMBER`, then `DISCTOTAL` or `TOTALDISCS` | `Disc` | | |
+| compilation | `TCMP` | `cpil` | `COMPILATION` | `Compilation` | | |
+| MusicBrainz release | `TXXX:MusicBrainz Album Id` | `----:com.apple.iTunes:MusicBrainz Album Id` | `MUSICBRAINZ_ALBUMID` | `MUSICBRAINZ_ALBUMID` | | |
+| MusicBrainz recording | `UFID` of `http://musicbrainz.org` | `----:com.apple.iTunes:MusicBrainz Track Id` | `MUSICBRAINZ_TRACKID` | `MUSICBRAINZ_TRACKID` | | |
+| ISRC | `TSRC` | `----:com.apple.iTunes:ISRC` | `ISRC` | `ISRC` | `ISRC` | |
+| ReplayGain | `TXXX:REPLAYGAIN_TRACK_GAIN`, and `_TRACK_PEAK`, `_ALBUM_GAIN`, `_ALBUM_PEAK` | `----:com.apple.iTunes:replaygain_track_gain` and the other three | `REPLAYGAIN_TRACK_GAIN` and the other three | `REPLAYGAIN_TRACK_GAIN` and the other three | | |
+| R128 | | | `R128_TRACK_GAIN`, `R128_ALBUM_GAIN` | | | |
+| Sound Check | `COMM:iTunNORM` | `----:com.apple.iTunes:iTunNORM` | | | | |
+
+Opus defines the R128 gains. The parse reads them from any Xiph comment, since the lookup is the same. A count comes from the number's tag, as in "3/12", or else from a tag of its own. The year is the date's leading number.
+
+**Each gain keeps its own reference level.** A ReplayGain gain is the tagged decibels, toward ReplayGain's reference. An R128 gain is Opus's Q7.8 whole number over 256, toward −23 LUFS, on top of the header's output gain. Sound Check's gain is −10 log10 of the louder of iTunNORM's first two words over 1000. Peaks are linear, with 1 at full scale. An app that levels by them converts between references itself.
+
+**FLAC's audio MD5 comes from STREAMINFO**, through the wrapper's `audioMD5FromTagLibFile`. It is the MD5 of the decoded samples, so a retag never changes it. An encoder that computed none writes zeros, which read as nil.
+
+**CoreAudio's facts carry none of the fields.** A CAF or a W64 reads its title and artist from the info dictionary, and nothing else.
+
+**TRAP: an entry archived before the fields must be a miss.** It decodes cleanly, with every field absent. A hit would then report an untagged album or gain for a file that carries one. So the store's name carries the archive's version, `v8` since the fields (`AudioTrackMetadataCache.m`). The cost is one parse of every file, once. An app ships the bump in a release that announces it.
+
+**Album grouping is `AlbumGroupingRules.h`.** `VibeAlbumGroupKey` gives the key that every track of one album shares. The release identifier is the whole key where present. Otherwise the key is the album artist, the album, and the year. The track artist stands in for a missing album artist. A compilation never splits by track artist. A track without an album has no key. Text compares as tagged. The rule reads values, so an app passes the fields of whatever record it keeps.
+
 ## Embedded artwork
 
 `AudioTrackMetadata.h` is the only display API and states each call's contract. `cachedArt` and `cachedThumbnail` never block and are safe while drawing. A cache miss never decodes from a drawing path.
@@ -108,11 +144,11 @@ The cover fallback, in `Artwork/FolderArt/`. `FolderArtResolver` is discovery an
 `Tests/media/Metadata/` holds Vibe's tests of the pipeline. `MetadataTests` runs them on macOS, with the headermap off. It defines `DEBUG` in every configuration, since the loader tests drive the loader's seam and `files/FileLoading`'s.
 
 - **The loader is tested as itself.** The loader tests run the production queues, barrier, ranking, materialization slots, real coordinator, parse claims, installation, publication and cancellation. They replace only cache reads, file parsing and the coordinator's provider-operation boundary. Their harness is `AudioTrackMetadataLoaderTestCase`, which runs no tests, and each topic is a subclass: `AudioTrackMetadataLoaderTests` (stage one, the cache and priority), `…SharedFileTests` (rows that share one file) and `…RetryTests` (retries, the foreground yield, admission, cancellation, and a parse of another version). Their fakes are `MetadataLoaderTestFakes`: `VibeLoaderTestTrack`, the tests' own holder, which memoizes its key as an app's item may, a duck-typed metadata, the loader's owner and delegate, and a provider operation each test completes by hand. Do not copy the loader's state machine into a fake or flatten it into rule tests.
-- `MetadataParseCoordinatorTests`, `MetadataRetryRulesTests`, and `MetadataScanOrderRulesTests` cover the claim table and the rules. `Artwork/` covers the artwork's state and loads, the thumbnail cache, and the folder art resolver and its rules.
-- **The tag parse runs over the real TagLib.** `AudioTrackMetadataTagTests` runs `metadataWithURL:displayArtData:` and the art read over each format: ID3v2.3, ID3v2.4, ID3v1 and APE on MP3, M4A, FLAC with a picture and with a CUESHEET block, Vorbis, Opus, WAV with ID3 or RIFF INFO, AIFF, CAF and W64. It checks tags, tempo and key, codec facts, art that will not decode, art whose header claims a huge image, a file whose extension misleads, and a remote placeholder's tags and art through its backend's read. `AudioTrackMetadataFuzzTests` mutates those files with a fixed seed. Each mutant must parse or fail within a bound and throw nothing. `TEST_RUNNER_VIBE_FUZZ_ROUNDS` raises the rounds, and `TEST_RUNNER_VIBE_FUZZ_SEED` changes the seed. Both write their files with `AudioTrackMetadataTagFixtures.h`: audio from `Tests/Support`'s `AudioFileFixtures.h` or an Apple encoder, then tags from TagLib's own writers. The art is `ImageFixtures.h`'s.
+- `MetadataParseCoordinatorTests`, `MetadataRetryRulesTests`, `MetadataScanOrderRulesTests`, and `AlbumGroupingRulesTests` cover the claim table and the rules. The grouping has a case for each rule above. `Artwork/` covers the artwork's state and loads, the thumbnail cache, and the folder art resolver and its rules.
+- **The tag parse runs over the real TagLib.** `AudioTrackMetadataTagTests` runs `metadataWithURL:displayArtData:` and the art read over each format: ID3v2.3, ID3v2.4, ID3v1 and APE on MP3, M4A, FLAC with a picture and with a CUESHEET block, Vorbis, Opus, WAV with ID3 or RIFF INFO, AIFF, CAF and W64. It checks tags, tempo and key, codec facts, every tag field each format carries, FLAC's audio MD5, art that will not decode, art whose header claims a huge image, a file whose extension misleads, and a remote placeholder's tags and art through its backend's read. Each fixture carries every tag field its format does, and the fields survive the cache's archive and a copy. Each field also gets a test of its own, which writes that field alone in each format that carries it. `AudioTrackMetadataFuzzTests` mutates those files with a fixed seed. Each mutant must parse or fail within a bound and throw nothing. `TEST_RUNNER_VIBE_FUZZ_ROUNDS` raises the rounds, and `TEST_RUNNER_VIBE_FUZZ_SEED` changes the seed. Both write their files with `AudioTrackMetadataTagFixtures.h`: audio from `Tests/Support`'s `AudioFileFixtures.h` or an Apple encoder, then tags from TagLib's own writers. The art is `ImageFixtures.h`'s.
 
-**Ogg's audio comes from an app's generated fixtures**, which these tests find where `VIBE_AUDIO_FIXTURES` points. Nothing here generates them, so the Vorbis and Opus cases skip here. Vibe's `VibeAudioTests` compiles the tag and fuzz tests from the submodule (`make test-audio`), over the fixtures it generates, so those cases run there. Vibe keeps its row's tests over the real parse, and its test of the walk's handoff to the resolver.
+**Ogg's audio comes from an app's generated fixtures**, which these tests find where `VIBE_AUDIO_FIXTURES` points. Nothing here generates them, so the Vorbis and Opus cases skip here. FLAC's Xiph comment still covers every Xiph field here, R128's gains included. Vibe's `VibeAudioTests` compiles the tag and fuzz tests from the submodule (`make test-audio`), over the fixtures it generates, so those cases run there. Vibe keeps its row's tests over the real parse, and its test of the walk's handoff to the resolver.
 
 **A bounded wait is a hang guard or a gate.** A wait for what must happen uses `VIBE_TEST_HANG_TIMEOUT`. A gate the test releases itself uses `VIBE_TEST_GATE_TIMEOUT`. A negative check uses `kVibeTestNegativeWindow` (`Tests/Support`). The bundle defines both bounds, as Vibe's do. Run the fuzz with a raised count under `-enableAddressSanitizer YES -enableUndefinedBehaviorSanitizer YES` after a change to the parse.
 
-The minimal consumer roots a metadata cache of its own, tags a WAV with a title and a picture through TagLib, loads it through the cache with a holder of its own, reads the title and the picture's bytes back, and waits for the row thumbnail.
+The minimal consumer roots a metadata cache of its own, tags a WAV with a title, an album, and a picture through TagLib, and loads it through the cache with a holder of its own. It reads the title, the album, and the picture's bytes back, groups the album, and waits for the row thumbnail.
