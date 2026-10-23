@@ -79,7 +79,8 @@ vibe-libs/
 │   ├── HTTP             ranged HTTP transfers
 │   ├── RemoteFiles      a local placeholder for a file on a server, fetched by range
 │   ├── ShareLinks       Dropbox, Google Drive and iCloud share links turned into direct URLs,
-│   │                    and the fake HTTP host that stands in for those services in tests
+│   │                    the rules for opening any web link, and the fake HTTP host that
+│   │                    stands in for those services in tests
 │   └── SandboxAccess    security-scoped bookmarks and folder grants, with the grant panel
 │
 ├── audio/
@@ -478,7 +479,9 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 - **18. Playlists returns records.** Today the CUE and M3U readers return `AudioTrack` rows. They return plain records, and Vibe makes its rows from them. The seam landed on 2026-10-21 (Vibe #359).
 - **23. FolderScan reports each walked file to a handler.** Today the walk notes cover-art candidates itself, through Metadata's `FolderArtRules.h`. The app installs the handler at launch, beside the walk's other handlers. Metadata cannot install it, since it has no edge to FolderScan. The handler returns a rank for each filename. The walk keeps the best-ranked file of each directory. The seam landed on 2026-10-21 (Vibe #359).
 
-**Waiting for their pieces:** cut 2 and seam 20 (RemoteFiles and ShareLinks; seam 20 also stops `LinkClient` importing `LinkStore`), the Now Playing half of seam 19, and seam 21 (the shell pieces). Cut 2 as written moves the playlist-extension tests into `PlayableExtensions`. That would add an edge from RemoteFiles to AudioTypes, which the map lacks. `isPlaylistExtension:` may instead be Playlists' word. The move of RemoteFiles settles it. Vibe's `LinkStore.h` imports the playable-item protocol (Vibe #351). `LinkClient` reaches it through the store. Seam 20 must cut that reach too. Cut 5 is not planned, since `AudioTrack` stays in Vibe.
+**Waiting for their pieces:** the Now Playing half of seam 19, and seam 21 (the shell pieces). Cut 5 is not planned, since `AudioTrack` stays in Vibe.
+
+**Cut 2 and seam 20 landed with RemoteFiles and ShareLinks on 2026-10-23.** Cut 2: the store's budget walk skipped playlist files through Playlists' `isPlaylistExtension:`. The walk, `downloadsUnder:`, became a hook. Its default counts every regular file that is no placeholder. Vibe's Dropbox mirror, the one store that keeps playlists whole, drops them in its override. So RemoteFiles needs neither Playlists nor AudioTypes, and the map gains no edge. Seam 20: `LinkClient` imported `LinkStore.h` only for the link error's domain and constructor. Both moved beside the client. `LinkStore.h`'s import of the playable-item protocol stays in Vibe with the store, so ShareLinks reaches no AudioTypes.
 
 **Before Phase 3 started**, every item it waited on was met or recorded. The checker covered every rule it promises, with a failing case for each (this repo's #3). The contracts of seams 13, 15, 17, and 22, and rule 4's version check, were each traced to tests on Vibe's proofs page, `docs/future/vibe-libs-contract-proofs.md`. That page lists the tests for each line of each contract. Five of its lines have no test that pins them. Three are behaviors: a download of the placeholder's own version leaving the memos alone, a sink's result that is no property-list object, and a file sounding through a re-key. Two are splits held only at compile time: which pieces take the playable-item protocol, and the holder protocol apart from it.
 
@@ -565,7 +568,7 @@ Two changes of behavior, each its own pull request with its own measurements:
 Each remaining candidate moves when a second app needs it, with the cuts it was waiting for:
 
 - **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates. NowPlaying moved on 2026-10-22: its 5 files moved with their history (this repo's #41), their tests run here, and Vibe compiles them through the template. It takes the track's source key, title, artist, and image as values, so it needs no snapshot type and no edge to AudioTypes.
-- **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them.
+- **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them. Done 2026-10-23: their 27 files and the tests' `HTTPStub` moved with their history (this repo's #46), their tests run here, and Vibe compiles them through the templates. The fake HTTP host joined ShareLinks (rule 8), so HTTP's and RemoteFiles' test bundles list ShareLinks' template for `HTTPStub`'s serving engine. The pieces never import it. The link store, the Dropbox mirror and client, and every debug verb stay in Vibe. The 2 GB link budget moved from `LinkRules.h` to Vibe's link store, since it is Vibe's choice. The error domains and queue names start `vibe-libs`. The kept part's xattr keeps Vibe's name, since parts on disk carry it.
 - **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date. Done 2026-10-23: DebugChannel and iOSDriver moved. Their 7 files moved with their history (this repo's #44), and Vibe compiles them through their templates. Two prep commits in Vibe came first. The channel's one reach into Vibe, the transport verbs' reply, moved to Vibe's verbs. The driver takes the app it drives, a relaunch's arguments, and the pinched view from its environment. Vibe had no tests of the channel, so its tests are new here. The minimal consumer answers one command through it. The driver builds as a UI-testing bundle with no host app, since it drives an app by bundle identifier.
 
 ## What the other app needs, and when
@@ -582,6 +585,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 | Full app: background analysis | WaveformLoading's scan requests | behavior | 5 | a throttled source yields within one block | |
 | Full app: leveling from tags | a gain per file through a gapless splice | behavior | 5 | the boundary-frame render test | |
 | First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | NowPlaying at 36ff73d (#41). Updates is still open. |
+| A server source | HTTP, RemoteFiles, and ShareLinks | move | 6 | Vibe's transfer, store, and link tests, moved here | Done 2026-10-23 (this repo's #46) |
 
 Nothing else is scheduled for the other app. The shell pieces are scheduled for a third app, on the shell track. Portable rewrites wait until a consumer needs them.
 
@@ -600,7 +604,7 @@ Vibe already has HTTP transfers, ranged reads, remote placeholders, opens that p
 - **The original bytes.** OpenSubsonic transcodes unless asked not to, so every stream request passes `format=raw`. A transcoded stream would change the waveform, the analysis, and bit-perfect output.
 - **Compatibility tests** against Navidrome, Gonic, Airsonic, and Ampache, which answer the same API differently.
 
-That work belongs to the app that ships the source. FileLoading and Player already moved in Phase 3. HTTP and RemoteFiles move in Phase 6, when the source is built.
+That work belongs to the app that ships the source. FileLoading and Player moved in Phase 3. HTTP, RemoteFiles, and ShareLinks moved in Phase 6 (this repo's #46).
 
 ## New types
 
