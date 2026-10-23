@@ -2,7 +2,7 @@
 
 **Status: planned 2026-10-17 and revised after review. Phase 0 done on 2026-10-18. Phase 1, the pilot, merged on 2026-10-20: this repo's first pieces and Vibe's pull requests #314 and #315. Revised again on 2026-10-18 after a second review: the checker covers every rule it promised, FolderScan and Playlists join the first path, and four contracts and a delivery list are written down. Revised on 2026-10-20 after a third review: the shell pieces join on a second track for a third app, the one prefix is `Vibe`, and a macOS-only piece has a shape. Wave 1 merged on 2026-10-21: `core/Graphics` moved (#6, Vibe #350), and seam 13 landed (Vibe #351). Waves 2 and 3 merged on 2026-10-21: `ui/Controls` and `ui/SettingsWindow` moved (#9, #11), and seams 14 to 18, the queue half of 19, 22, and 23 landed (Vibe #353 to #359). Wave 4 merged on 2026-10-21 with Phase 3 steps 1 and 2, cut 30, and the waveform version check (Vibe #361 to #364, this repo's #13 and #14). Wave 5 merged on 2026-10-21 with Phase 3 steps 3 and 4, the shell track's last move, and the metadata version check (Vibe #366 to #369, this repo's #16 to #18). Wave 6 merged on 2026-10-21 with all of Phase 3 step 5 but Player: OutputDevices, FX, Meter, Decode, and Analysis (Vibe #371 to #374, this repo's #20 to #23).**
 
-**Waves 7 to 9 merged on 2026-10-22 with the rest of Phase 3's moves and NowPlaying: Player, the five media pieces, the four waveform pieces, Controls' indicators, and `tools/strings` (Vibe #378 to #391, this repo's #28 to #42). Wave 10 merged on 2026-10-23 and brought the pieces to 44: DebugChannel and iOSDriver, HTTP, RemoteFiles, and ShareLinks, Updates and Sparkle, SandboxAccess, and AppOpening (Vibe #393 to #397, this repo's #44 to #48). What remains is the catalog scan, the Phase 3 consumer, Phases 4 and 5, and the pitch fader.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Waves 7 to 9 merged on 2026-10-22 with the rest of Phase 3's moves and NowPlaying: Player, the five media pieces, the four waveform pieces, Controls' indicators, and `tools/strings` (Vibe #378 to #391, this repo's #28 to #42). Wave 10 merged on 2026-10-23 and brought the pieces to 44: DebugChannel and iOSDriver, HTTP, RemoteFiles, and ShareLinks, Updates and Sparkle, SandboxAccess, and AppOpening (Vibe #393 to #397, this repo's #44 to #48). The pitch fader joined `ui/Controls` on 2026-10-23 (Vibe #399, this repo's #51). The Phase 3 consumer was met on 2026-10-23 (this repo's #50). Phase 4, the tag fields, was done on 2026-10-23 (this repo's #52). What remains is the catalog scan and Phase 5.** This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -122,9 +122,9 @@ vibe-libs/
 │
 ├── ui/
 │   ├── Controls ●○      loading bar and pill, equalizer bars; Mac/ the symbol button, the drawn
-│   │                    slider and switch, the detent slider, the image views, the link
-│   │                    label, and the resize timing an app's windows share; later the pitch
-│   │                    fader
+│   │                    slider and switch, the detent slider, the pitch fader and its panel,
+│   │                    the image views, the link label, and the resize timing an app's
+│   │                    windows share
 │   ├── SettingsWindow ○ macOS only: the System Settings shape, a sidebar with search, back
 │   │                    and forward history, the pane base, and the form views: cards, rows,
 │   │                    captions, lists, color-pair wells, sliders with readouts; the
@@ -306,7 +306,7 @@ A third app, a mac app that plays no audio, is the second consumer of Vibe's she
 | core/Graphics, Mac/ | `Fonts` | 194 | `AppTheme`, for the five font slots and the theme push |
 | ui/Shortcuts | `ShortcutRules.h`, `SettingsShortcutsViewController` | 700, at `4fc7b2b6` | nothing since cut 30 (Vibe #361) and the layout's cut (Vibe #366). The keyboard-layout half left Vibe's `MainMenuBuilder` for `ShortcutLayout`, which moved with them. |
 
-**What stays in Vibe:** `AppSettings` and `SettingsRules.h`, which are policy; every pane's content; `ArtworkImageView`; `PitchFaderView` and `PitchControlPanel` until seam 21; `MainMenuBuilder` without its keyboard-layout half (the shell track's step 6 moves that half); Vibe's command table; the About window; the iOS settings screens; and the theme record, its store, and the Themes pane.
+**What stays in Vibe:** `AppSettings` and `SettingsRules.h`, which are policy; every pane's content; `ArtworkImageView`; `MainMenuBuilder` without its keyboard-layout half (the shell track's step 6 moves that half); Vibe's command table; the About window; the iOS settings screens; and the theme record, its store, and the Themes pane.
 
 **The theme engine does not move.** `AppTheme` and its categories are about 3,500 lines, and the Themes pane 2,600 more. Its slots are Vibe's product: the waveform, the playlist, the transport buttons, and the window chrome. A theme piece needs a schema-driven record, which is a redesign, not a move, and no second app wants user themes. What is generic in it is small: the dark and light color-pair row, its seeding from the displayed fallback, and copy and paste of a color as hex. Those move into the form views, bound to a read block and a write block instead of a theme base (cut 29). A theme piece is reconsidered only when an app asks for user themes.
 
@@ -400,7 +400,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **The checker has tests of its own.** `scripts/checks/check-pieces-test.py` copies the repo, breaks one rule per case, and fails unless the checker fails with that rule's message. Each new rule gets a case. Two cases are the ones a review reproduced against the first checker: an angled include of another piece from `core/Common`, and a map edge from `core/Common` back to a piece that uses it.
 
-**A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `vibe-libs.yml` from two directories up, sets `VIBE_LIBS_ROOT`, lists a template, builds with no prefix header and no headermap, and runs. It grows into the consumer the end of Phase 3 asks for.
+**A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `vibe-libs.yml` from two directories up, sets `VIBE_LIBS_ROOT`, lists the templates it uses, builds with no prefix header and no headermap, and runs. It is the consumer the end of Phase 3 asks for. Its row, `ConsumerTrack`, adopts the playable-item protocol and Metadata's holder protocol, with a source key and a CUE window. A queue of these rows plays through a player on the manual render pump: two rows of one file, then a CUE window of another. Its delegate parks the queue's successor, as an app's does. The first track's end advances to the second row, and the window plays only its own frames. Every frame comes back exactly. It cancels an open over the fake cloud while the download is in flight, and the claim and the transfer let go. It roots a metadata cache and a waveform cache in temporary directories, and the second load from each is a hit. It needs no audio device. Each check sits in a file named for its piece, or in `main.m`, which runs them all.
 
 CI runs `make check-pieces`, `make test-strings`, `make test`, `make build-ios`, `make consumer`, and `make analyze`. `make analyze` joined on 2026-10-21, after `core/Graphics` moved. It runs clang's static analyzer over every piece's macOS test bundle in Release. It fails on any finding outside `third_party/`. GitHub Actions is free for a public repo, macOS runners included.
 
@@ -486,7 +486,7 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 - **18. Playlists returns records.** Today the CUE and M3U readers return `AudioTrack` rows. They return plain records, and Vibe makes its rows from them. The seam landed on 2026-10-21 (Vibe #359).
 - **23. FolderScan reports each walked file to a handler.** Today the walk notes cover-art candidates itself, through Metadata's `FolderArtRules.h`. The app installs the handler at launch, beside the walk's other handlers. Metadata cannot install it, since it has no edge to FolderScan. The handler returns a rank for each filename. The walk keeps the best-ranked file of each directory. The seam landed on 2026-10-21 (Vibe #359).
 
-**Waiting for its piece:** the pitch fader's part of seam 21. The Now Playing half of seam 19 came with NowPlaying (this repo's #41), and the other parts of seam 21 with wave 10's moves (Phase 6). Cut 5 is not planned, since `AudioTrack` stays in Vibe.
+**No seam waits for its piece.** The Now Playing half of seam 19 came with NowPlaying (this repo's #41). The parts of seam 21 came with wave 10's moves and the pitch fader's (Phase 6). Cut 5 is not planned, since `AudioTrack` stays in Vibe.
 
 **Cut 2 and seam 20 landed with RemoteFiles and ShareLinks on 2026-10-23** (this repo's #46, Vibe #394). Cut 2: the store's budget walk skipped playlist files through Playlists' `isPlaylistExtension:`. The walk, `downloadsUnder:`, became a hook. Its default counts every regular file that is no placeholder. Vibe's Dropbox mirror, the one store that keeps playlists whole, drops them in its override. So RemoteFiles needs neither Playlists nor AudioTypes, and the map gains no edge. Seam 20: `LinkClient` imported `LinkStore.h` only for the link error's domain and constructor. Both moved beside the client. `LinkStore.h`'s import of the playable-item protocol stays in Vibe with the store, so ShareLinks reaches no AudioTypes.
 
@@ -545,7 +545,7 @@ In this order, each its own move:
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file. Done 2026-10-22: its 3 scripts moved with their history (this repo's #40), and Vibe runs them from here with its own config. A prep commit in Vibe made them read the config, a bash file they source. Vibe's widget catalog became the config's optional subset. Every message and every catalog Vibe's gates write stayed the same. The piece is scripts, so it has no template and no targets, and the checker learned that. Its self-test runs the scripts over a tiny app of its own, `make test-strings`, and CI runs it.
 9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move. FolderScan has moved, so the catalog scan can now be built here.
 
-**Done when** a minimal consumer here, grown from `Tests/Consumer/`, uses the real templates with objects and strings of its own. It plays repeated queue entries and a CUE window, cancels a cloud open, roots a metadata cache of its own, and hits the waveform cache.
+**Done when** a minimal consumer here, grown from `Tests/Consumer/`, uses the real templates with objects and strings of its own. It plays repeated queue entries and a CUE window, cancels a cloud open, roots a metadata cache of its own, and hits the waveform cache. Done 2026-10-23: the consumer does each of these with a row of its own, through the templates an app lists (this repo's #50). The boundary check's paragraph on the minimal consumer says what each check does.
 
 **The other app's first slice starts after this phase.** It scans a folder, lists its songs, and plays a queue.
 
@@ -579,7 +579,7 @@ Each remaining candidate moves when a second app needs it, with the cuts it was 
 - **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates. NowPlaying moved on 2026-10-22: its 5 files moved with their history (this repo's #41, Vibe #390), their tests run here, and Vibe compiles them through the template. It takes the track's source key, title, artist, and image as values, so it needs no snapshot type and no edge to AudioTypes.
 - **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them.
 - **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it.
-- **The pitch fader** joins `ui/Controls` with its part of seam 21. It has no date.
+- **The pitch fader** joins `ui/Controls` with its part of seam 21. It moved on 2026-10-23 in this repo's #51 and Vibe #399. The fader and its panel joined `ui/Controls`' `Mac/` half. Their 4 files and their test moved with their history, the test runs here, and Vibe compiles them through Controls' template. Their part of seam 21 was four values, which a prep commit in Vibe turned into pushes. The panel takes its title, the fader's VoiceOver label, one formatter for its readout and the fader's spoken value, and its corner radius. So Controls' map row and template are unchanged.
 
 **Wave 10 moved the rest but the pitch fader on 2026-10-23**, in this order:
 
@@ -595,7 +595,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 
 | The other app's milestone | Delivery here | Kind | Phase | Proven by | Delivered at |
 | --- | --- | --- | --- | --- | --- |
-| First slice: scan a folder, list its songs, play a queue | the Playback and Waveform stacks, Metadata, PlayQueue, DiskCache, and FileLoading with its fake cloud | move | 3 | the minimal consumer | |
+| First slice: scan a folder, list its songs, play a queue | the Playback and Waveform stacks, Metadata, PlayQueue, DiskCache, and FileLoading with its fake cloud | move | 3 | the minimal consumer | Done 2026-10-23 (this repo's #50) |
 | First slice | Playlists and FolderScan | move | 3 | Vibe's walk and CUE tests, moved here | b02ac08 (#30) and 79487ed (#32) |
 | First slice | the catalog scan | behavior | 3 | the tests in Scanning a catalog | |
 | First slice, from its first UI string | `tools/strings` | tool | 3 | the consumer's own catalog passes the checks | 9aef74c (#40) |

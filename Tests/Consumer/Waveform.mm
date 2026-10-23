@@ -5,12 +5,18 @@
 //  decode would. Reads its peaks and level back, round-trips it through the
 //  archive and through the cache entry an app files, and draws it 64 pixels
 //  wide as a coverage mask. Writes the tone as a WAV, loads it into a summary
-//  through the waveform loader, and reads its length and peaks back.
+//  through the waveform loader, and reads its length and peaks back. Roots a
+//  waveform cache of its own, with an observer of its own on the decode, and
+//  loads the tone through it twice. The second load is a hit that decodes
+//  nothing, which the cache's seam reports.
 //
 
 #import <Foundation/Foundation.h>
 #import "AudioWaveform.h"
+#import "AudioWaveformCache+Debug.h"
 #import "AudioWaveformLoader.h"
+#import "AudioWaveformObserver.h"
+#import "ConsumerTrack.h"
 
 #include <algorithm>
 #include <cmath>
@@ -22,6 +28,7 @@
 
 extern "C" BOOL ConsumerWaveformHolds(void);
 extern "C" BOOL ConsumerLoadsAWaveform(void);
+extern "C" BOOL ConsumerHitsTheWaveformCache(void);
 
 BOOL ConsumerWaveformHolds(void) {
     const double rate = 44100;
@@ -96,11 +103,13 @@ BOOL ConsumerWaveformHolds(void) {
     return YES;
 }
 
-// A second of the tone as a 16-bit mono WAV, its bytes written here, loaded
-// through the loader as an app's cache would load it.
-BOOL ConsumerLoadsAWaveform(void) {
-    const uint32_t rate = 44100;
-    const uint32_t frames = 44100;
+static const uint32_t kToneRate = 44100;
+static const uint32_t kToneFrames = 44100;
+
+// A second of the tone as a 16-bit mono WAV at path, its bytes written here.
+static BOOL WriteToneWAV(NSString *path) {
+    const uint32_t rate = kToneRate;
+    const uint32_t frames = kToneFrames;
     NSMutableData *wav = [NSMutableData dataWithBytes:"RIFF" length:4];
     uint32_t chunk = 36 + frames * 2, fmtSize = 16, byteRate = rate * 2, dataSize = frames * 2;
     uint16_t pcm = 1, channels = 1, align = 2, bits = 16;
@@ -119,17 +128,145 @@ BOOL ConsumerLoadsAWaveform(void) {
         int16_t sample = int16_t(std::lround(16384 * std::sin(2 * M_PI * 1000 * double(i) / rate)));
         [wav appendBytes:&sample length:sizeof sample];
     }
+    return [wav writeToFile:path atomically:YES];
+}
+
+// The tone loaded through the loader as an app's cache would load it.
+BOOL ConsumerLoadsAWaveform(void) {
     NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:
                       [NSUUID.UUID.UUIDString stringByAppendingPathExtension:@"wav"]];
-    [wav writeToFile:path atomically:YES];
+    WriteToneWAV(path);
     CodableAudioWaveform *loaded = [[[AudioWaveformLoader alloc] init] load:path];
     [NSFileManager.defaultManager removeItemAtPath:path error:NULL];
     AudioWaveform *summary = loaded.waveform;
-    wavecore::Column whole = summary ? summary->column(0, double(frames)) : wavecore::Column();
-    if (!summary || !summary->isComplete() || summary->totalFrames() != frames || summary->sampleRate() != rate
+    wavecore::Column whole = summary ? summary->column(0, double(kToneFrames)) : wavecore::Column();
+    if (!summary || !summary->isComplete() || summary->totalFrames() != kToneFrames
+            || summary->sampleRate() != kToneRate
             || std::fabs(whole.hi - 0.5f) > 0.002f || std::fabs(whole.lo + 0.5f) > 0.002f) {
         fprintf(stderr, "consumer: the loader read %lld frames, %.4f to %.4f\n",
                 summary ? (long long)summary->totalFrames() : -1LL, whole.lo, whole.hi);
+        return NO;
+    }
+    return YES;
+}
+
+// The observer's sink: it counts the frames a decode feeds it.
+@interface ConsumerFrameSink : NSObject <AudioWaveformSink>
+@end
+
+@implementation ConsumerFrameSink {
+    NSUInteger _frames;
+}
+- (void)appendMonoSamples:(const float *)samples frameCount:(NSUInteger)frameCount {
+    _frames += frameCount;
+}
+- (id)waveformResult {
+    return @(_frames);
+}
+@end
+
+// The cache's deliveries, on main: the rows a complete waveform reached, and
+// each result with its row. It also counts the sinks the observer made, which
+// is the decodes that ran.
+@interface ConsumerWaveformListener : NSObject <AudioWaveformCacheDelegate>
+@property (nonatomic) NSMutableArray<id<VibePlayableItem>> *completed;
+@property (nonatomic) NSMutableArray<id<VibePlayableItem>> *resultTracks;
+@property (nonatomic) NSMutableArray<NSDictionary *> *results;
+@property (atomic) NSUInteger sinks;
+@end
+
+@implementation ConsumerWaveformListener
+- (instancetype)init {
+    if ((self = [super init])) {
+        _completed = [NSMutableArray array];
+        _resultTracks = [NSMutableArray array];
+        _results = [NSMutableArray array];
+    }
+    return self;
+}
+- (void)audioWaveform:(CodableAudioWaveform *)waveform didLoadData:(float)percentLoaded
+             forTrack:(id<VibePlayableItem>)track {
+    if (percentLoaded >= 1) {
+        [_completed addObject:track];
+    }
+}
+- (void)audioWaveformCache:(AudioWaveformCache *)cache
+            didLoadResults:(NSDictionary<NSString *, id> *)results
+                  forTrack:(id<VibePlayableItem>)track {
+    [_resultTracks addObject:track];
+    [_results addObject:results];
+}
+@end
+
+static BOOL Spin(BOOL (^done)(void)) {
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:10];
+    while (!done() && deadline.timeIntervalSinceNow > 0) {
+        [NSRunLoop.mainRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+    }
+    return done();
+}
+
+// The tone through a cache rooted in a temporary directory. The first load
+// decodes it, and the observer counts its frames. The entry is filed after
+// that delivery, so the preview lane, which only reads the disk, waits for it.
+// The second load, of a fresh row of the same file, asks the cache's seam. It
+// is a hit, it hands back the filed count, and no second sink is made.
+// TRAP: the row is the whole file. The seam keys a CUE row by its file's key
+// alone, so a window's second load misses there.
+BOOL ConsumerHitsTheWaveformCache(void) {
+    NSURL *directory = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:
+                                               NSUUID.UUID.UUIDString] isDirectory:YES];
+    [NSFileManager.defaultManager createDirectoryAtURL:directory withIntermediateDirectories:YES attributes:nil
+                                                 error:NULL];
+    NSURL *url = [directory URLByAppendingPathComponent:@"tone.wav"];
+    WriteToneWAV(url.path);
+    ConsumerWaveformListener *listener = [ConsumerWaveformListener new];
+    AudioWaveformObserver *frames = [[AudioWaveformObserver alloc] initWithIdentifier:@"consumer.frames"
+            sinkFactory:^id<AudioWaveformSink>(double sampleRate, NSRange window) {
+        listener.sinks++;
+        return [ConsumerFrameSink new];
+    }];
+    AudioWaveformCache *cache = [[AudioWaveformCache alloc]
+            initWithRootPath:[directory URLByAppendingPathComponent:@"cache"].path];
+    cache.delegate = listener;
+    cache.analysisProvider = ^VibeWaveformAnalysis {
+        return (VibeWaveformAnalysis){.bands = NO, .observers = @[frames]};
+    };
+    NSDictionary *counted = @{@"consumer.frames": @(kToneFrames)};
+
+    ConsumerTrack *row = [ConsumerTrack withURL:url];
+    [cache loadWaveformForTrack:row];
+    BOOL decoded = Spin(^BOOL { return listener.results.count > 0; })
+            && listener.resultTracks.firstObject == row && [listener.results.firstObject isEqual:counted]
+            && [listener.completed indexOfObjectIdenticalTo:row] != NSNotFound;
+    cache.delegate = nil;
+    __block BOOL filed = NO;
+    for (NSUInteger tries = 0; decoded && !filed && tries < 1000; tries++) {
+        __block BOOL answered = NO;
+        [cache cachedWaveformForTrack:[ConsumerTrack withURL:url]
+                           completion:^(CodableAudioWaveform *waveform) {
+            filed = waveform != nil;
+            answered = YES;
+        }];
+        Spin(^BOOL { return answered; });
+    }
+    __block BOOL ok = NO, wasCached = NO, answered = NO;
+    __block NSDictionary *results = nil;
+    if (filed) {
+        [cache cacheWaveformForTrack:[ConsumerTrack withURL:url]
+                          completion:^(BOOL loaded, BOOL hit, NSDictionary<NSString *, id> *entry) {
+            ok = loaded;
+            wasCached = hit;
+            results = entry;
+            answered = YES;
+        }];
+        Spin(^BOOL { return answered; });
+    }
+    [NSFileManager.defaultManager removeItemAtURL:directory error:NULL];
+    if (!decoded || !filed || !ok || !wasCached || ![results isEqual:counted] || listener.sinks != 1) {
+        fprintf(stderr, "consumer: the waveform cache decoded %d, filed %d, then answered %d, hit %d, "
+                "with %s, after %lu decodes\n", decoded, filed, ok, wasCached, results.description.UTF8String,
+                (unsigned long)listener.sinks);
         return NO;
     }
     return YES;

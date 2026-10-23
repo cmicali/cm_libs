@@ -1,6 +1,6 @@
 # ui/Controls
 
-Controls an app draws itself. It depends on `core/Graphics`, and on `core/Common` for the weak proxy and the helper macros. **Today it holds what Vibe moved here.** Its shared files are the equalizer bars and the loading indicator, which both platforms draw the same way. Its `Mac/` half holds the symbol button, the drawn slider and switch, the detent slider, two image views, the link label, and the window resize timing. None of it reads an app's settings, strings, or types.
+Controls an app draws itself. It depends on `core/Graphics`, and on `core/Common` for the weak proxy and the helper macros. **Today it holds what Vibe moved here.** Its shared files are the equalizer bars and the loading indicator, which both platforms draw the same way. Its `Mac/` half holds the symbol button, the drawn slider and switch, the detent slider, the pitch fader and its panel, two image views, the link label, and the window resize timing. None of it reads an app's settings, strings, or types.
 
 | File | Owns |
 | --- | --- |
@@ -78,6 +78,21 @@ It fades to its highlight color on hover and dims to half that while pressed. It
 - **`VibeSwitch`** matches the small `NSSwitch`, with its slide, Space under full keyboard access, and a VoiceOver checkbox of the switch subrole. Setting `state` neither slides nor sends the action.
 - **`VibeDetentSlider`** is an `NSSlider` with a detent, in a file of its own. It draws ticks above and below the track at `detentValue`, where its action snaps.
 
+### The pitch fader
+
+`PitchFaderView` is a turntable's pitch fader: minus at the top, plus at the bottom, a detent at 0, and a quartz-lock LED that lights at exactly 0. It is drawn like hardware, the same in both appearances. Its pitch is a percent, clamped to `±maxPitch`. `maxPitch` is 8 by default and never reaches 0. Setting the pitch never fires the delegate.
+
+`PitchControlPanel` is the strip around it: a title, a live readout, and the fader. **It is what an app talks to. The fader inside is an implementation detail, so gestures report the panel as the sender.** It vends `kPitchPanelWidth`, its fixed width. As the panel gets short, its header fades out and the fader takes the room.
+
+- A drag moves in 0.1% steps. Within 0.35% of zero it snaps to 0. A click on the scale jumps the knob there and keeps dragging. A double-click resets to 0.
+- **Both delegates fire `…DidEndAdjusting:` once per gesture**: on the mouse-up after a click or a drag, on a double-click reset, or after an accessibility step. It is the hook for work too heavy for every drag tick. The per-tick callback is `didChangePitch:`.
+- **A click on the title or the readout reports `pitchControlPanelDidClickHeader:`.** The labels pass clicks through to the panel. The panel refuses the window drag, so that click is its own. It drags the window itself from everywhere else. A faded header is not a target.
+- `VibeQuartzLockGreen(a)` is the green of the zero LED and of the readout at zero. It takes an alpha, so the LED's glow can use a faint variant.
+
+**The fader is an accessibility slider** (`NSAccessibilitySliderRole`). It is a custom `NSView` with no control to inherit from. Without this the pitch is unreachable with VoiceOver. Its step is **0.5%, not the 0.1% a drag moves by.** Stepping at 0.1% would take 160 presses to cross ±8%. Half a percent divides both 8 and 16 evenly, so stepping always lands back on exactly 0. A step takes the drag's path, with the detent, the rounding, and `didChangePitch:`. It then fires `…DidEndAdjusting:`, since one press is the whole gesture.
+
+**An app pushes everything the panel shows except the hardware look.** It sets the `title` and the fader's VoiceOver label (`faderAccessibilityLabel`). It sets `pitchFormatter`, which writes both the readout and the fader's spoken value, so the two always agree. With no formatter the readout is empty. It sets `cornerRadius` to its window's corner radius. The panel draws only its right corners, strictly inside its bounds. Its left edge is a hairline seam against the app's content. The range is the app's too. It sets `maxPitch` and keeps its player's range in step.
+
 ### Image views
 
 - **`CrossfadingImageView`** is a layer-backed `NSImageView`. `setImage:` cross-fades the new image over the old. It vends `kVibeArtCrossfadeDuration`, so an app can fade other views on the same clock. The new image sits beneath the outgoing fade layers. At most two outgoing layers remain, and a third drops the oldest. An in-flight fade never resets to opaque. It is opted out of drag and drop, so file drops fall through to the window.
@@ -103,6 +118,7 @@ With no link set it is an ordinary label. It is not focusable, not an accessibil
 
 - `EqualizerIndicatorViewTests` runs the bars in a deferred window with a recording `EqualizerLevelSource`. Every gate, a source swap, a reentrant restart, and deallocation must leave one balanced consumer per running poller.
 - `LoadingIndicatorTests` covers the loading control's layers, pulse, sweep, and palette, and its row view.
+- `PitchFaderViewTests` draws the fader and checks the knob, the LED, and the hardware look. It sends the gestures and the accessibility steps, and checks that each gesture ends once. It also checks what an app pushes into the fader and the panel: the label, the spoken value, the readout, and the corners.
 - The drawn-control, symbol-button, and link-label tests, and one that compiles `WindowAnimation.h`. A deferred window is never key, so the fills drawn here are the not-key ones. NSApp is nil, so a sent action is not asserted. A dragging session and a key window need a window server, so the app checks them in its running build.
 
-`DrawnViewTestSupport.h` is shared with SettingsWindow's and WaveformView's tests. Vibe keeps its own copy for its other view tests. The minimal consumer draws the bars from a level source of its own, and checks they ask it once and let go when they leave their window.
+`DrawnViewTestSupport.h` is shared with SettingsWindow's and WaveformView's tests. Vibe keeps its own copy for its other view tests. The minimal consumer draws the bars from a level source of its own, and checks they ask it once and let go when they leave their window. It draws the pitch fader and its panel, and steps the fader once through its accessibility action.

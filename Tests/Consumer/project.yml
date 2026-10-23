@@ -51,6 +51,9 @@ targets:
       excludedPlatform: iOS
     sources:
       - path: main.m
+      - path: ConsumerTrack.m
+      - path: FileLoading.m
+      - path: Player.m
       - path: Tags.mm
       - path: Metadata.mm
       - path: Waveform.mm
