@@ -10,7 +10,7 @@ An app's strings extraction and catalog checks. **It is scripts, not code an app
 | `check-translations.sh <config> --github` | Warns instead, as GitHub annotations and a step summary. Exits 0. |
 | `catalog-languages.sh <config>` | Prints the catalog's languages, one per line. No other list of an app's languages should exist. |
 
-Vibe runs them as `make strings`, `make check-strings`, and `make check-translations`. Its App Store scripts read the languages from `catalog-languages.sh`.
+An app runs them from make targets of its own. Any script of the app's that needs the languages reads them from `catalog-languages.sh`.
 
 ## The registry
 
@@ -83,7 +83,7 @@ STRINGS_SUBSET_SOURCES=(VibeWidget Vibe/iOS/Widget)
 
 ## What stays in each app
 
-The registry, the catalogs, the config, and the translations are the app's. So are its conventions for wording and translating. Vibe's are its `vibe-strings` skill.
+The registry, the catalogs, the config, and the translations are the app's. So are its conventions for wording and translating.
 
 ## The self-test
 

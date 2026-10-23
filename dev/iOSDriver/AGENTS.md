@@ -17,7 +17,7 @@ Taps, drags, and pinches in the iOS simulator, for scripts. No public API synthe
 | `VIBE_DRIVER_RELAUNCH_ARGS` | the arguments a self-heal relaunch passes, separated by spaces. Optional. |
 | `VIBE_DRIVER_PINCH_ELEMENT` | the accessibility identifier that `pinch` acts on. Optional, and `pinch` refuses without it. |
 
-**The bundle needs no host app.** The driver drives an app by its bundle identifier, so any installed app can be driven. `iOSDriver` here builds with no host. Run by hand against Settings, it served an attach, a tap, and a quit. An app's bundle may still depend on its app target, so `xcodebuild test` builds the app first, as Vibe's does. **TRAP: `xcodebuild test` builds a host app without installing it.** The app's script installs the build after the driver is ready, or the driver drives whatever the device already held.
+**The bundle needs no host app.** The driver drives an app by its bundle identifier, so any installed app can be driven. `iOSDriver` here builds with no host. Run by hand against Settings, it served an attach, a tap, and a quit. An app's bundle may still depend on its app target, so `xcodebuild test` builds the app first. **TRAP: `xcodebuild test` builds a host app without installing it.** The app's script installs the build after the driver is ready, or the driver drives whatever the device already held.
 
 Use a host directory, never the app's container. Every `simctl install` moves the data container, and a driver holding the old path stops seeing commands. The runner is not sandboxed, so it reads host paths directly.
 

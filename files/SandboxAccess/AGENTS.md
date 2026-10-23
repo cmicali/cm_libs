@@ -11,7 +11,7 @@ A sandboxed mac app's folder grants. It keeps every folder the user opens, drops
 
 ## How an app uses it
 
-- **An app makes one store at launch and keeps it** (`initWithDefaults:key:`). The store reads its grants from that key in those defaults, and writes every change back there. There is no shared instance. Vibe's app delegate makes it over the standard defaults.
+- **An app makes one store at launch and keeps it** (`initWithDefaults:key:`). The store reads its grants from that key in those defaults, and writes every change back there. There is no shared instance.
 - **The app calls `restoreGrantedAccessWithCompletion:` once at launch**, before any open that may need a remembered grant. The completion runs on main once every scope has started, or at the deadline.
 - **Each open waits for the grants that cover it** (`awaitRestoredAccessForURLs:completion:`), then calls `noteOpenedURLs:` with what it opened. That call bookmarks only directories outside an active grant and outside ~/Music. The caller must hold access to each URL now, from a drag, a panel, or Launch Services. A URL with no access is skipped.
 - **Background work asks `canReadInsideDirectory:` first**, from any thread. An unsanctioned read of a protected folder raises a system consent panel. A NO can be stale by one grant, so the change notification is the signal to ask again.

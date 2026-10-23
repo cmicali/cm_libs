@@ -2,7 +2,7 @@
 
 What every other piece may use, and nothing else. Every piece may import from it, so it depends on nothing. **Every file here is featureless.** If you can name the feature a file serves, it belongs in that feature's piece. Nothing here may call anything stateful: a singleton, a setting, a grant, or a panel.
 
-**Today it holds** the macros (`VibeMacros.h`), the work tally, the stall sampler, path spelling, the disk key, file emptiness and identity, the fixed-slot work lanes, a weak proxy, the display-paced update timer, the helper macros, the integer token parser, build provenance and its script, and the form label's colon rule. All of it came from Vibe. A file imports `VibeMacros.h` explicitly. No piece relies on a prefix header. An app's prefix header may import it too, as Vibe's does.
+**Today it holds** the macros (`VibeMacros.h`), the work tally, the stall sampler, path spelling, the disk key, file emptiness and identity, the fixed-slot work lanes, a weak proxy, the display-paced update timer, the helper macros, the integer token parser, build provenance and its script, and the form label's colon rule. All of it came from Vibe. A file imports `VibeMacros.h` explicitly. No piece relies on a prefix header. An app's prefix header may import it too.
 
 ## The realtime-effects brackets
 
@@ -14,11 +14,11 @@ What every other piece may use, and nothing else. Every piece may import from it
 
 `LogError`, `LogWarn`, `LogInfo`, `LogDebug` and `LogTiming` wrap `os_log`. They are Objective-C only.
 
-- **The subsystem is the main bundle's identifier**, read once, so each app's messages stream under its own name. Vibe's two apps share one identifier, `com.commonwealthrecordings.Vibe`. A test bundle's messages land under its runner's identifier.
+- **The subsystem is the main bundle's identifier**, read once, so each app's messages stream under its own name. A test bundle's messages land under its runner's identifier.
 - **`VIBE_VERBOSE_LOGGING`** is the app's build setting. At 1, info and debug are written at Default level, so they are kept for a later export. Unset, it reads as 0. `CommonTests` sets it to 1, so the stall sampler compiles and runs here.
 - **A message is formatted only when `os_log` takes its level.**
 
-**To see messages on stderr, an app sets `OS_ACTIVITY_DT_MODE=1` in the process's environment.** `os_log` then copies every message it keeps to stderr, which is how Xcode's console gets them. Vibe's device workflow passes it through `devicectl`. Debug-level messages need their level enabled, or an app that logs them at Default, as Vibe's verbose builds do.
+**To see messages on stderr, an app sets `OS_ACTIVITY_DT_MODE=1` in the process's environment.** `os_log` then copies every message it keeps to stderr, which is how Xcode's console gets them. On a device, an app passes it through `devicectl`. Debug-level messages need their level enabled, or an app that logs them at Default.
 
 **TRAP: `VibeLogWants` and `VibeLogEmit` hold nothing but the `os_log` calls.** Every log site in every piece inlines them. With a stderr hook there, Vibe's metadata-scan benchmarks retired 2 to 3% more instructions, although they never log. The system's own switch costs the call sites nothing.
 
@@ -28,7 +28,7 @@ What every other piece may use, and nothing else. Every piece may import from it
 
 `VibeSignpostBegin` and `VibeSignpostEnd` bracket an interval. `VibeSignpostCount` marks an event, and `VibeTallyCount` counts with no trace event. An interval lands in Instruments' Points of Interest track, under the main bundle's identifier. Each is also tallied by name in `VibeWorkTally`, a counting window that a device with no Instruments attached can read back. `VibeWorkTallyBegin` and `VibeWorkTallyEnd` open and close the window from a call site. `VibeWorkTallyTakeWindow` returns its counts instead of logging them.
 
-**They compile only where the app defines `VIBE_SIGNPOSTS` to 1.** Elsewhere every macro is `((void)0)`, and the tally's file is empty. The switch is the app's, as `VIBE_VERBOSE_LOGGING` is, because a header here may not read `DEBUG`. Vibe defines it in its Debug configuration, beside `DEBUG`. `CommonTests` defines it, so the tally's tests run. `VibeWorkTally.h` declares the tally in every build. A call outside the switch fails to link, not to compile.
+**They compile only where the app defines `VIBE_SIGNPOSTS` to 1.** Elsewhere every macro is `((void)0)`, and the tally's file is empty. The switch is the app's, as `VIBE_VERBOSE_LOGGING` is, because a header here may not read `DEBUG`. An app defines it in its Debug configuration, beside `DEBUG`. `CommonTests` defines it, so the tally's tests run. `VibeWorkTally.h` declares the tally in every build. A call outside the switch fails to link, not to compile.
 
 **TRAP: `VibeWorkTally.h` spells out C linkage.** Objective-C++ files use the signposts. Without it, they reference mangled names the `.m` never defines.
 
@@ -40,7 +40,7 @@ What every other piece may use, and nothing else. Every piece may import from it
 
 ## Path spelling
 
-**`VibeComparablePath` is path identity from the string alone.** It standardizes the spelling and drops the aliases `VibeAliasFreePath` drops: `/private` before `/tmp`, `/var` and `/etc`, and the data volume's firmlink. It never stats, so any thread may ask about any path. `VibeStandardizedAudioOpenPath` spells a URL the same way. Vibe keys every loader identity by it: the claim, the transfer, the parse, and the source key. **TRAP: never `stringByStandardizingPath` or `URLByStandardizingPath` here.** Each stats the path, which on a provider's folder is IPC on whichever thread asked.
+**`VibeComparablePath` is path identity from the string alone.** It standardizes the spelling and drops the aliases `VibeAliasFreePath` drops: `/private` before `/tmp`, `/var` and `/etc`, and the data volume's firmlink. It never stats, so any thread may ask about any path. `VibeStandardizedAudioOpenPath` spells a URL the same way. Every loader identity is keyed by it: the claim, the transfer, the parse, and an app's source key. **TRAP: never `stringByStandardizingPath` or `URLByStandardizingPath` here.** Each stats the path, which on a provider's folder is IPC on whichever thread asked.
 
 ## The disk key
 

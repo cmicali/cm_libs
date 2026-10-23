@@ -1,6 +1,6 @@
 //
 //  PitchControlPanel.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PitchControlPanel.h"
@@ -14,7 +14,7 @@ static const CGFloat kTitleHeight   = 14;
 static const CGFloat kReadoutHeight = 16;
 static const CGFloat kBottomPadding = 16;
 
-// Playlist collapsed: no header, and the fader gets everything.
+// A short panel: no header, and the fader gets everything.
 static const CGFloat kFaderTopCompact    = 12;
 static const CGFloat kBottomPaddingCompact = 12;
 
@@ -81,8 +81,8 @@ static const CGFloat kHeaderFadeEndHeight   = 340;
     [self.window performWindowDragWithEvent:event];
 }
 
-// The title and the readout. Empty while the header is faded out for a
-// collapsed playlist, so a faded header is neither a target nor a cursor rect.
+// The title and the readout. Empty while a short panel fades the header out.
+// A faded header is then neither a target nor a cursor rect.
 - (NSRect)headerRect {
     if (_titleLabel.alphaValue <= 0) {
         return NSZeroRect;

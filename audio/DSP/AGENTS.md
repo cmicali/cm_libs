@@ -4,7 +4,7 @@ Realtime signal stages a render can host, the math they share, and the resampler
 
 ## AudioVarispeed
 
-**A pitch stage with a plain C API.** A host creates a stage, sets its pitch from its own queue, and renders slices on the audio thread through an input callback that pulls the source. It needs no type of any app. The stage owns the kernel and its tables, the ring, the position, the bypass at zero, the engage and disengage, and the replay. Vibe hosts one per source segment, before its FX, at the bus rate.
+**A pitch stage with a plain C API.** A host creates a stage, sets its pitch from its own queue, and renders slices on the audio thread through an input callback that pulls the source. It needs no type of any app. The stage owns the kernel and its tables, the ring, the position, the bypass at zero, the engage and disengage, and the replay. `audio/Player` hosts one per source segment, before its FX, at the bus rate.
 
 **At zero pitch it is a bit-perfect pass-through**: nothing converted, delayed or copied. The bypass is what makes zero exact, since the kernel is a low-pass at a ratio of 1 too. A stage builds no kernel until the pitch first leaves zero.
 
@@ -18,15 +18,15 @@ Realtime signal stages a render can host, the math they share, and the resampler
 
 ## FadeMath
 
-**Every fade exists because a gain step at a non-zero sample clicks.** `FadeMath.h` is header-only. The declick, `kFadeDurationMilliseconds`, is 10 ms and linear, which keeps its per-sample step small at every rate. A longer fade is equal-power, so the two sides of a crossfade do not dip at the midpoint. `VibeFadeGainAtFrame` computes a gain from the frame index, never by accumulating, so a ramp lands on its target exactly. A render evaluates it per frame on the audio thread. Vibe's voice bus does.
+**Every fade exists because a gain step at a non-zero sample clicks.** `FadeMath.h` is header-only. The declick, `kFadeDurationMilliseconds`, is 10 ms and linear, which keeps its per-sample step small at every rate. A longer fade is equal-power, so the two sides of a crossfade do not dip at the midpoint. `VibeFadeGainAtFrame` computes a gain from the frame index, never by accumulating, so a ramp lands on its target exactly. A render evaluates it per frame on the audio thread, as `audio/Player`'s voice bus does.
 
 **The stepped fades are for a queue, not the audio thread.** `VibeFadeVolumeOverSteps` steps a log curve in `kFadeSteps` equal ratios over one declick, floored at −60 dB so the curve stays defined through silence. `audio/FX`'s send gates take it.
 
 ## The resampler
 
-**`AudioResampler.h` wraps r8brain-free-src in a plain C API**: linear phase, its 24-bit preset, and a 1% transition band, with no quality setting. A fill pulls float32 input through a callback until it has the frames it was asked for, or the callback answers none. That ends the fill with what it produced and leaves the filter primed for more. Vibe's voice bus converts every file whose rate is not the output's with it, on its decode queue. It is not realtime.
+**`AudioResampler.h` wraps r8brain-free-src in a plain C API**: linear phase, its 24-bit preset, and a 1% transition band, with no quality setting. A fill pulls float32 input through a callback until it has the frames it was asked for, or the callback answers none. That ends the fill with what it produced and leaves the filter primed for more. `audio/Player`'s voice bus converts every file whose rate is not the output's with it, on its decode queue. It is not realtime.
 
-**TRAP: it is never told the stream's end.** N frames fed come out as round(N × ratio) only once pushed through with silence, as Vibe's bus flushes a stream's end. A fill that stops at zero frames leaves the filter's length of the input inside it.
+**TRAP: it is never told the stream's end.** N frames fed come out as round(N × ratio) only once pushed through with silence, as `audio/Player`'s bus flushes a stream's end. A fill that stops at zero frames leaves the filter's length of the input inside it.
 
 ## Tests
 

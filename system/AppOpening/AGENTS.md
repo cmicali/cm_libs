@@ -12,15 +12,15 @@ Both are main-thread only.
 
 ## The coalescer
 
-**The first batch of a burst replaces at once, and later batches inside the quiet period append.** So a double-clicked file never waits. The app picks the quiet period. Vibe's is 0.3 seconds. Every event restarts it, even one with nothing to drain. The scheduler is a block the app may inject. The default runs `dispatch_after` on main. A superseded quiet-period block does nothing.
+**The first batch of a burst replaces at once, and later batches inside the quiet period append.** So a double-clicked file never waits. The app picks the quiet period. Every event restarts it, even one with nothing to drain. The scheduler is a block the app may inject. The default runs `dispatch_after` on main. A superseded quiet-period block does nothing.
 
 **A system open joins the current burst** (`openBurstURLs:`). The app calls it from `application:openURLs:` and for the files among its arguments. **A deliberate open ends any burst instead** (`openDeliberateURLs:appending:`). The open panel, Open Recent, and a window drop are deliberate. Whether a deliberate open appends is the caller's choice.
 
 **Before start, every open only queues.** `startAndDrainQueue` drains the queue as a burst's first batch. So the rest of an open that straddled launch appends. An empty start arms no burst, so an open a beat later replaces.
 
-**Launch order is drain, then restore, then the empty state** (`finishLaunchRestoring:revealEmpty:`). The app calls it once, when the opens may start. Vibe calls it after its sandbox grants are restored. A queued open wins, and the restore block does not run. The restore runs only when nothing drained. `revealEmpty` runs only when the restore also found nothing. **A restore is not an open**, so it never arms a burst.
+**Launch order is drain, then restore, then the empty state** (`finishLaunchRestoring:revealEmpty:`). The app calls it once, when the opens may start. A sandboxed app calls it after its folder grants are restored. A queued open wins, and the restore block does not run. The restore runs only when nothing drained. `revealEmpty` runs only when the restore also found nothing. **A restore is not an open**, so it never arms a burst.
 
-**`fileURLsInArguments:valueOptions:existingPath:` finds the paths among a process's arguments.** It skips the process's name, every dash-prefixed argument, and the value after each option the app lists. Vibe lists its debug channel's command flag. The `exists` block runs on the caller's thread. A stat can block for an automounter's timeout, so call it off main.
+**`fileURLsInArguments:valueOptions:existingPath:` finds the paths among a process's arguments.** It skips the process's name, every dash-prefixed argument, and the value after each option the app lists. The `exists` block runs on the caller's thread. A stat can block for an automounter's timeout, so call it off main.
 
 The sink gets each batch unexpanded, with whether it appends. Expanding it is the app's work.
 

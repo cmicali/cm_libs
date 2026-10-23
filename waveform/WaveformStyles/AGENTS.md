@@ -32,7 +32,7 @@ renderer.theme = [WaveformTheme themeForIdentifier:SETTINGS_VALUE_WAVEFORM_THEME
 [renderer updateWaveform:host.bounds progress:0.5 waveform:summary];   // an AudioWaveform
 ```
 
-**The app owns the policy.** It persists a style's identifier and resolves it once through `resolveStyleIdentifier:`. It names each style in its choosers, since display names are the app's. It maps its settings onto a `WaveformTheme`, and it pushes Normalize, Gain, Centered, and the bar density and width into the renderer. Vibe's mapping is its own category, `WaveformTheme+Settings`.
+**The app owns the policy.** It persists a style's identifier and resolves it once through `resolveStyleIdentifier:`. It names each style in its choosers, since display names are the app's. It maps its settings onto a `WaveformTheme`, and it pushes Normalize, Gain, Centered, and the bar density and width into the renderer.
 
 ## ObjC++ boundary
 
@@ -64,7 +64,7 @@ The theme beats the style's palette. The style is the geometry, and the theme is
 
 **Compare styles by identifier, never by class.** Variants share classes. Wiggle is `DetailedWaveformRenderer`, the oversampled types share a file, Cupertino subclasses Bars, and Spectrum subclasses 3-Band in 3-Band's file. The resolved registry identifier is what persists. Wiggle's is `wiggle_centered` whatever Centered says. Bars persists as `basic` and its class is `BasicWaveformRenderer`. Progress persists as `cupertino_basic` and its class is `CupertinoBasicWaveformRenderer`. Both keep the names they shipped under. The retired `wiggle` (Wiggle MC) is read only by an app's migrations, which turn it into Wiggle with Centered off.
 
-The registry's bake renders the real style into a bitmap with the caller's palette, density, width, and levels. Vibe's settings preview and its iOS widget use it. Its synthetic preview sample includes fine transients, because a smooth envelope hides the Detailed family's sampling differences at thumbnail size. A bake never changes a live renderer's geometry. Under a theme's `playheadColor` the bake draws what the views draw: the waveform wholly played and the line at the progress (The theme, above).
+The registry's bake renders the real style into a bitmap with the caller's palette, density, width, and levels. An app's settings preview or widget can use it. Its synthetic preview sample includes fine transients, because a smooth envelope hides the Detailed family's sampling differences at thumbnail size. A bake never changes a live renderer's geometry. Under a theme's `playheadColor` the bake draws what the views draw: the waveform wholly played and the line at the progress (The theme, above).
 
 ## Families
 
@@ -81,7 +81,7 @@ Two families and one flat style, split by how progress and hover quantize:
 **Every style but Sonic Cirrus and Progress draws a picture into a layer's contents.** The Detailed family draws coverage, white and premultiplied, into its mask, which cuts both gradients and the hover slice to the waveform. 3-Band and Spectrum paint their colors into one layer under the sides' mask. A rebuild draws the picture once, from the displayed samples, and installs it with actions off. The layer tree never holds a path, so a moving or scrolling waveform costs the render server no scan conversion. `VibeNewLayerImage` (`WaveformRenderer.h`) is the image factory of the bar styles and Wiggle. The step styles draw through a picture they keep (below). **A picture is painted in its window's color space** (`pictureColorSpace`, which a mac view sets). Core Animation color-matched an sRGB picture at every commit, which took half the main thread while a long file loaded on an external display. 3-Band and Spectrum convert their fills into it once.
 
 - **TRAP: a picture is 32-bit premultiplied ARGB, never an alpha-only image.** An alpha-only mask draws nothing under `renderInContext:`, which the registry's bake uses.
-- **TRAP: in a `geometryFlipped` tree a layer shows its contents upside down.** Vibe's iOS host is one. A picture for a layer whose `contentsAreFlipped` is written bottom-up, which `VibeNewLayerImage` does from the flag.
+- **TRAP: in a `geometryFlipped` tree a layer shows its contents upside down.** `waveform/WaveformView`'s iOS scrubber is one. A picture for a layer whose `contentsAreFlipped` is written bottom-up, which `VibeNewLayerImage` does from the flag.
 
 **The picture covers `renderRect`, by default the whole bounds** (`renderPixelsForSize:`). The layer's frame is that window, so a view far wider than the screen can draw only the stretch it shows. The window is part of the geometry the morph engine compares, so a window that moves with nothing else changed redraws.
 
@@ -125,7 +125,7 @@ Two families and one flat style, split by how progress and hover quantize:
 
 ## Bar count and thickness
 
-**The count follows the drawn width at the style's designed pitch**, so a resize adds bars rather than stretching them. Bars, Cupertino, and Sonic Cirrus share `blockBarCountForWidth:` (4 pt, capped at 1,024). Wiggle uses `numBarsForWidth:`. `barDensity` multiplies the block and Wiggle counts. Detailed in every type and Progress ignore it. The step styles draw their columns a point instead. `barWidthScale` scales bar thickness, or Wiggle's stroke, without changing the count. Discrete bars share `scaledBarWidth:pitch:` to stop at their slot edges. Width also scales Progress's pill heights. The registry gates density and width separately. Wiggle's count reads `samplingWidth` when set, so a pinch on Vibe's iOS scrubber stretches its loops instead of resampling them.
+**The count follows the drawn width at the style's designed pitch**, so a resize adds bars rather than stretching them. Bars, Cupertino, and Sonic Cirrus share `blockBarCountForWidth:` (4 pt, capped at 1,024). Wiggle uses `numBarsForWidth:`. `barDensity` multiplies the block and Wiggle counts. Detailed in every type and Progress ignore it. The step styles draw their columns a point instead. `barWidthScale` scales bar thickness, or Wiggle's stroke, without changing the count. Discrete bars share `scaledBarWidth:pitch:` to stop at their slot edges. Width also scales Progress's pill heights. The registry gates density and width separately. Wiggle's count reads `samplingWidth` when set, so a pinch on `waveform/WaveformView`'s iOS scrubber stretches its loops instead of resampling them.
 
 ## The morph engine
 
@@ -141,7 +141,7 @@ Two families and one flat style, split by how progress and hover quantize:
 
 ## The convert sweep
 
-**Vibe draws its Convert to FLAC progress with the waveform itself.** `dipBarsFromFraction:toFraction:` zeroes the displayed samples in the newly crossed span and rebuilds once, so the notch shows at zero. The standard ease then carries them back to the unchanged target, which draws the graded trail. The span rounds outward to whole bars, or for a step style to whole columns of each step, so an edge bar is never half-zeroed. Keeping the front and feeding only the new span is the view's job.
+**An app can draw a long job's progress with the waveform itself.** `dipBarsFromFraction:toFraction:` zeroes the displayed samples in the newly crossed span and rebuilds once, so the notch shows at zero. The standard ease then carries them back to the unchanged target, which draws the graded trail. The span rounds outward to whole bars, or for a step style to whole columns of each step, so an edge bar is never half-zeroed. Keeping the front and feeding only the new span is the view's job.
 
 ## 3-Band
 

@@ -30,7 +30,7 @@ The analysis clock is bounded and independent of the screen. `VibeLevelFFTSizeFo
 
 **Three normalization modes, one FFT.** Relative activity normalizes each band against its own private reference per window and keeps each band's largest level. Shared spectrum converts each band's energy to energy per octave, averages it across the windows, and normalizes the five bands against one common reference. The default, balanced spectrum (`VibeAudioLevelNormalizationModeBalancedSpectrum`), starts from the shared level. Where the activity level is higher, it moves 35% of the way toward it, gated by shared support, so unsupported bands stay dark. The result keeps 9% display headroom. It reuses the same FFT and cadence. `VibeAudioLevelNormalizationModeSharedSpectrum` and `VibeAudioLevelNormalizationModeRelativeActivity` are the two unmodified endpoints. None claims to reconstruct Apple's visualizer, whose band mapping and normalization are not public.
 
-The tunable audio half is `AudioLevelMath.h`. How a display moves its bars is the display's own, so changing visual motion cannot add FFT work. Vibe's is its `EqualizerAnimationMath.h`.
+The tunable audio half is `AudioLevelMath.h`. How a display moves its bars is the display's own, so changing visual motion cannot add FFT work. `ui/Controls`' bars move by its `EqualizerAnimationMath.h`.
 
 ## The signal probe
 
@@ -46,6 +46,6 @@ These are **the samples the render hands the meter**, not DAC or acoustic measur
 
 ## Tests
 
-`Tests/audio/Meter/` covers the band math, the analyzer, and the publisher. They build with verbose logging on, as in Vibe's tests, so the probe compiles there. The iOS build compiles it off. A probe compiles the stall seam, which only tests import, on both platforms. The minimal consumer plays a tone through a meter and checks the levels it reads.
+`Tests/audio/Meter/` covers the band math, the analyzer, and the publisher. They build with verbose logging on, so the probe compiles there. The iOS build compiles it off. A probe compiles the stall seam, which only tests import, on both platforms. The minimal consumer plays a tone through a meter and checks the levels it reads.
 
 The meter's render tests stay in Vibe, since they drive it through the whole player: the stalled callback, the session restart, the signal probe, and the bars under `--silent`.

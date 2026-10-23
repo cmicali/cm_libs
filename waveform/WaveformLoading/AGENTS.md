@@ -2,7 +2,7 @@
 
 A file decoded into a waveform summary, with observers on the same pass, cached on disk and shared between requests. **Today it holds what Vibe moved here** from its `Audio/Waveform`: `AudioWaveformLoader`, `AudioWaveformCache`, and `AudioWaveformObserver`, with their two seams. It depends on `core/Common`, `waveform/Waveform` for the summary and its cache entry, `audio/AudioTypes` for the playable item and the CUE window math, `audio/Decode` for the file handle, `files/FileLoading` for a file's materialization, and `files/DiskCache` and `third_party/PINCache` for the store. It reads no app's settings, strings, or types. A request names its file through `VibePlayableItem`, and every delivery hands that item back.
 
-Decoding without caching has no second user, so the two are one piece. The summary itself, its reads, and the entry's format are `waveform/Waveform/AGENTS.md`'s. What an app's analyzers compute is the app's. Vibe binds `audio/Analysis`' tempo and key as its observers.
+Decoding without caching has no second user, so the two are one piece. The summary itself, its reads, and the entry's format are `waveform/Waveform/AGENTS.md`'s. What an app's analyzers compute is the app's. An app may bind `audio/Analysis`' tempo and key as its observers.
 
 | File | Owns |
 | --- | --- |

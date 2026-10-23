@@ -1,13 +1,13 @@
 //
 //  PitchControlPanel.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Cocoa/Cocoa.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-// Width the main window grows by when the pitch panel is revealed.
+// The panel's width. A window that reveals the panel grows by it.
 extern const CGFloat kPitchPanelWidth;
 
 @class PitchControlPanel;

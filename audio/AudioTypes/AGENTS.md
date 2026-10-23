@@ -4,7 +4,7 @@ The words every audio piece shares, so a piece that needs one of them needs neit
 
 ## The playable item
 
-**`VibePlayableItem` is what a piece that reads a file takes of an app's item.** That is its file, its window in CD frames, its source key, and its disk key. A piece keeps the item it was given and hands that same object back, so two items for one file stay two items. It only reads it. Nothing in the protocol is about tags, tempo, key, names, or art. Those are the app's. Any object may adopt it. Vibe's playlist row does.
+**`VibePlayableItem` is what a piece that reads a file takes of an app's item.** That is its file, its window in CD frames, its source key, and its disk key. A piece keeps the item it was given and hands that same object back, so two items for one file stay two items. It only reads it. Nothing in the protocol is about tags, tempo, key, names, or art. Those are the app's. Any object may adopt it.
 
 - **The window** is `cueStart` and `cueEnd`, start inclusive and end exclusive. An end of 0 runs to the file's end, so 0 and 0 is the whole file. It is fixed before the item crosses a thread.
 - **`sourceKey` is source identity**: the file's path and its window. Shared work matches on it. It is compared on paths that run every tick, so it must be fixed and allocate nothing. It names what sounds. It is never a path to open.
@@ -20,7 +20,7 @@ The words every audio piece shares, so a piece that needs one of them needs neit
 
 ## The musical key
 
-**A `VibeMusicalKey` is one integer**: 0 to 11 is the major key on that pitch class, C to B, and 12 to 23 is the minor. Vibe's waveform cache archives it, so the encoding never changes. `VibeMusicalKeyFromString` reads the spellings real tags carry: musical names, Camelot, and Open Key. It answers none for anything it cannot read with confidence, so an unreadable tag falls back to analysis. The display names are DJ notation and are not localized.
+**A `VibeMusicalKey` is one integer**: 0 to 11 is the major key on that pitch class, C to B, and 12 to 23 is the minor. An app's waveform cache may archive it, so the encoding never changes. `VibeMusicalKeyFromString` reads the spellings real tags carry: musical names, Camelot, and Open Key. It answers none for anything it cannot read with confidence, so an unreadable tag falls back to analysis. The display names are DJ notation and are not localized.
 
 **TRAP: 0 is C major, not "none".** Every fresh holder must be set to `VibeMusicalKeyNone` (-1) explicitly. A zero-filled field or a message to nil reads as a tagged C major.
 
