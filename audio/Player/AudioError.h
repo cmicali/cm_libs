@@ -30,9 +30,9 @@ typedef NS_ENUM(NSInteger, VibeAudioErrorCode) {
     VibeAudioErrorConnectionLost, // a streaming track's download stalled: paused in place, play replays it
 };
 
-// Descriptions are for logs, never localized; the UI's line is
-// VibeStatusForPlayError (Common/StringRules.h). An underlying error's
-// description is appended in parentheses.
+// Descriptions are for logs and are never localized. An app chooses the
+// line it shows from the error code, with its own rule. An underlying
+// error's description is appended in parentheses.
 NSError *VibeAudioError(VibeAudioErrorCode code, NSString *description, NSError * _Nullable underlying);
 // The same, with the failing track's URL under kVibeAudioErrorTrackURLKey.
 NSError *VibeAudioErrorForTrack(VibeAudioErrorCode code, NSString *description, NSError * _Nullable underlying, NSURL * _Nullable trackURL);

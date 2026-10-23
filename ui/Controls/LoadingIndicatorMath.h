@@ -1,14 +1,14 @@
 //
 //  LoadingIndicatorMath.h
-//  Vibe
+//  vibe-libs
 //
 //  The loading indicator's per-style metrics: one control, two sizes. The
 //  waveform style is the hairline midline, the shimmer peaking at an unplayed waveform bar's on-screen worth
 //  (the renderer family's 0.5 gradient top under its 0.75 layer opacity), the
 //  inert track on the unplayed baseline — so the waveform arriving over it is
-//  the same brightness rather than a step down. The row style is one EQ-bar's
-//  weight in the 16pt number gutter, reading at the EQ bars' alpha because
-//  there are no waveform bars in a row to match.
+//  the same brightness rather than a step down. The row style is one equalizer
+//  bar's weight in a 16pt row gutter. It reads at the equalizer bars' alpha,
+//  since a row has no waveform bars to match.
 //
 //  The macOS empty-state line is the waveform style's track at rest, so it
 //  reads its height and alpha from here rather than restating them.

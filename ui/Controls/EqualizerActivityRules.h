@@ -1,6 +1,6 @@
 //
 //  EqualizerActivityRules.h
-//  Vibe
+//  vibe-libs
 //
 //  The complete fail-closed decision for whether an indicator may consume
 //  audio and run its snapshot poller. Platform code owns the meaning of

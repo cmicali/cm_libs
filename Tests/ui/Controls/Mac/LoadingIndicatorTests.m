@@ -1,6 +1,6 @@
 //
 //  LoadingIndicatorTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The loading control's layer tree and its compositor animations, and the
 //  row gutter's host for it. No window server: the layers are never rendered,

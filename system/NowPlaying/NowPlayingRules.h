@@ -1,6 +1,6 @@
 //
 //  NowPlayingRules.h
-//  Vibe
+//  vibe-libs
 //
 //
 
@@ -20,8 +20,8 @@ static inline NowPlayingPlaybackState VibeNowPlayingStateForPlayer(BOOL isPlayin
     return NowPlayingPlaybackStateStopped;
 }
 
-// nil equals nil, or an artistless track republishes every tick. Shared with
-// the iOS widget publisher.
+// nil equals nil, or an artistless track republishes every tick. An app's
+// widget publisher can share it.
 static inline BOOL VibeNowPlayingStringsEqual(NSString *_Nullable a, NSString *_Nullable b) {
     return a == b || (b && [a isEqualToString:b]);
 }
