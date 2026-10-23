@@ -46,13 +46,8 @@ PIECES = [
     # third_party: Sparkle is still Vibe's
     ("third_party/Sparkle", "Vibe/ThirdParty/Sparkle/"),
     # debug seams and simulators go with the class they open
-    ("files/ShareLinks", "Vibe/Debug/Simulators/VibeFakeHTTP"),
     ("dev/DebugChannel", "Vibe/Debug/Channel/"),
     # files
-    ("files/HTTP", "Vibe/Loading/Net/HTTPTransfer"),
-    ("files/RemoteFiles", "Vibe/Loading/Net/RemotePlaceholderStore"),
-    ("app", "Vibe/Loading/Net/LinkStore"),
-    ("files/ShareLinks", "Vibe/Loading/Net/"),
     ("app", "Vibe/Loading/iOS/"),
     ("files/SandboxAccess", "Vibe/Mac/App/FolderAccess"),
     # media
