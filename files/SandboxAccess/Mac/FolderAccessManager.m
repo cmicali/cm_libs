@@ -1,6 +1,6 @@
 //
 //  FolderAccessManager.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "FolderAccessManagerInternal.h"
@@ -627,8 +627,8 @@ static BOOL VibeURLIsCoveredByPath(NSURL *url, NSString *grantedPath) {
     [_defaults setObject:stored forKey:_defaultsKey];
 }
 
-// Restoration settles one bookmark at a time and observers do real work
-// (an art scan), so one post per run-loop turn. User add and remove post
+// Restoration settles one bookmark at a time and an observer may do real
+// work, so one post per run-loop turn. User add and remove post
 // directly, so a list redraws in the click's turn.
 - (void)postCoalescedChangeNotification {
     if (_changeNotificationPending) {

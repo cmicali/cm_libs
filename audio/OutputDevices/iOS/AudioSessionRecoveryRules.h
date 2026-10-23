@@ -1,6 +1,6 @@
 //
 //  AudioSessionRecoveryRules.h
-//  Vibe (iOS)
+//  vibe-libs
 //
 
 

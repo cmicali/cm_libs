@@ -448,7 +448,7 @@ static const uint8_t kFLAC[] = {'f', 'L', 'a', 'C', 0, 0, 0, 34};
     XCTAssertEqualObjects(VibeLinkAudioExtension(none, get, nil, @"audio/flac", noOpus), @"flac");
 }
 
-// A login page or a deleted share at a .mp3 address is not a track.
+// A login page or a deleted share at a .mp3 address is not audio.
 - (void)testHTMLWithoutMagicIsNotAudio {
     NSData *page = Text(@"<!DOCTYPE html><html>");
     XCTAssertNil(Audio(page, @"https://example.com/song.mp3", nil, @"text/html"));

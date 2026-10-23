@@ -587,10 +587,10 @@ typedef struct {
     XCTAssertEqualObjects([self versionOfPart], @"\"v1\"");
 }
 
-// A cancel racing the step that ended a download's last task, as Dropbox's
-// does when the token refresh after a 401 hangs. The file is the steps'
-// alone: the cancel settles at once without touching it, and the step that
-// runs next closes it. A cancel that closed it would race a step still
+// A cancel racing the step that ended a download's last task, as a web API
+// client's does when its token refresh after a 401 hangs. The file is the
+// steps' alone: the cancel settles at once without touching it, and the step
+// that runs next closes it. A cancel that closed it would race a step still
 // reading it. The test sees the step parked through a relaxed
 // atomic, which orders nothing, so ThreadSanitizer sees the two threads as
 // concurrent.

@@ -53,6 +53,9 @@ Across the repo:
   - AGENTS.md and README.md each say "The first <number> pieces are here",
     with the number in words. It is the count of pieces with an AGENTS.md,
     third_party/ included.
+  - the sources of system/Updates that reach Sparkle, directly or through
+    the piece's own headers, are exactly the ones an app's no-updater
+    configuration excludes by name: VibeUpdater.m
 Lists the classes with no prefix. Exits 1 and lists every failure.
 """
 import json
@@ -518,6 +521,36 @@ for doc in ["AGENTS.md", "README.md"]:
         if word != in_words(piece_count):
             fail(f'{doc}: the piece count says "{word}", but {piece_count} pieces have an AGENTS.md; '
                  f'write "{in_words(piece_count)}"')
+
+# An app builds with no updater by excluding Sparkle.framework and every
+# source of system/Updates that reaches Sparkle, by file name, in
+# EXCLUDED_SOURCE_FILE_NAMES. The piece's doc and its template name that one
+# file. A second source that reached Sparkle would fail to link in every
+# such app, and a renamed one would leave each app's exclude naming nothing.
+UPDATES = "system/Updates"
+UPDATER_SOURCES = ["VibeUpdater.m"]
+
+
+def reaches_sparkle(path, seen):
+    for _, quoted, spelling, _ in scan(path):
+        if spelling.split("/")[0] == "Sparkle":
+            return True
+        for h in resolve(spelling, quoted, path):
+            if h not in seen and inside(h, UPDATES):
+                seen.add(h)
+                if reaches_sparkle(h, seen):
+                    return True
+    return False
+
+
+if os.path.isdir(UPDATES):
+    linking = sorted(os.path.basename(f) for f in walk(UPDATES)
+                     if f.endswith(SOURCE) and reaches_sparkle(f, {f}))
+    if linking != UPDATER_SOURCES:
+        fail(f"{UPDATES}: the sources that reach Sparkle are {', '.join(linking) or 'none'}, "
+             f"but an app's no-updater configuration excludes only {', '.join(UPDATER_SOURCES)} by name. "
+             f"Keep every Sparkle import in {', '.join(UPDATER_SOURCES)}, or change this check, "
+             f"{UPDATES}/AGENTS.md, vibe-libs.yml, and every app's exclude list together")
 
 unprefixed = sorted({m for piece in pieces if first_party(piece) for f in walk(piece) if f.endswith(HEADER)
                      for m in re.findall(r"^@(?:interface|protocol)\s+([A-Za-z_]\w*)\b(?!\s*\()",

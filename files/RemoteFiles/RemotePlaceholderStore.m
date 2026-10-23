@@ -27,9 +27,9 @@ static const NSTimeInterval kRangedReadTimeout = 30;
 static const uint64_t kStreamReadableBytes = 256 * 1024;
 // A tag read of a file streaming now waits this long for a range its stream
 // is about to hold, its first MB or its tail window, before asking the
-// server: the current track's parse starts at the tap, beside the download,
-// so its bytes arrive about one first byte later either way (1–1.7 s
-// measured on Dropbox).
+// server. An app often parses the file it opens beside its download, so the
+// bytes arrive about one first byte later either way (1–1.7 s measured on
+// Dropbox).
 static const NSTimeInterval kStreamedTagWaitSeconds = 3;
 static const uint64_t kStreamedTagHeadBytes = 1024 * 1024;
 
@@ -287,7 +287,7 @@ static NSError *VibePOSIXError(void) {
 }
 
 // Size and mtime are kept, so the cache key, and with it the cached tags and
-// waveform, still match when the song is downloaded again.
+// waveform, still match when the file is downloaded again.
 - (BOOL)evictDownload:(NSDictionary *)download {
     return [RemotePlaceholderStore writePlaceholderAtURL:download[@"url"] size:[download[@"size"] longLongValue]
                                                 modified:(time_t)[download[@"modified"] longLongValue]];
@@ -327,7 +327,7 @@ static NSError *VibePOSIXError(void) {
 
 // Applied on the disk queue as a fetch's landing applies it: a smaller
 // budget sends the oldest back to placeholders at once, and the new total is
-// reported. A song playing from one keeps its open file.
+// reported. A reader of one keeps its open file.
 - (void)setDownloadBudget:(long long)downloadBudget {
     __atomic_store_n(&_downloadBudget, downloadBudget, __ATOMIC_RELAXED);
     dispatch_async(_diskQueue, ^{

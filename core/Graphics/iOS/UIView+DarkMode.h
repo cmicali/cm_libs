@@ -1,6 +1,6 @@
 //
 //  UIView+DarkMode.h
-//  Vibe (iOS)
+//  vibe-libs
 //
 //  The mirror of NSView+DarkMode, so shared call sites read the same.
 //

@@ -1,6 +1,6 @@
 //
 //  FolderAccessRules.h
-//  Vibe
+//  vibe-libs
 //
 //  Path-coverage rules, testable without the manager or the sandbox.
 //
@@ -19,7 +19,7 @@ static inline BOOL VibePathIsUnderFolder(NSString *path, NSString *root) {
 }
 
 // TRAP: for a path that was NOT canonicalized (Launch Services, a pasteboard,
-// a track URL), so deliberately case-insensitive. Under-matching would walk
+// a file's URL), so deliberately case-insensitive. Under-matching would walk
 // a path before its grant is restored, or refuse a readable folder.
 static inline BOOL VibeUncanonicalPathIsUnderFolder(NSString *path, NSString *root) {
     if (path.length == 0 || root.length == 0) {

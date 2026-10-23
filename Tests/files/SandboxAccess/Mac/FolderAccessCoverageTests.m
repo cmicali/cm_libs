@@ -200,9 +200,9 @@ static NSString *RealHome(void) {
 
 #pragma mark - The read test's spelling
 
-// canReadInsideDirectory: is handed a directory taken off a track URL, which
-// carries whatever spelling its opener supplied, so it folds case where the
-// auto-add's duplicate check must not.
+// canReadInsideDirectory: is handed a directory taken off a file's URL, which
+// carries whatever spelling its opener supplied, so it folds case where
+// noteOpenedURLs:'s duplicate check must not.
 
 - (void)testReadCoverageFoldsCaseWhereTheAddCheckDoesNot {
     XCTAssertTrue([FolderAccessManager readablePath:@"/Users/someone/albums/Disc 1"

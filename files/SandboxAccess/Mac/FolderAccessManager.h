@@ -1,6 +1,6 @@
 //
 //  FolderAccessManager.h
-//  Vibe
+//  vibe-libs
 //
 //  Every folder the user opens, drops or adds is stored as an app-scoped
 //  security bookmark and re-opened at launch. ~/Music needs none: the app's
@@ -60,7 +60,7 @@ typedef NS_ENUM(NSInteger, VibeGrantedFolderState) {
 // no covering restoration left, or at the restore's deadline. The most
 // specific covering grant is promoted first. An open no restoration covers
 // completes synchronously. The deadline is not optional: an open held behind
-// a dead mount would leave the window in its launch grace for good.
+// a dead mount would wait for good.
 - (void)awaitRestoredAccessForURLs:(NSArray<NSURL *> *)urls
                         completion:(dispatch_block_t)completion;
 
@@ -75,8 +75,8 @@ typedef NS_ENUM(NSInteger, VibeGrantedFolderState) {
 // Asking for a grant is FolderAccessManager+GrantPanel.h.
 
 // At or under one of grantedPaths, or under ~/Music. Compares alias-free
-// spellings (/tmp and /private/tmp, firmlink paths). The auto-add's duplicate
-// check: case-SENSITIVE, because both sides are canonical there.
+// spellings (/tmp and /private/tmp, firmlink paths). noteOpenedURLs:'s
+// duplicate check: case-SENSITIVE, because both sides are canonical there.
 + (BOOL)path:(NSString *)path isCoveredByAnyOf:(NSArray<NSString *> *)grantedPaths;
 
 // The read test (canReadInsideDirectory:), for a path in whatever spelling its

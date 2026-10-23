@@ -89,7 +89,7 @@ static NSArray<NSURL *> *URLBatch(NSUInteger count) {
     XCTAssertEqualObjects(_drains, expected);
 }
 
-// A drop onto the empty-state add well, the one deliberate open that appends.
+// A deliberate open the app appends, such as a drop onto an empty list.
 - (void)testADeliberateAppendEndsTheBurstWithoutReplacing {
     [_coalescer startAndDrainQueue];
     [_coalescer openBurstURLs:URLBatch(2)];

@@ -161,7 +161,7 @@ static dispatch_queue_t VibeFakeHTTPDeliveryQueue(void) {
 }
 
 // One piece per step. The bytes written grow as a real transfer's do, and
-// the loading bar reads them. A cancel lands between pieces. beforePiece is
+// a progress readout reads them. A cancel lands between pieces. beforePiece is
 // asked at every step, so a fault set mid-transfer applies to it.
 - (void)deliverFrom:(uint64_t)delivered after:(NSTimeInterval)wait {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(wait * NSEC_PER_SEC)), VibeFakeHTTPDeliveryQueue(), ^{
