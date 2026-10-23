@@ -115,4 +115,4 @@ The cover fallback, in `Artwork/FolderArt/`. `FolderArtResolver` is discovery an
 
 **A bounded wait is a hang guard or a gate.** A wait for what must happen uses `VIBE_TEST_HANG_TIMEOUT`. A gate the test releases itself uses `VIBE_TEST_GATE_TIMEOUT`. A negative check uses `kVibeTestNegativeWindow` (`Tests/Support`). The bundle defines both bounds, as Vibe's do. Run the fuzz with a raised count under `-enableAddressSanitizer YES -enableUndefinedBehaviorSanitizer YES` after a change to the parse.
 
-The minimal consumer roots a metadata cache of its own, tags a WAV with a title and a picture through TagLib, loads it through the cache with a holder of its own, reads the title and the picture's bytes back, and waits for the row thumbnail.
+The minimal consumer roots a metadata cache of its own, tags a WAV with a title and a picture through TagLib, loads it through the cache with a holder of its own, reads the title and the picture's bytes back, and waits for the row thumbnail. A second cache over the same root then loads a fresh row with `loadCachedMetadata:`, and the hit gives the same title.
