@@ -459,6 +459,20 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/system/NowPlaying"]
 
+  # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
+  # as SettingsWindow's do. It lists Sparkle, which links and embeds the
+  # framework. An app's configuration without the updater excludes both by
+  # file name: EXCLUDED_SOURCE_FILE_NAMES of Sparkle.framework and
+  # VibeUpdater.m.
+  VibeLibsUpdates:
+    templates: [VibeLibsSparkle]
+    sources:
+      - path: system/Updates
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/system/Updates/Mac"]
+
   # The debug command channel: the command-file drain, the lookup over an
   # app's command tables, and the wire format. It lists Common for the log
   # macros. An app compiles it into every configuration. Each source wraps
@@ -637,3 +651,12 @@ targetTemplates:
     settings:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/third_party/vorbis/include"]
+
+  # Sparkle's prebuilt framework, macOS only. It compiles nothing. It links
+  # the framework, embeds it in the product's Frameworks, and signs it there
+  # with the target's own identity. Its tools in bin/ never join a project.
+  VibeLibsSparkle:
+    dependencies:
+      - framework: third_party/Sparkle/Sparkle.framework
+        embed: true
+        codeSign: true

@@ -812,6 +812,21 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # system/Updates, tested on macOS. It is macOS only, so it has no iOS target.
+  # Its tests make the updater unstarted, so no feed is read.
+  UpdatesTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsUpdates]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/system/Updates
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
   # dev/DebugChannel, tested on macOS. Its sources compile only under DEBUG,
   # so the bundle defines it in every configuration, the analyzer's Release
   # build included. The hang bound matches Vibe's.
@@ -1003,6 +1018,18 @@ targets:
     platform: iOS
     templates: [VibeLibsVorbis]
 
+  # Sparkle is macOS only, so it has no iOS target.
+  SparkleTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsSparkle]
+    sources:
+      - path: Tests/third_party/Sparkle
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   vibe-libs:
     build:
@@ -1061,6 +1088,7 @@ schemes:
         ShortcutsTests: [test]
         NowPlayingTests: [test]
         NowPlaying-iOS: all
+        UpdatesTests: [test]
         DebugChannelTests: [test]
         DebugChannel-iOS: all
         iOSDriver: all
@@ -1082,11 +1110,12 @@ schemes:
         Ogg-iOS: all
         VorbisTests: [test]
         Vorbis-iOS: all
+        SparkleTests: [test]
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, HTTPTests,
                 RemoteFilesTests, ShareLinksTests, DecodeTests, PlayerTests, TagsTests,
                 MetadataTests, PlayQueueTests, PlaylistsTests, FolderScanTests, WaveformTests, WaveformLoadingTests,
                 WaveformStylesTests, WaveformViewTests, ControlsTests, SettingsWindowTests, ShortcutsTests,
-                NowPlayingTests, DebugChannelTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests,
-                DrWavTests, OggTests, VorbisTests]
+                NowPlayingTests, UpdatesTests, DebugChannelTests, TaglibTests, PINCacheTests, PINOperationTests,
+                R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests, SparkleTests]
