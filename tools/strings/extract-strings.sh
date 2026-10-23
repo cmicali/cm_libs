@@ -33,17 +33,19 @@ trap 'rm -rf "$WORK"' EXIT
 # a throwaway TU referencing every registry macro, which is exact and fails
 # loudly on a malformed entry where a regex over the header would quietly
 # mis-parse.
+#
+# TRAP: check for a macro before the grep below lists them. Under pipefail an
+# empty grep stops the script, so an error after it can never print.
+if ! grep -qE "^#define[[:space:]]+${STRINGS_MACROS}[A-Za-z0-9_]+" "$REGISTRY"; then
+    echo "error: no ${STRINGS_MACROS}* macros found in $REGISTRY" >&2
+    exit 1
+fi
 {
     printf '#import "%s"\n' "$REGISTRY"
     printf 'static id vibe_registry_[] = {\n'
     grep -oE "^#define[[:space:]]+${STRINGS_MACROS}[A-Za-z0-9_]+" "$REGISTRY" | awk '{print $2 ","}'
     printf '};\n'
 } > "$WORK/registry.m"
-
-if ! grep -q "$STRINGS_MACROS" "$WORK/registry.m"; then
-    echo "error: no ${STRINGS_MACROS}* macros found in $REGISTRY" >&2
-    exit 1
-fi
 
 # VIBE_STRINGS_EXTRACTION keeps Foundation out of the TU; otherwise
 # NSLocalizedStringWithDefaultValue, itself a Foundation macro, expands past
