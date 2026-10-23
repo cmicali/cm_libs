@@ -10,7 +10,7 @@ The transport of a debug command channel: a script drives and inspects a running
 
 ## It compiles in every configuration and ships in none
 
-**An app lists the template in every configuration.** Each `.m` wraps its body in `#if DEBUG`, so a release build compiles each to an empty object. The headers carry no `#if DEBUG`, since no header here may. So a call from release code compiles and then fails to link. An app keeps every caller under its own `#if DEBUG`, as Vibe keeps its whole debug directory.
+**An app lists the template in every configuration.** Each `.m` wraps its body in `#if DEBUG`, so a release build compiles each to an empty object. The headers carry no `#if DEBUG`, since no header here may. So a call from release code compiles and then fails to link. An app keeps every caller under its own `#if DEBUG`.
 
 `DebugChannelTests` defines `DEBUG` in every configuration, so the analyzer's Release build reaches the code. `DebugChannel-iOS` does too, so the iOS watcher compiles.
 
@@ -19,7 +19,7 @@ The transport of a debug command channel: a script drives and inspects a running
 - **The executor.** `VibeInstallDebugCommandChannel` takes one block, called on main with the command's arguments and id. It returns the JSON reply, or nil when the verb replies later through `VibeWriteDebugResponse`. Call it once, at launch. A second call replaces the executor and adds a second listener.
 - **The tables.** A table is an array of specs built by `VibeDebugCmd`: a usage string, the client's wait, and a handler. The verb is the usage's first word. The app's dispatcher looks the verb up with `VibeDebugSpecForVerb` and calls the handler with its own controller. `controller` is `id`, so each table names its own type. The handler is never handed nil: the dispatcher answers an error first while the app has no controller yet.
 - **The command list.** `VibeDebugUnknownCommandReply` lists every usage of the tables it is given, plus the verbs the app's client runs in its own process. It is the authoritative list, so a doc never repeats it.
-- **The client.** The piece has none. On the mac, an app's binary can be its own client, as Vibe's is: it writes the command file, posts the notification, and polls for the reply. The client reads a verb's wait from the same table. On iOS a host script writes the file straight into the simulator container's tmp, a plain host directory.
+- **The client.** The piece has none. On the mac, an app's binary can be its own client: it writes the command file, posts the notification, and polls for the reply. The client reads a verb's wait from the same table. On iOS a host script writes the file straight into the simulator container's tmp, a plain host directory.
 
 ## The contract
 

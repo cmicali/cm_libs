@@ -6,9 +6,9 @@ Tempo and musical key from mono PCM. It depends on `audio/AudioTypes` alone, for
 
 **Each analyzer streams.** Make one at the file's sample rate. Feed it mono float32 blocks in file order, of any size. Call `finish` once, after the last block. Tempo answers 0 when it finds none. Key answers `VibeMusicalKeyNone`.
 
-**Neither reads a file.** An app feeds them from a decode it already runs, so analysis costs no second read. Vibe attaches both to its waveform decode as observers, and the decode knows neither class (the plan's seam 17). Vibe's binding lives in the app. A window of a file, such as a CUE row, is analyzed by feeding only its frames.
+**Neither reads a file.** An app feeds them from a decode it already runs, so analysis costs no second read. An app attaches both to its waveform decode as observers, and the decode knows neither class (the plan's seam 17). The binding lives in the app. A window of a file, such as a CUE row, is analyzed by feeding only its frames.
 
-**Which analyzers run is the app's choice.** Both build on both platforms. Vibe runs tempo on both and key on macOS only.
+**Which analyzers run is the app's choice.** Both build on both platforms.
 
 **TRAP: a `VibeMusicalKey` of 0 is C major** (`audio/AudioTypes`). `finish` answers `VibeMusicalKeyNone` explicitly. A holder of its result must start at `VibeMusicalKeyNone` too.
 

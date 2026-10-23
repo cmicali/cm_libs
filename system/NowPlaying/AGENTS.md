@@ -10,13 +10,13 @@ The bridge to the system's Now Playing info and remote commands, over MediaPlaye
 
 ## The driver
 
-**The app drives it, and takes the commands back through the delegate.** The app hands it each track's values and timing on every transport event. The delegate routes each command to the same transport entry points the app's own buttons use. Each command is delivered on main. Vibe's drivers are its two shells' `+NowPlaying` categories.
+**The app drives it, and takes the commands back through the delegate.** The app hands it each track's values and timing on every transport event. The delegate routes each command to the same transport entry points the app's own buttons use. Each command is delivered on main.
 
 **It takes values, never the app's row.** `updateWithSourceKey:title:artist:artwork:…` takes the track's source key, its title, its artist, one image, and the timing. The source key is the dirty check's identity, so a cue row of the same file is a change. A nil source key means no track. A nil title publishes as empty, and a nil artist publishes none.
 
 **Nothing is published until the first track plays.** The update withholds every publish before its first Playing one: no track, a parked start and a paused start alike. A launch into a restored session therefore cannot claim the system slot. Next and previous availability is applied before that return regardless. After the first play, a nil source key clears the slot once.
 
-**The image is the app's choice, and the dirty check compares its identity.** Vibe passes the track's art, else its thumbnail, else a placeholder, each read without blocking. Pass the same object while it is unchanged. A new object on every tick republishes on every tick. A placeholder must already match the app's appearance, since the drawing appearance here is the system's.
+**The image is the app's choice, and the dirty check compares its identity.** An app reads each image it passes without blocking: the track's art, say, else its thumbnail, else a placeholder. Pass the same object while it is unchanged. A new object on every tick republishes on every tick. A placeholder must already match the app's appearance, since the drawing appearance here is the system's.
 
 **Shuffle and repeat are commands, not Now Playing info.** `changeShuffleModeCommand` and `changeRepeatModeCommand` take the system's controls (Siri, the Watch, accessories) to the delegate's `setShuffleEnabled:` and `setRepeatMode:`. The app writes its setting and applies it exactly as its own control does. The state the system shows is `currentShuffleType` and `currentRepeatType` on the commands. `updateShuffleEnabled:repeatMode:available:` writes them, so the app calls it wherever it applies the modes. A shuffle request of Items or Collections is on, since there is no album-level shuffle. `available` sets both commands' `enabled`. An app that hides its own shuffle and repeat controls passes NO, so CarPlay hides its buttons too. `VibeRepeatMode` has `MPRepeatType`'s raw values, and static asserts hold the cast.
 
@@ -26,7 +26,7 @@ The bridge to the system's Now Playing info and remote commands, over MediaPlaye
 
 **TRAP: the published artwork must be rasterized privately on the main thread, and that result must be the only thing the `MPMediaItemArtwork` request handler returns.** The handler runs on MediaPlayer's threads. The source is the live `NSImage` the app's UI is drawing, and `NSImage` is not safe to draw from two threads at once. `VibeArtworkForPublishing` always redraws, even a small thumbnail. It caps art at 512px and hands over a private copy. iOS passes the image through.
 
-**The republish rules are `NowPlayingRules.h`**, header-only and tested. The system extrapolates the elapsed time from the last publish at the published rate, so only a jump it cannot explain republishes. A buffering hold publishes Playing at rate 0, so the system's clock holds with the audio. An app's widget can share the string comparison, as Vibe's iOS widget does.
+**The republish rules are `NowPlayingRules.h`**, header-only and tested. The system extrapolates the elapsed time from the last publish at the published rate, so only a jump it cannot explain republishes. A buffering hold publishes Playing at rate 0, so the system's clock holds with the audio. An app's widget can share the string comparison.
 
 **TRAP: a debug build's `--no-audio-hw` and `--no-now-playing` launch flags suppress all of it**: no publish and no command registration. Publishing can pull AirPods from another device even when rendering to a virtual output. `--no-now-playing` keeps hardware rendering for loopback tests. Verifying this class needs a launch without either flag.
 

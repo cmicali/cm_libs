@@ -33,7 +33,7 @@ It has the Q low-kill high-pass with its W double-cutoff boost, and three send-r
 
 ## The intent
 
-**The intent is one number per stage** (`lowKillCutoffHz`, `reverbSendLevel`, `delaySendLevel`), **and the on-off setters write it.** A toggle resolves to the cutoff through `VibeLowKillCutoffHz` and opens a send at its base level with the held swell. A pad writes the numbers directly, which clears the toggles' memory and swells nothing. Vibe's mac keys use the toggles, and its iOS pad the numbers. **Clearing `lowKillEnabled` also clears `lowKillBoostActive`**, because the boost modifies that filter, and a latched W must not hold the cutoff up while the low kill reads off.
+**The intent is one number per stage** (`lowKillCutoffHz`, `reverbSendLevel`, `delaySendLevel`), **and the on-off setters write it.** A toggle resolves to the cutoff through `VibeLowKillCutoffHz` and opens a send at its base level with the held swell. A pad writes the numbers directly, which clears the toggles' memory and swells nothing. **Clearing `lowKillEnabled` also clears `lowKillBoostActive`**, because the boost modifies that filter, and a latched W must not hold the cutoff up while the low kill reads off.
 
 A level or cutoff written on every drag frame touches the queue only on a real change. A move of an open gate is written to its target, which the audio thread slews toward. A cutoff move within `kLowKillDirectMoveRatio` of where the filter sits is written to the unit directly. Anything larger, such as an open from silence, a close, a flick, or a toggle, preempts the ramp in flight and continues from where the gate or filter sits. A stream of positions then lands as one motion without a timer per frame.
 

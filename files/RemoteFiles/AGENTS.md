@@ -7,7 +7,7 @@ Files on a server kept as local placeholders under one root, so everything that 
 | `RemotePlaceholderStore` | the placeholder and the install, the directory index, the fetch that streams, the ranged read, the download budget, and the backend it installs |
 | `RemotePlaceholderStoreInternal.h` | the hooks a subclass overrides, and what a subclass and the tests reach: the disk queue, the index, the downloads, and the budget |
 
-**What an app gives it.** A subclass that says which remote file a placeholder stands for (the hooks, below). A client, any `HTTPTransferClient`. A root, an index xattr's name, and a budget. A store is used through a subclass: an app's store of a web API's files, or its store of links (Vibe's Dropbox mirror and its link store).
+**What an app gives it.** A subclass that says which remote file a placeholder stands for (the hooks, below). A client, any `HTTPTransferClient`. A root, an index xattr's name, and a budget. A store is used through a subclass: an app's store of a web API's files, or its store of links.
 
 ## The placeholder store
 

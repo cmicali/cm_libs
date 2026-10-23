@@ -31,7 +31,7 @@ view.delegate = self;                    // the seek, and each theme resolution
 view.progress = 0.25;
 ```
 
-**The app owns the policy.** It owns the loader and the cache, and it hands each view a reset, then each delivery. It maps its settings onto a theme in the `themeProvider` block. It pushes the style, the levels, Centered, the bar density and width, and the drag behavior. It labels each view for accessibility where it builds it, so the views read no strings. A view with no provider draws Mono. Vibe's mapping is its own category, `WaveformTheme+Settings`.
+**The app owns the policy.** It owns the loader and the cache, and it hands each view a reset, then each delivery. It maps its settings onto a theme in the `themeProvider` block. It pushes the style, the levels, Centered, the bar density and width, and the drag behavior. It labels each view for accessibility where it builds it, so the views read no strings. A view with no provider draws Mono.
 
 ## The theme
 

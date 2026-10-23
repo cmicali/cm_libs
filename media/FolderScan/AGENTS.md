@@ -10,12 +10,12 @@ The folder walk: whatever the user opened, a file, a folder, or a playlist file,
 
 ## The walk stays ignorant on purpose
 
-**The walk returns `PlaylistEntry` records, and the caller makes its rows from them.** Vibe's are made by `AudioTrack rowsForEntries:`. The walk runs on background workers, never the main thread. `expandAndFilterList:sortedBy:completion:` runs four wide and completes on its worker, so the caller makes its rows there and then goes to main. Callers order overlapping results themselves.
+**The walk returns `PlaylistEntry` records, and the caller makes its rows from them.** The walk runs on background workers, never the main thread. `expandAndFilterList:sortedBy:completion:` runs four wide and completes on its worker, so the caller makes its rows there and then goes to main. Callers order overlapping results themselves.
 
 **It calls no one. What it discovers is reported through handler blocks the app installs at launch.** Each is a value the walk copies under a lock and reads from its workers.
 
 - `setPlaylistFolderGrantHandler:`: the grant a playlist file's unreadable entries need. It runs on a worker and blocks until answered. Only the macOS build asks it.
-- `setWalkedFileHandler:`: a rank for each file a folder walk lists, by name. The walk keeps the first best-ranked file of each directory and knows nothing of what the rank means. Vibe installs folder art's cover rank.
+- `setWalkedFileHandler:`: a rank for each file a folder walk lists, by name. The walk keeps the first best-ranked file of each directory and knows nothing of what the rank means. An app may install `media/Metadata`'s cover rank, `VibeFolderArtCandidateRank`.
 - `setWalkedDirectoriesHandler:` and `setBulkOpenDirectoriesHandler:`: the folders it listed with the file it kept in each, and a bulk open's loose folders. An app's cover resolver can take them rather than pay for its own listing.
 
 **Unset handlers mean the walk still works and throws the extra facts away.** That is what the tests install. A walk that called a singleton behind a setting, a grant, and a modal panel could not be tested. `FolderWalkInternal.h` exposes the synchronous expansion steps for those tests. Do not import it outside `FolderWalk.m`, the tests, and an app's benchmarks.

@@ -13,9 +13,9 @@ Sparkle for a mac app that is downloaded directly and updates itself. It depends
 
 ## What the app passes in
 
-- **The feed override**, at init. A nil one keeps the Info.plist's `SUFeedURL`. Vibe passes its Debug build's `--update-feed`.
+- **The feed override**, at init. A nil one keeps the Info.plist's `SUFeedURL`.
 - **The beta switch**, as a block. Sparkle asks at every check, so a change needs no push. The block decides both the allowed channels and the feed's `channel` parameter. An item with no channel is stable, and it always qualifies.
-- **When it starts.** `start` starts the updater. Before that, it stores its settings, and a check it is asked for logs and does nothing. Vibe never starts it in a Debug build launched without `--update-feed`.
+- **When it starts.** `start` starts the updater. Before that, it stores its settings, and a check it is asked for logs and does nothing.
 - **The check interval**, through `checkInterval`, in seconds. 0 turns Sparkle's automatic checks off, and keeps the stored interval. Any other value turns them on at that interval. The getter answers 0 while they are off. The default interval is the app's to choose.
 - **Check for Updates…** targets `controller` with `checkForUpdates:`. The controller validates the menu item. It is disabled while the updater is unstarted.
 
@@ -32,7 +32,7 @@ Sparkle for a mac app that is downloaded directly and updates itself. It depends
 - **Its macOS target lists `VibeLibsUpdates`** with `excludedPlatform: iOS`. No iOS target may list it. The template lists `VibeLibsSparkle`, which links, embeds, and signs the framework (`third_party/Sparkle/AGENTS.md`).
 - **Its Info.plist names the feed and the key**: `SUFeedURL` and `SUPublicEDKey`. Sparkle refuses an update its key did not sign.
 - **A sandboxed app runs Sparkle's installer as its XPC service.** It sets `SUEnableInstallerLauncherService`. Its entitlements add the mach-lookup exceptions `$(PRODUCT_BUNDLE_IDENTIFIER)-spks` and `$(PRODUCT_BUNDLE_IDENTIFIER)-spki`, and outgoing network connections.
-- **A configuration with no updater excludes both files by name.** It sets `EXCLUDED_SOURCE_FILE_NAMES` to `Sparkle.framework` and `VibeUpdater.m`. The first unlinks and unembeds the framework. The second leaves out the class that links it. **It must exclude every source here that links Sparkle**, and `VibeUpdater.m` is the only one. `make check-pieces` fails when another source of this piece reaches Sparkle, by its own import or through `VibeUpdater.h`. It also fails when `VibeUpdater.m` is renamed. Either would break every app's exclude list. So every Sparkle import stays in `VibeUpdater.m`. A source here that reaches no Sparkle needs no exclude. The app compiles out its own references with a switch of its own, and strips the `SU` keys from its built Info.plist. Vibe's Mac App Store build does all three, since App Review rejects an app that updates itself.
+- **A configuration with no updater excludes both files by name.** It sets `EXCLUDED_SOURCE_FILE_NAMES` to `Sparkle.framework` and `VibeUpdater.m`. The first unlinks and unembeds the framework. The second leaves out the class that links it. **It must exclude every source here that links Sparkle**, and `VibeUpdater.m` is the only one. `make check-pieces` fails when another source of this piece reaches Sparkle, by its own import or through `VibeUpdater.h`. It also fails when `VibeUpdater.m` is renamed. Either would break every app's exclude list. So every Sparkle import stays in `VibeUpdater.m`. A source here that reaches no Sparkle needs no exclude. The app compiles out its own references with a switch of its own, and strips the `SU` keys from its built Info.plist. A Mac App Store build does all three, since App Review rejects an app that updates itself.
 
 ## Tests
 

@@ -1,6 +1,6 @@
 # files/DiskCache
 
-A bounded disk cache over PINCache. It depends on `third_party/PINCache` and on `core/Common`. **Today it holds what Vibe moved here**: one category, `PINCache (VibeAudioCache)`. `media/Metadata`'s cache and Vibe's waveform cache both build their stores through it, so their entries live and die on the same terms.
+A bounded disk cache over PINCache. It depends on `third_party/PINCache` and on `core/Common`. **Today it holds what Vibe moved here**: one category, `PINCache (VibeAudioCache)`. `media/Metadata`'s cache and `waveform/WaveformLoading`'s cache both build their stores through it, so their entries live and die on the same terms.
 
 ## The store
 
@@ -10,7 +10,7 @@ A bounded disk cache over PINCache. It depends on `third_party/PINCache` and on 
 
 **`audioDiskUsageWithCompletion:` counts the entries and their bytes on disk.** The enumeration blocks, so call it on the store's own serial queue. The completion is dispatched to the main thread.
 
-The keys are the caller's. Vibe keys both stores by `core/Common`'s disk key, `NSURL (Hash)`.
+The keys are the caller's. Both stores are keyed by `core/Common`'s disk key, `NSURL (Hash)`.
 
 ## Tests
 

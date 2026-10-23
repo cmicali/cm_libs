@@ -11,7 +11,7 @@ CUE sheets, also embedded in FLAC, and M3U playlists, read and written as record
 
 ## Records
 
-**The readers return `PlaylistEntry` records, and the writer takes them.** An app makes its rows from entries, and entries from its rows, in one place of its own. Vibe's is `AudioTrack rowsForEntries:` and `entriesForRows:`. The writer takes each entry's length and display names, so the app fills them in. The readers ignore `#EXTINF`, so they make every entry with the shorter initializer. The window's arithmetic is `audio/AudioTypes`' `CueWindowMath.h`, which an app's player shares.
+**The readers return `PlaylistEntry` records, and the writer takes them.** An app makes its rows from entries, and entries from its rows, in one place of its own. The writer takes each entry's length and display names, so the app fills them in. The readers ignore `#EXTINF`, so they make every entry with the shorter initializer. The window's arithmetic is `audio/AudioTypes`' `CueWindowMath.h`, which an app's player shares.
 
 The playable extensions are `audio/AudioTypes`' `PlayableExtensions`. The entry rungs read it, so an entry can never resolve to a format the decoders do not open. `media/FolderScan`'s walk filters with the same list.
 
@@ -37,7 +37,7 @@ These files come from other people's software, so the next two traps are load-be
 
 `writeM3UForEntries:relativeToDirectory:toURL:error:` is the only writer. It writes `m3uTextForEntries:relativeToDirectory:` atomically as UTF-8 without a BOM. An entry under the target directory is written relative to it, and anything else is absolute. `commonDirectoryForEntries:` answers the folder that makes every entry relative.
 
-**A cue entry is written with two more directives before its path.** VLC's `#EXTVLCOPT:start-time=` and `stop-time=` let other players play the slice. `#VIBE-CUE:` carries the window and the names, which the readers turn back into exactly that entry. The line carries everything rather than pointing at the sheet. Vibe restores its session mirror on main at launch, where reading a sheet on a cloud placeholder or a dead mount would hang the launch. A malformed line reads as a plain entry.
+**A cue entry is written with two more directives before its path.** VLC's `#EXTVLCOPT:start-time=` and `stop-time=` let other players play the slice. `#VIBE-CUE:` carries the window and the names, which the readers turn back into exactly that entry. The line carries everything rather than pointing at the sheet. An app may restore a playlist on main at launch, where reading a sheet on a cloud placeholder or a dead mount would hang the launch. A malformed line reads as a plain entry.
 
 **TRAP: every M3U reader trims whitespace, splits at newlines, and skips a leading `#`.** So a name any of those would mangle goes out as a percent-encoded `file://` URL, which reads back whole. A backslash in a name does not round-trip, because the Windows-separator rule turns it into `/`.
 
