@@ -1,6 +1,6 @@
 //
 //  AnalysisFramerMath.h
-//  Vibe
+//  vibe-libs
 //
 //  The boundary-straddling stream framer both analyzers run their DSP behind:
 //  the guarantee that the buffer sizes the decoder happens to hand an analyzer

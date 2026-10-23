@@ -1,6 +1,6 @@
 //
 //  AudioVarispeed.h
-//  Vibe
+//  vibe-libs
 //
 //  A pitch fader's stage: a varispeed between the app's voice bus and the FX.
 //  At zero pitch it is a bit-perfect pass-through: the source goes straight

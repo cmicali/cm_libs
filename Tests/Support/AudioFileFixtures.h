@@ -1,6 +1,6 @@
 //
 //  AudioFileFixtures.h
-//  Vibe
+//  vibe-libs
 //
 //  The audio files the file handle's tests write, shared with an app's tests.
 //  VibeWriteWAV and VibeWriteSowtAIFF write the bytes themselves, so reading a

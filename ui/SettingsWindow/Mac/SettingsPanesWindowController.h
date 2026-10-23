@@ -1,6 +1,6 @@
 //
 //  SettingsPanesWindowController.h
-//  Vibe
+//  vibe-libs
 //
 //  A window of settings panes in the System Settings shape: a source-list
 //  sidebar with search drives a tab-less tab controller of panes. It keeps

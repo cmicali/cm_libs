@@ -1,6 +1,6 @@
 //
 //  PlatformImage.h
-//  Vibe
+//  vibe-libs
 //
 //  The bounded image decode and pixel sampling. Free functions because the
 //  image class differs per platform.

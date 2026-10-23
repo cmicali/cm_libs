@@ -1,6 +1,6 @@
 //
 //  VibeFakeCloud.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "VibeFakeCloud.h"

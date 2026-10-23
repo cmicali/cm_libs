@@ -1,6 +1,6 @@
 //
 //  DrawnViewTestSupport.h
-//  VibeTests
+//  vibe-libs
 //
 //  Renders a view or a layer tree into a 1x bitmap with no window server, and
 //  reads a pixel by the view's own coordinates. The drawn-view tests assert

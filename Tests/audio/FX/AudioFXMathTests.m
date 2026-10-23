@@ -1,6 +1,6 @@
 //
 //  AudioFXMathTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The numbers AudioFX's toggles and the iOS pad resolve to, without hosting
 //  a unit; AudioFXChainTests renders the chain itself.

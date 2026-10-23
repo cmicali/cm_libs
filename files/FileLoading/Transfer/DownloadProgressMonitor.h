@@ -1,6 +1,6 @@
 //
 //  DownloadProgressMonitor.h
-//  Vibe
+//  vibe-libs
 //
 //  Best-effort progress for a file its provider is materializing: shimmer
 //  while indeterminate, a fill once a fraction is known.

@@ -1,6 +1,6 @@
 //
 //  NSURL+Emptiness.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NSURL+Emptiness.h"

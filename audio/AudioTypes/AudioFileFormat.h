@@ -1,6 +1,6 @@
 //
 //  AudioFileFormat.h
-//  Vibe
+//  vibe-libs
 //
 //  Sniffed codec/container names shared by metadata display and conversion.
 //

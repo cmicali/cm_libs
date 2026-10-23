@@ -1,6 +1,6 @@
 //
 //  AudioKeyAnalyzerTests.mm
-//  VibeTests
+//  vibe-libs
 //
 
 #import <XCTest/XCTest.h>

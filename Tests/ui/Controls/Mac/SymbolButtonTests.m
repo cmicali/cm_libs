@@ -1,6 +1,6 @@
 //
 //  SymbolButtonTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The symbol button's state colors and its rendered glyph, with no window
 //  server. Its two layers are the color wash under the symbol's mask and the

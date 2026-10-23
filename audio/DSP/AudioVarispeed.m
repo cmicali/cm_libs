@@ -1,6 +1,6 @@
 //
 //  AudioVarispeed.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioVarispeed.h"

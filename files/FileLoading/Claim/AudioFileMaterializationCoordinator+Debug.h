@@ -1,6 +1,6 @@
 //
 //  AudioFileMaterializationCoordinator+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  The path-wide admission counters and the stage-2 open hang. Both
 //  categories are implemented in AudioFileMaterializationCoordinator+Debug.m.

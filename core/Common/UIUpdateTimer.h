@@ -1,6 +1,6 @@
 //
 //  UIUpdateTimer.h
-//  Vibe
+//  vibe-libs
 //
 //  A main-queue timer for the playback-position UI that fires only while
 //  wanted AND the window is visible. It owns the dispatch-source bookkeeping —

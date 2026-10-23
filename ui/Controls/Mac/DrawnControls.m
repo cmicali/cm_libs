@@ -1,6 +1,6 @@
 //
 //  DrawnControls.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "DrawnControls.h"

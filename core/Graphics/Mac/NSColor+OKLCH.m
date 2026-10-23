@@ -1,6 +1,6 @@
 //
 //  NSColor+OKLCH.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NSColor+OKLCH.h"

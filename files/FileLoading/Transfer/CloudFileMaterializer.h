@@ -1,6 +1,6 @@
 //
 //  CloudFileMaterializer.h
-//  Vibe
+//  vibe-libs
 //
 //  Downloads a file provider's placeholder as an abortable step. Opening a
 //  dataless file blocks in the kernel until the provider finishes, and

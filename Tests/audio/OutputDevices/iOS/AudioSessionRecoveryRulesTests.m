@@ -1,6 +1,6 @@
 //
 //  AudioSessionRecoveryRulesTests.m
-//  VibeTests
+//  vibe-libs
 //
 
 

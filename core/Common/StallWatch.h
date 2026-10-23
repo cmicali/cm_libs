@@ -1,6 +1,6 @@
 //
 //  StallWatch.h
-//  Vibe
+//  vibe-libs
 //
 //  The beta stall log's watchdogs and stack sampler. They read no player
 //  state. Everything but the scene flag exists only under

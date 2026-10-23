@@ -1,6 +1,6 @@
 //
 //  NSURL+FileIdentity.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NSURL+FileIdentity.h"

@@ -1,6 +1,6 @@
 //
 //  SymbolButton.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "SymbolButton.h"

@@ -1,6 +1,6 @@
 //
 //  PlaceholderFiles+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlaceholderFiles+Debug.h"

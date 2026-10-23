@@ -1,6 +1,6 @@
 //
 //  AudioWorkScheduler.h
-//  Vibe
+//  vibe-libs
 //
 //  Fixed-slot admission for OS calls with no cancellation point. Work is not
 //  dispatched until it owns a slot, so a blocked worker cannot grow an

@@ -1,6 +1,6 @@
 //
 //  AudioLevelMeter+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  A render test's seam for a meter callback stalled between its entry and
 //  its publication. Implemented in AudioLevelMeter.m, beside the meter's

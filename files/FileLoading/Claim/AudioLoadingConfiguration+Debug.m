@@ -1,6 +1,6 @@
 //
 //  AudioLoadingConfiguration+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioLoadingConfiguration+Debug.h"

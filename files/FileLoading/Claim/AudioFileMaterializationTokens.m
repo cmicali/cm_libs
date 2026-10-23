@@ -1,6 +1,6 @@
 //
 //  AudioFileMaterializationTokens.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioFileMaterializationTokens.h"

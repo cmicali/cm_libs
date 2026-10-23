@@ -1,6 +1,6 @@
 //
 //  CoreAudioUtil.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "CoreAudioUtilInternal.h"

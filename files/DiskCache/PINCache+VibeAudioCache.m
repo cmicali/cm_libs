@@ -1,6 +1,6 @@
 //
 //  PINCache+VibeAudioCache.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PINCache+VibeAudioCache.h"

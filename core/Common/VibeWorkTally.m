@@ -1,6 +1,6 @@
 //
 //  VibeWorkTally.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "VibeWorkTally.h"
