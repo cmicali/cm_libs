@@ -50,6 +50,7 @@ Across the repo:
   - the other app's name appears nowhere
   - no file outside third_party/ holds a merge conflict marker: a line that
     starts with seven <, =, or > and ends there or goes on after a space
+  - no .md file outside third_party/ has a line over 1500 characters
   - AGENTS.md and README.md each say "The first <number> pieces are here",
     with the number in words. It is the count of pieces with an AGENTS.md,
     third_party/ included.
@@ -77,6 +78,8 @@ CONDITION = re.compile(r"^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b(.*)")
 # Git's three markers. Exactly seven, then a space or the line's end, so a
 # longer Markdown or RST underline of = is no marker.
 CONFLICT = re.compile(r"^(?:<{7}|={7}|>{7})(?: |$)", re.M)
+# Vibe's limit on a doc line, kept here too.
+DOC_LINE_LIMIT = 1500
 
 SUPPORT = os.path.join("Tests", "Support")   # the tests' shared helpers, in no piece
 THIRD_PARTY = "third_party"   # a vendored piece's template may also search this group directory
@@ -494,6 +497,11 @@ for path in walk("."):
     if not path.startswith(THIRD_PARTY + os.sep):
         for m in CONFLICT.finditer(text):
             fail(f"{path}:{text.count(chr(10), 0, m.start()) + 1}: a merge conflict marker")
+        if path.endswith(".md"):
+            for number, line in enumerate(text.split("\n"), 1):
+                if len(line) > DOC_LINE_LIMIT:
+                    fail(f"{path}:{number}: a doc line of {len(line)} characters, over {DOC_LINE_LIMIT}; "
+                         f"split it, or make a list a table")
 
 # The piece count, in words, in the sentence AGENTS.md and README.md share.
 # Every move changes it, so the check keeps it true.

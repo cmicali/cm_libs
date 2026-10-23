@@ -398,6 +398,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 - no `#if DEBUG` in a shipping header
 - the other app's name appears nowhere
 - no file outside `third_party/` holds a merge conflict marker. A marker is seven `<`, `=`, or `>` at a line's start, then a space or the line's end. A longer underline of `=` is not one.
+- no `.md` file outside `third_party/` has a line over 1,500 characters, Vibe's own limit
 - the sources of `system/Updates` that reach Sparkle are `VibeUpdater.m` alone, since an app's configuration with no updater excludes it by name
 - and it lists the classes with no prefix
 
