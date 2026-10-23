@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  Metadata-loader-only construction surface.
 //

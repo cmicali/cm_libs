@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataLoader+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioTrackMetadataLoader+Debug.h"

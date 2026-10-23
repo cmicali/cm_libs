@@ -1,10 +1,10 @@
 //
 // FolderArtResolver.h
-// Vibe
+// vibe-libs
 //
 // The cover beside an audio file with absent or undecodable art, consulted by
 // AudioTrackArtwork. Per directory, lazy, never on the scan's path and never
-// persisted; the cost rules are the piece's AGENTS.md's, Folder art.
+// persisted; the cost rules are this piece's AGENTS.md, Folder art.
 //
 
 #import <Foundation/Foundation.h>
@@ -13,11 +13,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Posted on main when a folder's question is answered, "it has none"
-// included: the header holds the previous track's art until the answer.
+// included. A view may hold the previous track's art until the answer.
 extern NSNotificationName const FolderArtDidResolveNotification;
 
 // Whether folder art is on, and whether a directory may be read without
-// raising a permission panel. The app answers both (setEnabledProvider:).
+// raising a permission panel. An app answers both (setEnabledProvider:).
 typedef BOOL (^FolderArtEnabledProvider)(void);
 typedef BOOL (^FolderArtAccessProvider)(NSString *directory);
 
@@ -25,10 +25,10 @@ typedef BOOL (^FolderArtAccessProvider)(NSString *directory);
 
 + (instancetype)sharedInstance;
 
-// The two answers the resolver takes from the app. The mac installs its
-// Folder art setting and its folder grants at launch. Until then, and on iOS,
-// folder art is off and any directory may be read. Installing re-reads the
-// enabled answer and drops cached images, as folderArtSettingDidChange does.
+// The two answers the resolver takes from an app, usually at launch. Until
+// an app installs them, folder art is off and any directory may be read.
+// Installing re-reads the enabled answer and drops cached images, as
+// folderArtSettingDidChange does.
 // Any thread.
 - (void)setEnabledProvider:(FolderArtEnabledProvider)enabledProvider
              accessProvider:(FolderArtAccessProvider)accessProvider;

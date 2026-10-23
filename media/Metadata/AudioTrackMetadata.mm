@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadata.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioTrackMetadata.h"
@@ -45,9 +45,9 @@ NSNotificationName const AudioTrackMetadataThumbnailDidLoadNotification =
 @end
 
 // The reader for a remote placeholder, which the parse and the art read take
-// by range instead of materializing the song (AGENTS.md, The scan). nil reads
-// the file from disk. The root test comes before the stat, so a file under no
-// remote root pays none.
+// by range instead of materializing the song (this piece's AGENTS.md, The
+// scan). nil reads the file from disk. The root test comes before the stat,
+// so a file under no remote root pays none.
 static VibeTagByteRangeRead _Nullable VibeTagRangeReadForPath(NSString *path, uint64_t *length) {
     struct stat st;
     if (!VibePathIsUnderRemotePlaceholderRoot(path) || stat(path.UTF8String, &st) != 0
@@ -392,7 +392,7 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
     }
 }
 
-// CoreAudio's facts for a file TagLib cannot read (AGENTS.md).
+// CoreAudio's facts for a file TagLib cannot read (this piece's AGENTS.md).
 - (void)loadCoreAudioFactsFromURL:(NSURL *)url {
     // The parser open playback makes for a file its own decoders refuse.
     // TRAP: the handle closes the parser when released, which ARC may do
@@ -431,8 +431,8 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
         if (artist) self.artist = artist;
         if (title) self.title = title;
     }
-    // PCM is never WAV or AIFF, which would offer Convert to FLAC a container
-    // its tag copy cannot open.
+    // PCM is never named WAV or AIFF here. A caller that copies tags by
+    // format would then open a container its tag copy cannot read.
     if (format.mFormatID != kAudioFormatLinearPCM) self.fileType = VibeAudioFileFormatForCodec(format.mFormatID);
     else if (container == kAudioFileWave64Type) self.fileType = VibeAudioFileFormatW64;
     else if (container == kAudioFileCAFType) self.fileType = VibeAudioFileFormatCAF;

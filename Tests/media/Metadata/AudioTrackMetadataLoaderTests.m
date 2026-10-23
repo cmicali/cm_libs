@@ -292,7 +292,7 @@
     [self waitForExpectations:@[controller.cancellationExpectation] timeout:VIBE_TEST_HANG_TIMEOUT];
 }
 
-// The shell's row removal abandons the queued entry; its undo is the later
+// An app's row removal abandons the queued entry. Its undo is the later
 // priority edge.
 - (void)testAbandonedQueuedTrackNeverMaterializesAndPriorityRebuildsIt {
     VibeLoaderTestTrack *first = [self trackNamed:@"first.wav"];
