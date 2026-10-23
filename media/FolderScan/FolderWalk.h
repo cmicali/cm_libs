@@ -34,6 +34,29 @@ typedef void (^VibeWalkedDirectoriesHandler)(NSSet<NSString *> *directories,
 // is a fair price. Once per expansion; never for a single file.
 typedef void (^VibeBulkOpenDirectoriesHandler)(NSSet<NSString *> *directories);
 
+// What a catalog scan may read of a file's contents.
+typedef NS_ENUM(NSInteger, VibeFolderScanReadPolicy) {
+    // Nothing: every file is an entry whole, a CUE sheet included, and no
+    // sheet or FLAC is opened.
+    VibeFolderScanReadPolicyNone = 0,
+    // What an open reads: each sheet beside the files, and the sheet inside a
+    // large FLAC that is not a cloud placeholder.
+    VibeFolderScanReadPolicyLocal,
+};
+
+// How much of one root a catalog scan saw. Only complete lets a catalog mark
+// an unseen file missing.
+typedef NS_ENUM(NSInteger, VibeFolderScanVerdict) {
+    VibeFolderScanVerdictComplete = 0,
+    // Something under the root could not be read. Its failures say what.
+    VibeFolderScanVerdictPartial,
+    // The token was cancelled before the scan ended.
+    VibeFolderScanVerdictCancelled,
+};
+
+// No batch holds more entries than this.
+FOUNDATION_EXPORT const NSUInteger VibeFolderScanBatchLimit;
+
 
 @interface FolderWalk : NSObject
 
@@ -54,6 +77,33 @@ typedef void (^VibeBulkOpenDirectoriesHandler)(NSSet<NSString *> *directories);
 + (void)expandAndFilterList:(NSArray<NSURL *> *)list
                    sortedBy:(VibeFolderOpenSort)sort
                  completion:(void (^)(NSArray<PlaylistEntry *> *entries, NSUInteger folderCount))completion;
+
+// Every file under each root, in order, as entries, with nothing sorted. It
+// runs at utility QoS on a worker of its own, never one of the open's four.
+//
+// batch runs on that worker with at most VibeFolderScanBatchLimit entries. A
+// batch holds one directory's entries, in enumeration order, once that
+// directory is listed in full, so its sheets have claimed their files. A
+// large directory arrives in several batches.
+//
+// progress is the token. Cancelling it stops the scan between entries, and
+// no batch starts after the cancel. The scan adds each batch's count to its
+// completedUnitCount once the batch returns. It never sets the total.
+//
+// completion runs on the same worker once, after the last batch. It gives one
+// verdict and one failure list per root, in the order of roots. Each failure
+// is an NSError with the directory it met under NSURLErrorKey, in the order
+// met. A root that cannot be read at all is partial with one failure naming
+// it. A cancelled token makes every verdict cancelled.
+//
+// The scan never asks the grant handler, since background work must never
+// raise a panel. The walked-file and walked-directories handlers run as they
+// do under an open, once per root.
++ (void)scanRoots:(NSArray<NSURL *> *)roots
+       readPolicy:(VibeFolderScanReadPolicy)policy
+         progress:(NSProgress *)progress
+            batch:(void (^)(NSArray<PlaylistEntry *> *entries))batch
+       completion:(void (^)(NSArray<NSNumber *> *verdicts, NSArray<NSArray<NSError *> *> *failures))completion;
 
 // Common/PlayableExtensions' set.
 + (NSSet<NSString *> *)supportedExtensions;

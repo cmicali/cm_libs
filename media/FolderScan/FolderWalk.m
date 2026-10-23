@@ -70,7 +70,7 @@ static VibeBulkOpenDirectoriesHandler BulkOpenDirectoriesHandler(void) {
 }
 
 // The directory a path resolves to, canonically spelled, or nil for a file or
-// a broken link.
+// a broken link, with the reason in *error when given.
 //
 // TRAP: NSURLIsDirectoryKey is lstat-shaped: a link to a folder answers NO, and
 // the enumerator refuses one as its root (ENOTDIR), so an unresolved folder
@@ -78,14 +78,23 @@ static VibeBulkOpenDirectoriesHandler BulkOpenDirectoriesHandler(void) {
 // ~/Music/NAS link opens to nothing. realpath, not URLByResolvingSymlinksInPath,
 // which keeps a /private prefix: only realpath's spelling matches the
 // enumerator's resolved paths.
-static NSString *VibeResolvedDirectoryPath(NSString *path) {
-    if (path.length == 0) {
-        return nil;
-    }
+static NSString *VibeResolvedDirectoryPath(NSString *path, int *error) {
     char resolved[PATH_MAX];
     struct stat st;
-    if (!realpath(path.fileSystemRepresentation, resolved) ||
-        stat(resolved, &st) != 0 || !S_ISDIR(st.st_mode)) {
+    int reason = 0;
+    if (path.length == 0) {
+        reason = ENOENT;
+    }
+    else if (!realpath(path.fileSystemRepresentation, resolved) || stat(resolved, &st) != 0) {
+        reason = errno;
+    }
+    else if (!S_ISDIR(st.st_mode)) {
+        reason = ENOTDIR;
+    }
+    if (reason != 0) {
+        if (error) {
+            *error = reason;
+        }
         return nil;
     }
     return [NSFileManager.defaultManager stringWithFileSystemRepresentation:resolved
@@ -200,18 +209,47 @@ static BOOL VibeListedFileIsEmpty(NSURL *url, BOOL isLink, BOOL *dangling) {
     return url.isEmptyOrDirectory;
 }
 
+// An enumeration failure, with the directory it met under NSURLErrorKey.
+static NSError *VibeWalkFailure(NSURL *directory, NSError *error) {
+    NSMutableDictionary<NSErrorUserInfoKey, id> *info = [error.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+    info[NSURLErrorKey] = directory;
+    return [NSError errorWithDomain:error.domain code:error.code userInfo:info];
+}
+
+// Hands listed every directory deeper than depth, deepest first: an entry at
+// that depth means they are listed in full. An empty one is skipped.
+static void VibeCloseListedDirectories(NSMutableArray<NSMutableArray<NSURL *> *> *open, NSUInteger depth,
+                                       void (^listed)(NSMutableArray<NSURL *> *files)) {
+    while (open.count > depth) {
+        NSMutableArray<NSURL *> *files = open.lastObject;
+        [open removeLastObject];
+        if (files.count > 0) {
+            listed(files);
+        }
+    }
+}
+
+// The one enumerator, under the open and the scan alike: the nonempty audio
+// files and the CUE sheets anywhere under dir, unsorted. With byDirectory,
+// listed gets each directory's files once that directory is listed in full.
+// Without it, listed gets every file once, in enumeration order. failures,
+// when given, collects each directory the enumeration could not read. A
+// cancelled progress stops it between entries. It then reports nothing more
+// and returns NO.
+//
 // The walk ranks each file through the walked-file handler on the way past,
 // so the walked-directories handler gets each folder's best file for free.
 // Only directories with playable audio are reported.
-+ (NSArray<PlaylistEntry*>*) expandDirectory:(NSURL*)dir sortedBy:(VibeFolderOpenSort)sort {
+static BOOL VibeWalkTree(NSURL *dir, VibeFolderOpenSort sort, NSProgress *progress, BOOL byDirectory,
+                         NSMutableArray<NSError *> *failures, void (^listed)(NSMutableArray<NSURL *> *files)) {
 
-    NSMutableArray<NSURL*> *results = [[NSMutableArray alloc] init];
+    NSMutableArray<NSURL*> *results = byDirectory ? nil : [[NSMutableArray alloc] init];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     VibeWalkedFileHandler rankFile = WalkedFileHandler();
     NSMutableDictionary<NSString*, NSString*> *keptByDirectory = [NSMutableDictionary dictionary];
     NSMutableDictionary<NSString*, NSNumber*> *keptRankByDirectory = [NSMutableDictionary dictionary];
     NSMutableSet<NSString*> *directoriesWalked = [NSMutableSet set];
-    NSSet<NSString*> *supported = [self supportedExtensions];
+    NSSet<NSString*> *supported = [FolderWalk supportedExtensions];
 
     // The enumerator neither follows a directory link nor takes one as root,
     // so each link found becomes another root, resolved to canonical form.
@@ -219,9 +257,14 @@ static BOOL VibeListedFileIsEmpty(NSURL *url, BOOL isLink, BOOL *dangling) {
     // subtree from listing it twice.
     NSMutableArray<NSString*> *pendingRoots = [NSMutableArray array];
     NSMutableSet<NSString*> *covered = [NSMutableSet set];
-    NSString *resolvedRoot = VibeResolvedDirectoryPath(dir.path);
+    int rootError = 0;
+    NSString *resolvedRoot = VibeResolvedDirectoryPath(dir.path, &rootError);
     if (resolvedRoot) {
         [pendingRoots addObject:resolvedRoot];
+    }
+    else if (failures) {
+        [failures addObject:VibeWalkFailure(dir, [NSError errorWithDomain:NSPOSIXErrorDomain code:rootError
+                                                                 userInfo:nil])];
     }
 
     // Skipping hidden files drops the AppleDouble "._Song.mp3" sidecars that
@@ -241,15 +284,29 @@ static BOOL VibeListedFileIsEmpty(NSURL *url, BOOL isLink, BOOL *dangling) {
         NSMutableArray<NSString*> *linkedRoots = [NSMutableArray array];
         // Depth-first, so entries arrive in runs from one directory.
         NSString *lastDirectory = nil;
+        // The directories still being listed, the root first, each with its
+        // files so far. A directory's files are split around its subfolders,
+        // so it is listed in full only when the walk climbs back above it.
+        NSMutableArray<NSMutableArray<NSURL*>*> *open =
+                byDirectory ? [NSMutableArray arrayWithObject:[NSMutableArray array]] : nil;
         NSDirectoryEnumerator *enumerator = [fileManager
                 enumeratorAtURL:[NSURL fileURLWithPath:rootPath isDirectory:YES]
      includingPropertiesForKeys:keys
                         options:NSDirectoryEnumerationSkipsHiddenFiles | NSDirectoryEnumerationSkipsPackageDescendants
                    errorHandler:^(NSURL *url, NSError *error) {
                        LogWarn(@"Error enumerating %@: %@", url, error);
+                       if (failures) {
+                           [failures addObject:VibeWalkFailure(url, error)];
+                       }
                        return YES;
                    }];
         for (NSURL *url in enumerator) {
+            if (progress.isCancelled) {
+                return NO;
+            }
+            if (open) {
+                VibeCloseListedDirectories(open, enumerator.level, listed);
+            }
             NSError *error = nil;
             NSNumber *isDirectory = nil;
             BOOL isFile;
@@ -264,6 +321,9 @@ static BOOL VibeListedFileIsEmpty(NSURL *url, BOOL isLink, BOOL *dangling) {
             // Every file reaches the walked-file handler below, audio or not.
             NSString *path = url.path;
             if (!isFile) {
+                if (open) {
+                    [open addObject:[NSMutableArray array]];
+                }
                 // Recorded so a link into this subtree reads as covered; one a
                 // link already walked is skipped whole.
                 if (path.length == 0) {
@@ -280,7 +340,7 @@ static BOOL VibeListedFileIsEmpty(NSURL *url, BOOL isLink, BOOL *dangling) {
             NSNumber *isLink = nil;
             [url getResourceValue:&isLink forKey:NSURLIsSymbolicLinkKey error:NULL];
             if (isLink.boolValue) {
-                NSString *linked = VibeResolvedDirectoryPath(path);
+                NSString *linked = VibeResolvedDirectoryPath(path, NULL);
                 if (linked) {
                     [linkedRoots addObject:linked];
                     continue;
@@ -301,6 +361,7 @@ static BOOL VibeListedFileIsEmpty(NSURL *url, BOOL isLink, BOOL *dangling) {
             // (entriesForWalk:); an M3U here would double what the walk found.
             if ((isAudio && !empty) || [PlaylistFile isCueExtension:extension]) {
                 [results addObject:url];
+                [open.lastObject addObject:url];
             }
             if (!VibePathIsDirectlyInside(path, lastDirectory)) {
                 lastDirectory = path.stringByDeletingLastPathComponent;
@@ -319,6 +380,12 @@ static BOOL VibeListedFileIsEmpty(NSURL *url, BOOL isLink, BOOL *dangling) {
                 }
             }
         }
+        if (progress.isCancelled) {
+            return NO;
+        }
+        if (open) {
+            VibeCloseListedDirectories(open, 0, listed);
+        }
 
         for (NSString *linked in linkedRoots) {
             if (![covered containsObject:linked]) {
@@ -331,9 +398,18 @@ static BOOL VibeListedFileIsEmpty(NSURL *url, BOOL isLink, BOOL *dangling) {
     if (walked && directoriesWalked.count > 0) {
         walked(directoriesWalked, keptByDirectory);
     }
+    if (results) {
+        listed(results);
+    }
+    return YES;
+}
 
++ (NSArray<PlaylistEntry*>*) expandDirectory:(NSURL*)dir sortedBy:(VibeFolderOpenSort)sort {
+    __block NSMutableArray<NSURL*> *results = nil;
+    VibeWalkTree(dir, sort, nil, NO, nil, ^(NSMutableArray<NSURL *> *files) {
+        results = files;
+    });
     VibeSortAudioURLs(results, sort, YES);
-
     return [self entriesForWalk:results];
 }
 
@@ -381,18 +457,29 @@ static NSDictionary<NSString *, NSArray<NSURL *> *> *VibeKnownFiles(NSArray<NSUR
 // A sheet's entries that name supported, nonempty files, listed or readable: a
 // listed placeholder counts though no readability probe passes it. playable
 // holds the verdict once per file, however many entries or sheets name it.
+// failures, when given, collects each file a denial kept out, with its
+// directory. Background work never asks for a grant, so a scan reports one.
 static NSArray<PlaylistEntry *> *VibePlayableSheetEntries(NSURL *sheet, NSSet<NSURL *> *listed,
                                                          NSDictionary<NSString *, NSArray<NSURL *> *> *knownFiles,
-                                                         NSMutableDictionary<NSURL *, NSNumber *> *playable) {
+                                                         NSMutableDictionary<NSURL *, NSNumber *> *playable,
+                                                         NSMutableArray<NSError *> *failures) {
     NSSet<NSString *> *supported = PlayableExtensions.lookup;
     NSMutableArray<PlaylistEntry *> *entries = [NSMutableArray array];
     for (PlaylistEntry *entry in [PlaylistFile cueEntriesForSheetAtURL:sheet knownFiles:knownFiles]) {
         NSNumber *verdict = playable[entry.url];
         if (verdict == nil) {
-            verdict = @([supported containsObject:entry.url.pathExtension.lowercaseString]
-                        && !entry.url.isEmptyOrDirectory
-                        && ([listed containsObject:entry.url]
-                            || ReadAccessForURL(entry.url) == VibeReadAccessReadable));
+            BOOL readable = [supported containsObject:entry.url.pathExtension.lowercaseString]
+                    && !entry.url.isEmptyOrDirectory;
+            if (readable && ![listed containsObject:entry.url]) {
+                VibeReadAccess access = ReadAccessForURL(entry.url);
+                readable = access == VibeReadAccessReadable;
+                if (access == VibeReadAccessDenied && failures) {
+                    [failures addObject:[NSError errorWithDomain:NSCocoaErrorDomain code:NSFileReadNoPermissionError
+                                                        userInfo:@{NSURLErrorKey: entry.url.URLByDeletingLastPathComponent,
+                                                                   NSFilePathErrorKey: entry.url.path ?: @""}]];
+                }
+            }
+            verdict = @(readable);
             playable[entry.url] = verdict;
         }
         if (verdict.boolValue) {
@@ -407,8 +494,8 @@ static NSArray<PlaylistEntry *> *VibePlayableSheetEntries(NSURL *sheet, NSSet<NS
 // claims its files, so none also appears whole or is opened for its own sheet,
 // and none is cut again by a later sheet: Album.cue beside Album (UTF-8).cue
 // would list every track twice. Sheet entries must name supported, nonempty
-// files, listed or readable.
-+ (NSArray<PlaylistEntry *> *)entriesForWalk:(NSArray<NSURL *> *)urls {
+// files, listed or readable. failures as VibePlayableSheetEntries takes it.
+static NSArray<PlaylistEntry *> *VibeEntriesForWalk(NSArray<NSURL *> *urls, NSMutableArray<NSError *> *failures) {
     NSMutableArray<NSURL *> *sheets = [NSMutableArray array];
     for (NSURL *url in urls) {
         if ([PlaylistFile isCueExtension:url.pathExtension.lowercaseString]) {
@@ -418,7 +505,7 @@ static NSArray<PlaylistEntry *> *VibePlayableSheetEntries(NSURL *sheet, NSSet<NS
     if (sheets.count == 0) {
         NSMutableArray<PlaylistEntry *> *entries = [NSMutableArray arrayWithCapacity:urls.count];
         for (NSURL *url in urls) {
-            [entries addObjectsFromArray:[self entriesForFile:url]];
+            [entries addObjectsFromArray:[FolderWalk entriesForFile:url]];
         }
         return entries;
     }
@@ -430,7 +517,7 @@ static NSArray<PlaylistEntry *> *VibePlayableSheetEntries(NSURL *sheet, NSSet<NS
     NSMutableDictionary<NSURL *, NSNumber *> *playable = [NSMutableDictionary dictionary];
     for (NSURL *sheet in sheets) {
         NSMutableArray<PlaylistEntry *> *entries = [NSMutableArray array];
-        for (PlaylistEntry *entry in VibePlayableSheetEntries(sheet, listed, knownFiles, playable)) {
+        for (PlaylistEntry *entry in VibePlayableSheetEntries(sheet, listed, knownFiles, playable, failures)) {
             NSURL *cutBy = claimed[entry.url];
             if (!cutBy || cutBy == sheet) {
                 [entries addObject:entry];
@@ -446,10 +533,14 @@ static NSArray<PlaylistEntry *> *VibePlayableSheetEntries(NSURL *sheet, NSSet<NS
             [entries addObjectsFromArray:sheetEntries];
         }
         else if (!claimed[url]) {
-            [entries addObjectsFromArray:[self entriesForFile:url]];
+            [entries addObjectsFromArray:[FolderWalk entriesForFile:url]];
         }
     }
     return entries;
+}
+
++ (NSArray<PlaylistEntry *> *)entriesForWalk:(NSArray<NSURL *> *)urls {
+    return VibeEntriesForWalk(urls, nil);
 }
 
 // A whole album or mix in one FLAC may carry its own sheet, and only such a
@@ -469,7 +560,7 @@ static NSMutableArray<NSURL *> *VibeListedAudioURLs(NSURL *dir, VibeFolderOpenSo
         NSArray<NSURL *> *listed = VibeListedAudioURLs(url.URLByDeletingLastPathComponent,
                                                        VibeFolderOpenSortAsReceived, nil, nil) ?: @[];
         return VibePlayableSheetEntries(url, [NSSet setWithArray:listed], VibeKnownFiles(listed),
-                                        [NSMutableDictionary dictionary]);
+                                        [NSMutableDictionary dictionary], nil);
     }
     if ([PlaylistFile isM3UExtension:url.pathExtension.lowercaseString]) {
         return [self expandFileList:@[url] sortedBy:VibeFolderOpenSortAsReceived folderCount:NULL
@@ -591,6 +682,54 @@ static NSMutableArray<NSURL *> *VibeListedAudioURLs(NSURL *dir, VibeFolderOpenSo
     }];
 }
 
+const NSUInteger VibeFolderScanBatchLimit = 256;
+
+// Utility QoS, off the open's four workers: a scan stuck on a dead mount holds
+// no open back.
++ (void)scanRoots:(NSArray<NSURL *> *)roots
+       readPolicy:(VibeFolderScanReadPolicy)policy
+         progress:(NSProgress *)progress
+            batch:(void (^)(NSArray<PlaylistEntry *> *))batch
+       completion:(void (^)(NSArray<NSNumber *> *, NSArray<NSArray<NSError *> *> *))completion {
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        NSMutableArray<NSArray<NSError *> *> *failureLists = [NSMutableArray arrayWithCapacity:roots.count];
+        NSMutableArray<NSNumber *> *verdicts = [NSMutableArray arrayWithCapacity:roots.count];
+        for (NSURL *root in roots) {
+            NSMutableArray<NSError *> *failures = [NSMutableArray array];
+            if (!progress.isCancelled) {
+                VibeWalkTree(root, VibeFolderOpenSortAsReceived, progress, YES, failures,
+                             ^(NSMutableArray<NSURL *> *files) {
+                    NSMutableArray<PlaylistEntry *> *entries = [NSMutableArray arrayWithCapacity:files.count];
+                    if (policy == VibeFolderScanReadPolicyLocal) {
+                        [entries addObjectsFromArray:VibeEntriesForWalk(files, failures)];
+                    }
+                    else {
+                        for (NSURL *file in files) {
+                            [entries addObject:[PlaylistEntry entryWithURL:file]];
+                        }
+                    }
+                    for (NSUInteger start = 0; start < entries.count; start += VibeFolderScanBatchLimit) {
+                        if (progress.isCancelled) {
+                            return;
+                        }
+                        NSUInteger length = MIN(VibeFolderScanBatchLimit, entries.count - start);
+                        batch([entries subarrayWithRange:NSMakeRange(start, length)]);
+                        progress.completedUnitCount += (int64_t)length;
+                    }
+                });
+            }
+            [failureLists addObject:failures];
+            [verdicts addObject:@(failures.count > 0 ? VibeFolderScanVerdictPartial : VibeFolderScanVerdictComplete)];
+        }
+        if (progress.isCancelled) {
+            for (NSUInteger index = 0; index < verdicts.count; index++) {
+                verdicts[index] = @(VibeFolderScanVerdictCancelled);
+            }
+        }
+        completion(verdicts, failureLists);
+    });
+}
+
 + (NSArray<PlaylistEntry*>*) expandAndFilterList:(NSArray<NSURL*>*)list
                                         sortedBy:(VibeFolderOpenSort)sort
                                      folderCount:(NSUInteger *)folderCount {
@@ -656,7 +795,7 @@ static NSMutableArray<NSURL *> *VibeListedAudioURLs(NSURL *dir, VibeFolderOpenSo
                 ? isDirectory.boolValue
                 : url.hasDirectoryPath; // resource read failed; fall back to the slash
         if (!isDir && [values[NSURLIsSymbolicLinkKey] boolValue]) {
-            isDir = VibeResolvedDirectoryPath(url.path) != nil;
+            isDir = VibeResolvedDirectoryPath(url.path, NULL) != nil;
         }
         if (isDir) {
             if (folderCount) {
