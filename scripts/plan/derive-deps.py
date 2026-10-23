@@ -43,8 +43,6 @@ GROUPS = ("core", "files", "audio", "media", "waveform", "ui", "system", "dev", 
 
 # Files still in Vibe: (piece, path prefix relative to root). First match wins.
 PIECES = [
-    # third_party: Sparkle is still Vibe's
-    ("third_party/Sparkle", "Vibe/ThirdParty/Sparkle/"),
     # debug seams and simulators go with the class they open
     ("files/ShareLinks", "Vibe/Debug/Simulators/VibeFakeHTTP"),
     ("dev/DebugChannel", "Vibe/Debug/Channel/"),
