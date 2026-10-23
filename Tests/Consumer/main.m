@@ -5,9 +5,10 @@
 //  exactly, then renders off zero. Plays a tone through the FX chain with
 //  nothing engaged and checks it comes back exactly, then reads the meter's
 //  levels of it. Round-trips a color through its hex form.
-//  Draws each mac control into a bitmap with no window. Builds a settings
-//  window of three panes without showing it, finds a color-pair row, a switch,
-//  and a slider in two of them, and picks the second pane in the sidebar. In
+//  Draws each mac control into a bitmap with no window, and steps the pitch
+//  fader once as VoiceOver would. Builds a settings window of three panes
+//  without showing it, finds a color-pair row, a switch, and a slider in two
+//  of them, and picks the second pane in the sidebar. In
 //  the third, the Shortcuts pane over two commands of its own, it records a
 //  shortcut from a key event sent through NSApp. Keys a temporary file by its
 //  size, time and path, and keys it anew once it changes. Turns a CUE window
@@ -64,6 +65,8 @@
 #import "CrossfadingImageView.h"
 #import "DrawnControls.h"
 #import "EqualizerIndicatorView.h"
+#import "PitchControlPanel.h"
+#import "PitchFaderView.h"
 #import "FolderWalk.h"
 #import "ScaledImageView.h"
 #import "SymbolButton.h"
@@ -674,11 +677,19 @@ int main(void) {
     VibeLinkLabel *link = [VibeLinkLabel labelWithString:@"vibe-libs"];
     link.linkURL = [NSURL URLWithString:@"https://github.com/cmicali/vibe-libs"];
     link.linkRange = NSMakeRange(0, 9);
-    for (NSView *view in @[slider, toggle, detent, button, scaled, crossfading, link]) {
+    PitchFaderView *fader = [[PitchFaderView alloc] initWithFrame:NSMakeRect(0, 0, 88, 300)];
+    PitchControlPanel *pitch = [[PitchControlPanel alloc] initWithFrame:NSMakeRect(0, 0, kPitchPanelWidth, 400)];
+    pitch.title = @"PITCH";
+    pitch.cornerRadius = 8;
+    for (NSView *view in @[slider, toggle, detent, button, scaled, crossfading, link, fader, pitch]) {
         if (!Draws(view)) {
             fprintf(stderr, "consumer: %s drew nothing\n", view.className.UTF8String);
             return 1;
         }
+    }
+    if (![fader accessibilityPerformIncrement] || fader.pitch != 0.5f) {
+        fprintf(stderr, "consumer: the pitch fader stepped to %.2f\n", fader.pitch);
+        return 1;
     }
     NSMutableArray<NSColor *> *pair = [@[NSColor.blackColor, NSColor.whiteColor] mutableCopy];
     ConsumerPane *look = [[ConsumerPane alloc] initWithEffectsSink:^(NSUInteger effects) {}];

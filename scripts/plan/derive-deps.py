@@ -45,9 +45,6 @@ PIECES = [
     # files
     ("app", "Vibe/Loading/iOS/"),
     # media
-    # ui, system, media
-    ("app", "Vibe/Mac/Controls/ArtworkImageView"),
-    ("ui/Controls", "Vibe/Mac/Controls/"),
     ("media/FolderScan", "Vibe/iOS/Search/FileSearch"),
     ("app", ""),
 ]
