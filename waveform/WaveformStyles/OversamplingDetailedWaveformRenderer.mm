@@ -1,6 +1,6 @@
 //
 //  OversamplingDetailedWaveformRenderer.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "OversamplingDetailedWaveformRenderer.h"

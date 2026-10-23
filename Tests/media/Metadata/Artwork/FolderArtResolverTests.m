@@ -640,7 +640,7 @@
 }
 
 // The other half: a folder skipped for want of a grant is exactly what a grant
-// change must forget, or the art never appears until the app restarts.
+// change must forget, or the art never appears until the process restarts.
 - (void)testAGrantChangeForgetsTheFoldersItLeftAlone {
     __block BOOL granted = NO;
     NSImage *decoded = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];

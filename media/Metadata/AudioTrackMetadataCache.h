@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataCache.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Foundation/Foundation.h>
@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)loadCachedMetadata:(NSArray<id<AudioTrackMetadataHolder>> *)tracks;
 
 // Cancels the scan and releases its loader, which holds every queued track.
-// File > Close. Main thread only.
+// For a playlist that is closed or replaced. Main thread only.
 - (void)cancelScan;
 
 // The track the user just started, ahead of the scan: a cache hit publishes
@@ -44,8 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)abandonQueuedTrack:(id<AudioTrackMetadataHolder>)track;
 
 // Ranks the pending scan by these tracks, first first: the playlist's
-// neighborhoodTracks, which follow shuffle. Both shells call it from their
-// current-index funnel. Main thread only.
+// neighborhoodTracks, which follow shuffle. An app calls it when its current
+// track changes. Main thread only.
 - (void)setNeighborhoodTracks:(NSArray<id<AudioTrackMetadataHolder>> *)tracks;
 
 // The completion fires on the cache's internal queue. A parse in flight

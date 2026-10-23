@@ -1,6 +1,6 @@
 //
 //  AudioFileHandle+Stream.m
-//  Vibe
+//  vibe-libs
 //
 //  dr_flac's, dr_wav's and libvorbis's decode of a FLAC, WAV, AIFF or Ogg
 //  Vorbis file: the container sniff, the opens, the facts they answer in

@@ -1,6 +1,6 @@
 //
 //  VibeWeakProxy.h
-//  Vibe
+//  vibe-libs
 //
 //  CADisplayLink retains its target; a weak proxy keeps the real target's
 //  dealloc (and the invalidate in it) reachable. Messages to a dead target

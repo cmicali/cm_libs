@@ -1,6 +1,6 @@
 //
 //  DownloadProgressMonitor+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  A stand-in for the provider's progress reporting, so a stress run can drive
 //  the loading indicator's determinate half with no file provider. VibeFakeCloud

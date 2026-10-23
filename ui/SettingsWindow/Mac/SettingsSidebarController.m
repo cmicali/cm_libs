@@ -1,6 +1,6 @@
 //
 //  SettingsSidebarController.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "SettingsSidebarController.h"

@@ -1,6 +1,6 @@
 //
 //  ShortcutLayout.m
-//  Vibe
+//  vibe-libs
 //
 
 #import <Carbon/Carbon.h> // TIS and UCKeyTranslate: a key code's character under the current layout

@@ -1,6 +1,6 @@
 //
 //  MetadataScanEntry.h
-//  Vibe
+//  vibe-libs
 //
 //  The metadata loader's two records: one file's scan entry and one
 //  priority mark. Private to the loader's files.

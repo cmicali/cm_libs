@@ -1,6 +1,6 @@
 //
 //  FolderArtResolverInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  Deterministic I/O seams and diagnostics for focused resolver tests.
 //

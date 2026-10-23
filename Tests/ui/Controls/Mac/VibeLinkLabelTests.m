@@ -1,6 +1,6 @@
 //
 //  VibeLinkLabelTests.m
-//  VibeTests
+//  vibe-libs
 //
 
 // The About window's mail link, as a VoiceOver or keyboard-only user meets it.

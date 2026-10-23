@@ -1,6 +1,6 @@
 //
 //  PlaceholderFiles.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlaceholderFiles.h"

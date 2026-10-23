@@ -1,6 +1,6 @@
 //
 //  DownloadProgressMonitor+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "DownloadProgressMonitor+Debug.h"

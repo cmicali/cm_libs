@@ -1,6 +1,6 @@
 //
 //  WaveformMorphEngine.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "WaveformMorphEngine.h"

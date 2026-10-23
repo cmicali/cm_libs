@@ -1,6 +1,6 @@
 //
 //  MetadataScanOrderRules.h
-//  Vibe
+//  vibe-libs
 //
 //  Which pending scan miss materializes next. The scan submits one at a time,
 //  so this order decides everything, the tail included.

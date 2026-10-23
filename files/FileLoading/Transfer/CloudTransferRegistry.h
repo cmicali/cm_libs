@@ -1,6 +1,6 @@
 //
 //  CloudTransferRegistry.h
-//  Vibe
+//  vibe-libs
 //
 //  Which files are on the wire, and how far each has come: the one home of
 //  "this file is loading". AudioFileMaterializationCoordinator publishes

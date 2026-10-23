@@ -1,6 +1,6 @@
 //
 //  FolderWalk.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Foundation/Foundation.h>
@@ -43,8 +43,8 @@ typedef void (^VibeBulkOpenDirectoriesHandler)(NSSet<NSString *> *directories);
 + (void)setBulkOpenDirectoriesHandler:(nullable VibeBulkOpenDirectoriesHandler)handler;
 
 // Expands folders and top-level playlist files to entries and filters to
-// playable extensions, on a four-wide queue; callers order overlapping results
-// (OpenRequestCoordinator). A file is one entry; a CUE sheet — opened, or met
+// playable extensions, on a four-wide queue. Callers order overlapping
+// results. A file is one entry; a CUE sheet — opened, or met
 // in a walked folder, where it claims its files — is an entry per track.
 // folderCount is how many top-level URLs were directories. Completion runs on
 // the expansion worker, so the caller makes its rows off main.

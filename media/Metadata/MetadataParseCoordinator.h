@@ -1,6 +1,6 @@
 //
 //  MetadataParseCoordinator.h
-//  Vibe
+//  vibe-libs
 //
 //  One parse holder per standardized path, with duplicate rows weakly waiting
 //  for its result. Foundation-only for host-less contention tests.

@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataCache.m
-//  Vibe
+//  vibe-libs
 //
 
 #import <stdatomic.h>
@@ -56,7 +56,7 @@
         _loadingConfiguration = [[AudioLoadingConfiguration productionConfiguration] copy];
         _currentLoader = nil;
         _parseCoordinator = [[MetadataParseCoordinator alloc] init];
-        _cacheQueue = dispatch_queue_create("com.vibe.metadatacache",
+        _cacheQueue = dispatch_queue_create("vibe-libs.metadata.cache",
                 dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
         // Off main: constructing on main boosts PINCache's init-time disk scan
         // to user-initiated, which priority-inverts against the utility

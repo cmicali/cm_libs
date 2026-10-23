@@ -702,7 +702,7 @@
         [newEdges addObject:artwork];
         // All seven slots are occupied, two of them by uncancellable stale
         // reads: the new edge is DROPPED, unmarked, with no completion —
-        // the pager's next redraw is what re-requests it (spec J6).
+        // the view's next redraw is what re-requests it (spec J6).
         [artwork loadArtIfNeededWithLabel:@"new edge" stillWanted:^{ return YES; }
                 completion:^(NSImage *image) {
             XCTFail(@"a dropped request owns no completion");

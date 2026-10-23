@@ -1,9 +1,9 @@
 //
 //  FolderArtRules.h
-//  Vibe
+//  vibe-libs
 //
 //  What a cover may be called and which name wins, shared by the resolver and
-//  the walked-file handler the app gives FolderWalk.
+//  the walked-file handler an app gives FolderWalk.
 //
 
 #import <Foundation/Foundation.h>

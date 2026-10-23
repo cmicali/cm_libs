@@ -1,6 +1,6 @@
 //
 //  MetadataRetryRules.h
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioFileMaterializationCoordinator.h"
@@ -50,8 +50,8 @@ static inline NSTimeInterval VibeMetadataAdmissionRetryDelay(
 }
 
 // A priority record's Yielded result. A local file retries at once, hold or
-// not: its parse starts no transfer, and waiting cost the now-playing tags a
-// successor prefetch's whole download. A still-dataless record waits while
+// not: its parse starts no transfer, and waiting cost the playing track's
+// tags a successor prefetch's whole download. A still-dataless record waits while
 // the hold stands (a re-pick would burn a probe slot and yield again) and
 // demotes to the sweep once it lifts: the open failed, and re-downloading
 // behind its error is the sweep's call, at its rank.

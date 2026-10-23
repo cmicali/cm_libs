@@ -1,6 +1,6 @@
 //
 //  CloudFileMaterializer+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "CloudFileMaterializer+Debug.h"

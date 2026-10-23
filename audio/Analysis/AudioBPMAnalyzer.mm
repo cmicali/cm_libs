@@ -1,6 +1,6 @@
 //
 //  AudioBPMAnalyzer.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioBPMAnalyzer.h"

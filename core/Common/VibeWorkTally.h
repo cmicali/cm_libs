@@ -1,6 +1,6 @@
 //
 //  VibeWorkTally.h
-//  Vibe
+//  vibe-libs
 //
 //  A named counting window over the signpost sites: every interval that
 //  closes while a window is open is tallied by name, so "the rotation

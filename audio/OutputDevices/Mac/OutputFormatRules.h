@@ -1,6 +1,6 @@
 //
 //  OutputFormatRules.h
-//  Vibe
+//  vibe-libs
 //
 //  The output device layer's decisions, as static inlines so the host-less
 //  suite reaches them without a HAL: whether a device is gone, then

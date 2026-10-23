@@ -1,6 +1,6 @@
 //
 //  BasicWaveformRenderer.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "BasicWaveformRenderer.h"

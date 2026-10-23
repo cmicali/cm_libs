@@ -1,6 +1,6 @@
 //
 //  AudioResampler.h
-//  Vibe
+//  vibe-libs
 //
 //  A sample-rate converter for a decode: r8brain-free-src
 //  (third_party/r8brain), linear phase, its 24-bit preset, a 1% transition

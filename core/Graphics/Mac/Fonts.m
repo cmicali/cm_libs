@@ -1,6 +1,6 @@
 //
 //  Fonts.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "Fonts.h"

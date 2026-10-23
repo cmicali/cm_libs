@@ -1,6 +1,6 @@
 //
 //  FolderArtEntry.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "FolderArtEntry.h"

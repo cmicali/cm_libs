@@ -1,6 +1,6 @@
 //
 //  SymbolButton.h
-//  Vibe
+//  vibe-libs
 //
 //  A borderless icon button drawing an SF Symbol. The symbol is rendered into
 //  an alpha mask over a flat color layer, so that state changes stay color

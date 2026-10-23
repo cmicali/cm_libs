@@ -10,14 +10,14 @@
 @class WaveformRenderer;
 @class CodableAudioWaveform;
 
-// A stable registry identifier, never a display name. Persisted by the
-// settings and the themes.
+// A stable registry identifier, never a display name. An app persists it in
+// its settings and its themes.
 #define SETTINGS_VALUE_WAVEFORM_STYLE_DEFAULT               @"oversampling_detailed_x4"
 // TRAP: Wiggle's, centered or not. Persisted, so it keeps its name though
 // Centered is a setting now: renaming it orphans every saved Wiggle.
 #define SETTINGS_VALUE_WAVEFORM_STYLE_WIGGLE                @"wiggle_centered"
-// Wiggle MC's through 1.14, and Wiggle with Centered off since. The app's
-// theme gate and the iOS migration map it. Nothing else may read it.
+// An older identifier: Wiggle MC's, and later Wiggle with Centered off. An
+// app's own migration maps it. Nothing else may read it.
 #define SETTINGS_VALUE_WAVEFORM_STYLE_LEGACY_WIGGLE_MC      @"wiggle"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // One identifier per style, in registration order, the same on every call.
 // The Detailed family's four identifiers are one style, listed under its 4x
-// type. Each chooser sorts the styles by name (Common/StringRules.h).
+// type. An app's chooser sorts them by its own display names.
 + (NSArray<NSString *> *)styleIdentifiers;
 // The styleIdentifiers entry an identifier shows under.
 + (NSString *)styleIdentifierForIdentifier:(NSString *)identifier;
@@ -61,9 +61,9 @@ NS_ASSUME_NONNULL_BEGIN
 // palette's, or the played color three times.
 + (NSArray<VibeColor *> *)swatchColorsForIdentifier:(nullable NSString *)identifier
                                               theme:(WaveformTheme *)theme;
-// iOS, whose playhead line is a loose setting: the user's choice, and until
-// there is one the style's own default, the line for the band styles. The mac's
-// is its theme's field, whatever the style.
+// For an app whose playhead line is a loose choice: the user's choice, and
+// until there is one the style's own default, the line for the band styles.
+// An app that keeps the line in its theme reads the theme's field instead.
 + (BOOL)drawsPlayheadLineForIdentifier:(nullable NSString *)identifier
                                 chosen:(nullable NSNumber *)chosen;
 // A static sample rendered by the actual style and current display settings.
@@ -72,7 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
                                      barWidth:(CGFloat)barWidth centered:(BOOL)centered
                                     normalize:(BOOL)normalize gainDB:(float)gainDB CF_RETURNS_RETAINED;
 
-// A real track's envelope for a consumer that cannot host a renderer (the
+// A real track's envelope for a consumer that cannot host a renderer (a
 // widget, a second process). progress draws the whole envelope in one side of
 // the palette: bake 0 and 1, reveal one over the other.
 + (nullable CGImageRef)newImageForCodableWaveform:(CodableAudioWaveform *)waveform
@@ -86,7 +86,7 @@ NS_ASSUME_NONNULL_BEGIN
                                            gainDB:(float)gainDB CF_RETURNS_RETAINED;
 
 // The full resolution chain for a persisted style: the given identifier if
-// registered, else the app default, else an arbitrary registered style (a
+// registered, else the default style, else an arbitrary registered style (a
 // last resort only — registry order is unspecified).
 + (NSString *)resolveStyleIdentifier:(nullable NSString *)identifier;
 

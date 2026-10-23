@@ -1,6 +1,6 @@
 //
 //  NSString+FormLabel.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NSString+FormLabel.h"

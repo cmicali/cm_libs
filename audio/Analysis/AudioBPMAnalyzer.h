@@ -1,6 +1,6 @@
 //
 //  AudioBPMAnalyzer.h
-//  Vibe
+//  vibe-libs
 //
 //  A streaming tempo estimator fed by the waveform loader's decode pass, so
 //  that BPM detection never costs a second full-file read. Feed it mono

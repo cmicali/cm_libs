@@ -1,6 +1,6 @@
 //
 //  AudioLevelPublisher.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioLevelPublisherInternal.h"

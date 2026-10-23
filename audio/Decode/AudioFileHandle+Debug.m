@@ -1,6 +1,6 @@
 //
 //  AudioFileHandle+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioFileHandle+Debug.h"

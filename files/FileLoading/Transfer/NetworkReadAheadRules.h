@@ -1,6 +1,6 @@
 //
 //  NetworkReadAheadRules.h
-//  Vibe
+//  vibe-libs
 //
 //  Which files read ahead (NetworkReadAhead.m), from a mount table alone.
 //

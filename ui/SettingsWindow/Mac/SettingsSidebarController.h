@@ -1,6 +1,6 @@
 //
 //  SettingsSidebarController.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Cocoa/Cocoa.h>
