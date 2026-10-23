@@ -44,7 +44,6 @@ GROUPS = ("core", "files", "audio", "media", "waveform", "ui", "system", "dev", 
 PIECES = [
     # files
     ("app", "Vibe/Loading/iOS/"),
-    ("files/SandboxAccess", "Vibe/Mac/App/FolderAccess"),
     # media
     # ui, system, media
     ("app", "Vibe/Mac/Controls/ArtworkImageView"),
