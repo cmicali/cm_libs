@@ -1,6 +1,6 @@
 //
 //  PlatformColor.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlatformColor.h"

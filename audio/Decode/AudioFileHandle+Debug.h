@@ -1,6 +1,6 @@
 //
 //  AudioFileHandle+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  The read-ahead's test seam (NetworkReadAhead): which files read ahead, and
 //  what each of its reads does. Both are process-wide. A test sets them for

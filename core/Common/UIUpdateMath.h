@@ -1,6 +1,6 @@
 //
 //  UIUpdateMath.h
-//  Vibe
+//  vibe-libs
 //
 //  The playback-UI tick rate from the numbers alone, for UIUpdateTimer.
 //

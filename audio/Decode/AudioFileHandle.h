@@ -1,6 +1,6 @@
 //
 //  AudioFileHandle.h
-//  Vibe
+//  vibe-libs
 //
 //  One opened audio file. For reading: a descriptor this process owns and a
 //  decoder over it. dr_flac, dr_wav and libvorbis parse their own containers,

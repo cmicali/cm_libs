@@ -1,6 +1,6 @@
 //
 //  AudioWaveformLoaderInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The decode pass's phases, declared so the tests can reach them one at a
 //  time. The completeness rule reads the pass struct and needs no audio at

@@ -1,6 +1,6 @@
 //
 //  WaveformRenderer.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Foundation/Foundation.h>
@@ -231,9 +231,9 @@ static inline void VibeApplyContentsScale(CALayer * _Nullable layer, CGFloat sca
 }
 
 // Places the lit hover column, or hides it for CGRectNull. Over the played
-// side the lit column hides and a hole in played shows the unplayed side
-// (Mac/AGENTS.md). column is in the superlayer's coordinates, which played
-// shares. Callers disable actions.
+// side the lit column hides and a hole in played shows the unplayed side.
+// column is in the superlayer's coordinates, which played shares. Callers
+// disable actions.
 static inline void VibePlaceHoverColumn(CALayer *lit, CALayer *played, CGRect column) {
     BOOL hovering = !CGRectIsNull(column);
     BOOL overPlayed = hovering && CGRectGetMidX(column) < played.bounds.size.width;
@@ -327,8 +327,8 @@ static inline void VibePlaceHoverColumn(CALayer *lit, CALayer *played, CGRect co
 @property (nonatomic, strong, nullable) __attribute__((NSObject)) CGColorSpaceRef pictureColorSpace;
 
 // The part of the bounds to draw, in the parent's points; CGRectNull, the
-// default, is the whole bounds. The iOS scrubber draws its visible stretch
-// of a track far wider than the screen.
+// default, is the whole bounds. A zoomed view draws its visible stretch of a
+// track far wider than the screen.
 @property (nonatomic) CGRect renderRect;
 
 // The render window for bounds of this size at the parent's scale.
@@ -353,15 +353,15 @@ static inline void VibePlaceHoverColumn(CALayer *lit, CALayer *played, CGRect co
 
 // Metadata for the class's default registry entry. Variants may share a class;
 // persist and compare the resolved registry identifier, never this class key.
-// Its name is Vibe's (Common/StringRules.h).
+// An app gives each style its display name.
 + (NSString *)styleIdentifier;
 
 // Whether the style draws the bands, which a waveform holds only when its
 // decode was asked for them. A style that paints a band palette reads them.
 + (BOOL)readsBands;
 
-// The palette the style paints, which the settings then offer. The waveform
-// theme's here.
+// The palette the style paints, which an app's settings then offer. The
+// waveform theme's here.
 + (VibeWaveformPaletteKind)paletteKind;
 
 - (instancetype)initWithLayer:(CALayer *)parentLayer bounds:(CGRect)bounds isDark:(BOOL)isDark;
@@ -380,7 +380,7 @@ static inline void VibePlaceHoverColumn(CALayer *lit, CALayer *played, CGRect co
 // number a point.
 - (void)backingScaleDidChange;
 
-// The Convert to FLAC sweep: dip the bars in [from, to) to the midline and let
+// A progress sweep: dip the bars in [from, to) to the midline and let
 // the morph ease them back. A step style dips the columns under the track's
 // span. No-op without a morph engine.
 - (void)dipBarsFromFraction:(double)from toFraction:(double)to;

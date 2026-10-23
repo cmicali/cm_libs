@@ -481,13 +481,14 @@ Small pull requests in Vibe remove every reach from the path's code into Vibe's 
 
 **Before Phase 3 started**, every item it waited on was met or recorded. The checker covered every rule it promises, with a failing case for each (this repo's #3). The contracts of seams 13, 15, 17, and 22, and rule 4's version check, were each traced to tests on Vibe's proofs page, `docs/future/vibe-libs-contract-proofs.md`. That page lists the tests for each line of each contract. Five of its lines have no test that pins them. Three are behaviors: a download of the placeholder's own version leaving the memos alone, a sink's result that is no property-list object, and a file sounding through a re-key. Two are splits held only at compile time: which pieces take the playable-item protocol, and the holder protocol apart from it.
 
-**Done when** this returns nothing in Vibe for the path's directories:
+**Done when** this returns nothing in Vibe for the path's directories that remain there:
 
 ```
 grep -rlF --exclude='*.md' -e AppSettings -e AppTheme -e VibeStrings.h -e FolderAccessManager -e DebugWireFormat -e AudioTrack.h \
-  Vibe/Audio Vibe/Loading/Claim Vibe/Loading/Transfer Vibe/Loading/PlaceholderFiles* \
-  Vibe/WaveformUI Vibe/Controls Vibe/Playlist/Playlist.* Vibe/Playlist/PlaylistFile.* Vibe/Playlist/FolderWalk.*
+  Vibe/Audio Vibe/WaveformUI Vibe/Controls
 ```
+
+The grep once listed the loading claim and transfer code, the placeholder files, the queue, the playlist files, and the folder walk too. Each has moved here.
 
 ### The shell track, beside Phase 2
 
@@ -573,7 +574,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 | The other app's milestone | Delivery here | Kind | Phase | Proven by | Delivered at |
 | --- | --- | --- | --- | --- | --- |
 | First slice: scan a folder, list its songs, play a queue | the Playback and Waveform stacks, Metadata, PlayQueue, DiskCache, and FileLoading with its fake cloud | move | 3 | the minimal consumer | |
-| First slice | Playlists and FolderScan | move | 3 | Vibe's walk and CUE tests, moved here | |
+| First slice | Playlists and FolderScan | move | 3 | Vibe's walk and CUE tests, moved here | b02ac08 (#30) and 79487ed (#32) |
 | First slice | the catalog scan | behavior | 3 | the tests in Scanning a catalog | |
 | First slice, from its first UI string | `tools/strings` | tool | 3 | the consumer's own catalog passes the checks | |
 | Full app: song matching and leveling | the tag fields, identifiers, audio MD5, and loudness tags | behavior | 4 | a parse fixture for each field | |

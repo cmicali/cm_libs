@@ -1,6 +1,6 @@
 //
 //  FilePaths.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "FilePaths.h"

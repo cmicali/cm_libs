@@ -1,6 +1,6 @@
 //
 //  AudioFileFormat.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioFileFormat.h"

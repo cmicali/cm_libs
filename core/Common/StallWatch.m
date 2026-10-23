@@ -1,6 +1,6 @@
 //
 //  StallWatch.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "StallWatch.h"

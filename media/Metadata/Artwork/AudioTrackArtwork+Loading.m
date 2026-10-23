@@ -1,6 +1,6 @@
 //
 // AudioTrackArtwork+Loading.m
-// Vibe
+// vibe-libs
 //
 // The full-art load: the extraction gate, the blocking read ladder, and the
 // async load ArtworkLoadRegistry admits. Every transition takes the artwork

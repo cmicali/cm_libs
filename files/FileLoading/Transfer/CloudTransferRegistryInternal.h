@@ -1,6 +1,6 @@
 //
 //  CloudTransferRegistryInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The coordinator's publication edges and the test seam.
 //

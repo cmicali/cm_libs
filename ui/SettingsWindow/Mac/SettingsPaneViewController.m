@@ -1,6 +1,6 @@
 //
 //  SettingsPaneViewController.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "SettingsPaneViewController.h"

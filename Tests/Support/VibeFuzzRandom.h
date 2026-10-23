@@ -1,6 +1,6 @@
 //
 //  VibeFuzzRandom.h
-//  Vibe
+//  vibe-libs
 //
 //  The fuzz classes' generator and seed, apart from the audio fixtures, so a
 //  piece that decodes nothing can fuzz with them.

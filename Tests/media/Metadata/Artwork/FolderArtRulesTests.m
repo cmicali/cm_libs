@@ -2,7 +2,7 @@
 // What a folder cover may be called, the order it is looked for in, and which
 // one wins when a folder holds several. The order IS the cost model: only the
 // first few are ever stat'd blind, and the rest exist to be matched against a
-// listing the app was doing anyway.
+// listing the folder walk was doing anyway.
 //
 
 #import <XCTest/XCTest.h>

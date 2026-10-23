@@ -1,6 +1,6 @@
 //
 //  CrossfadingImageView.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "CrossfadingImageView.h"

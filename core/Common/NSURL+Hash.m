@@ -1,6 +1,6 @@
 //
 //  NSURL+Hash.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NSURL+Hash.h"

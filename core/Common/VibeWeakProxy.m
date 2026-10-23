@@ -1,6 +1,6 @@
 //
 //  VibeWeakProxy.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "VibeWeakProxy.h"

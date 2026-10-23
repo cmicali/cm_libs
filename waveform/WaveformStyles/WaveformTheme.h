@@ -1,6 +1,6 @@
 //
 //  WaveformTheme.h
-//  Vibe
+//  vibe-libs
 //
 //  The waveform's palette, resolved from a theme identifier in exactly one
 //  place. Each color carries its side's resting level in its ALPHA, and the
@@ -50,8 +50,8 @@ typedef NS_ENUM(NSInteger, VibeWaveformPaletteKind) {
 @class WaveformTheme;
 
 // How a view resolves its theme: from the appearance it draws in and the
-// artwork color settled on it. The shell installs one that maps its store
-// (Common/WaveformTheme+Settings). A view with none resolves Mono.
+// artwork color settled on it. An app installs one that maps its own
+// settings. A view with none resolves Mono.
 typedef WaveformTheme *_Nonnull (^WaveformThemeProvider)(BOOL isDark, VibeColor *_Nullable artworkColor);
 
 @interface WaveformTheme : NSObject
@@ -83,12 +83,12 @@ typedef WaveformTheme *_Nonnull (^WaveformThemeProvider)(BOOL isDark, VibeColor 
 @property (nonatomic) BOOL flatFill;
 
 // 3-Band's seven opaque fills in its painter's order: low, mid, high, then
-// low+mid, low+high, mid+high, and all three. Rekord Bin's unless a mac theme
-// sets its bands or iOS picks another palette.
+// low+mid, low+high, mid+high, and all three. Rekord Bin's unless a theme
+// sets its bands or an app picks another palette.
 @property (nonatomic, copy) NSArray<VibeColor *> *bandColors;
 
 // Spectrum's low, mid and high primaries, opaque. It mixes them per bar by
-// the bands' energies. RGB's unless a mac theme or iOS picks another palette.
+// the bands' energies. RGB's unless a theme or an app picks another palette.
 @property (nonatomic, copy) NSArray<VibeColor *> *spectrumColors;
 
 // Spectrum gives each section of the track one color, its whole mix, in

@@ -1,6 +1,6 @@
 //
 //  PlatformTypes.h
-//  Vibe
+//  vibe-libs
 //
 //  Aliases so a portable model header can carry an image or color;
 //  implementation files use the platform class directly.

@@ -1,6 +1,6 @@
 //
 //  AudioWaveformMonoMixTests.mm
-//  VibeTests
+//  vibe-libs
 //
 //  The mono mix the summary and both analyzers share. The summary's own tests
 //  are WaveformSummaryTests, in vibe-libs' waveform/Waveform.

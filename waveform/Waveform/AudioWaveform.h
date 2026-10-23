@@ -1,6 +1,6 @@
 //
 //  AudioWaveform.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <Foundation/Foundation.h>
@@ -32,8 +32,8 @@ static inline const float* AudioWaveformMonoMix(const float* buffer, float* scra
     return scratch;
 }
 
-// Vibe's waveform is the summary of vibe-libs' waveform/Waveform: peaks
-// and energy in bins of fixed time, read through its pyramid.
+// The waveform is this piece's summary: peaks and energy in bins of fixed
+// time, read through its pyramid.
 typedef wavecore::Summary AudioWaveform;
 
 // The entry-format version. It is encoded in every archive and embedded in the

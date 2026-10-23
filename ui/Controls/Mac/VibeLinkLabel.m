@@ -1,6 +1,6 @@
 //
 //  VibeLinkLabel.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "VibeLinkLabel.h"

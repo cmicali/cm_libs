@@ -1,6 +1,6 @@
 //
 //  UIUpdateTimer.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "UIUpdateTimer.h"

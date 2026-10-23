@@ -1,6 +1,6 @@
 //
 //  VibeDetentSlider.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "VibeDetentSlider.h"

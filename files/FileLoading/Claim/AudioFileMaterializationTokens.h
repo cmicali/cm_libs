@@ -1,6 +1,6 @@
 //
 //  AudioFileMaterializationTokens.h
-//  Vibe
+//  vibe-libs
 //
 //  The coordinator's private side of its two tokens, and the call a request
 //  token's cancel makes back into it. An open token's cancel calls

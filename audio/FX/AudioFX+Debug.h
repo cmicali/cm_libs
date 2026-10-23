@@ -1,6 +1,6 @@
 //
 //  AudioFX+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  The test suites' fault seam for a hosted effect: an uninitialized Apple
 //  unit refuses its next render, as under a hosting failure. Implemented in

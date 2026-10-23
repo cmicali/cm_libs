@@ -1,6 +1,6 @@
 //
 //  WaveformBarMath.h
-//  Vibe
+//  vibe-libs
 //
 //  The bar styles' view geometry: block quantization, the band, the seek band
 //  and the pixel-snapped columns. Header-only and C++-free, so a plain .m can
@@ -59,7 +59,7 @@ static const CGFloat kVibeHoverHighlightWidth = 1.5;
 
 // The line a theme's playheadColor asks for: solid, the height of the seek
 // band, pixel-snapped like the hover slice. Each view draws its own, since
-// the mac's moves across the waveform and the scrubber's stays at center.
+// one view's moves across the waveform and another's stays at center.
 static const CGFloat kVibePlayheadLineWidth = 2;
 static inline CGRect VibePlayheadLineRect(CGFloat x, CGRect band, CGFloat boundsWidth, CGFloat scale) {
     CGRect line = VibeSnappedColumnRect(x, kVibePlayheadLineWidth, boundsWidth, band.size.height, scale);

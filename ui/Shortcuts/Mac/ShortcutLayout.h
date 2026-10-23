@@ -1,6 +1,6 @@
 //
 //  ShortcutLayout.h
-//  Vibe
+//  vibe-libs
 //
 //  A shortcut under the current keyboard layout: the character a key types,
 //  the key that types a character, the key's name, the display string, and

@@ -1,6 +1,6 @@
 //
 //  AudioLevelMath.h
-//  Vibe
+//  vibe-libs
 //
 //  The tunable half of the audio-reactive equalizer indicator: where the five
 //  bands sit, how a band's energy becomes a 0..1 level, and how much audio one

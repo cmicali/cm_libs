@@ -1,6 +1,6 @@
 //
 //  DrawnControlsTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  VibeSlider and VibeSwitch drawn into a bitmap, with no window server. A
 //  deferred window is never key, so the fills drawn here are the not-key ones.

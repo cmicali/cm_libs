@@ -1,6 +1,6 @@
 //
 //  EmbeddedThumbnailCache.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "EmbeddedThumbnailCache.h"

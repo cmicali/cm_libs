@@ -1,6 +1,6 @@
 //
 //  FolderArtFileIO.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "FolderArtFileIO.h"

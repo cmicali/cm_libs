@@ -1,6 +1,6 @@
 //
 //  ShortcutRules.h
-//  Vibe
+//  vibe-libs
 //
 //  Remappable shortcuts: the encoding, the reserved keys, and the decisions a
 //  key monitor, a menu bar and a recorder pane must agree on, over the app's

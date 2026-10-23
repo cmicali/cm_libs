@@ -1,6 +1,6 @@
 //
 //  AudioTrackArtworkInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  AudioTrackArtwork's ivars and the helpers its two files share. Only
 //  AudioTrackArtwork.m and AudioTrackArtwork+Loading.m import it; the test

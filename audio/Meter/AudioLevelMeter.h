@@ -1,6 +1,6 @@
 //
 //  AudioLevelMeter.h
-//  Vibe
+//  vibe-libs
 //
 //  Demand-driven FFT analysis for the five-bar equalizer, fed the render's
 //  final samples. The meter lives from the first demand. Rate or mode changes

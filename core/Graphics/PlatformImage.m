@@ -1,6 +1,6 @@
 //
 //  PlatformImage.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "PlatformImage.h"

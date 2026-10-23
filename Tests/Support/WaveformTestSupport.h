@@ -1,6 +1,6 @@
 //
 //  WaveformTestSupport.h
-//  VibeTests
+//  vibe-libs
 //
 //  Waveforms built bin by bin, for the renderer and view tests. ObjC++ only.
 //

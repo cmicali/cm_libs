@@ -1,6 +1,6 @@
 //
 //  AudioWaveformCache.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioWaveformCacheInternal.h"
@@ -111,26 +111,26 @@ static const NSTimeInterval kWaveformClaimWaitSeconds = 20.0;
         dispatch_queue_attr_t queueAttributes = dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0);
         _loaderQueue = dispatch_queue_create("AudioWaveformCache", queueAttributes);
         _lookupScheduler = [[AudioWorkScheduler alloc]
-                initWithLabel:@"com.vibe.waveform.lookup"
+                initWithLabel:@"vibe-libs.waveformloading.lookup"
                 qualityOfService:QOS_CLASS_UTILITY
                 maximumRunningCount:kMaxRunningWaveformLookups
                 maximumPendingCount:kMaxPendingWaveformWork
                 pendingGrace:kWaveformAdmissionGraceSeconds];
         // A neighbor's wedged stat must never hold the playing lookup's slots.
         _previewScheduler = [[AudioWorkScheduler alloc]
-                initWithLabel:@"com.vibe.waveform.preview"
+                initWithLabel:@"vibe-libs.waveformloading.preview"
                 qualityOfService:QOS_CLASS_UTILITY
                 maximumRunningCount:1
                 maximumPendingCount:2
                 pendingGrace:kWaveformAdmissionGraceSeconds];
         _detailScheduler = [[AudioWorkScheduler alloc]
-                initWithLabel:@"com.vibe.waveform.detail"
+                initWithLabel:@"vibe-libs.waveformloading.detail"
                 qualityOfService:QOS_CLASS_UTILITY
                 maximumRunningCount:1
                 maximumPendingCount:1
                 pendingGrace:kWaveformAdmissionGraceSeconds];
         _decodeScheduler = [[AudioWorkScheduler alloc]
-                initWithLabel:@"com.vibe.waveform.decode"
+                initWithLabel:@"vibe-libs.waveformloading.decode"
                 qualityOfService:QOS_CLASS_UTILITY
                 maximumRunningCount:kMaxDetachedWaveformLoads + 1
                 maximumPendingCount:kMaxPendingWaveformWork
@@ -173,7 +173,7 @@ static const NSTimeInterval kWaveformClaimWaitSeconds = 20.0;
 
 - (void)loadWaveformForTrack:(id<VibePlayableItem>)track {
     NSString *key = VibeWaveformClaimKey(track);
-    // On main, so a provider reading main-confined settings (the mac's theme)
+    // On main, so a provider reading main-confined settings (an app's theme)
     // is never called off it.
     VibeWaveformAnalysis analysis = self.analysisProvider ? self.analysisProvider() : (VibeWaveformAnalysis){};
     [self detachCurrentLoader];
@@ -385,7 +385,7 @@ static const NSTimeInterval kWaveformClaimWaitSeconds = 20.0;
         }
         if ([claim.workToken cancelIfPending]) {
             // It never entered stat/open/decode, and its block was removed
-            // from the app-owned pending set without being dispatched.
+            // from the scheduler's pending set without being dispatched.
             [self settleClaim:claim];
         }
     }
@@ -586,9 +586,9 @@ awaitPersist:(BOOL)awaitPersist
     }];
     claim.workToken = decodeToken;
     // A cancel landing between the check above and here leaves a pending decode
-    // nothing wants. Removing it while it is still app-owned releases the
-    // loader and the track it captured immediately; once it is running, it owns
-    // its own cancellation checks and settles normally.
+    // nothing wants. Removing it while the scheduler still holds it releases
+    // the loader and the track it captured immediately. Once it is running, it
+    // owns its own cancellation checks and settles normally.
     if (loader.isCancelled && [decodeToken cancelIfPending]) {
         completion(nil, NO);
         if (settled) {

@@ -1,6 +1,6 @@
 //
 //  NSURL+FilenameTitle.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NSURL+FilenameTitle.h"

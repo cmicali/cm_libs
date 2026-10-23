@@ -1,6 +1,6 @@
 //
 //  NetworkReadAheadMath.h
-//  Vibe
+//  vibe-libs
 //
 //  How far a read-ahead fetches past its reader (NetworkReadAhead.m).
 //

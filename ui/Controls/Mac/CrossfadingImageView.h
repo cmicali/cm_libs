@@ -1,6 +1,6 @@
 //
 //  CrossfadingImageView.h
-//  Vibe
+//  vibe-libs
 //
 
 #import <AppKit/AppKit.h>

@@ -1,6 +1,6 @@
 //
 //  NSBundle+BuildInfo.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NSBundle+BuildInfo.h"

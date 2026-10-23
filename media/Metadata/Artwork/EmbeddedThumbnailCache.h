@@ -1,6 +1,6 @@
 //
 //  EmbeddedThumbnailCache.h
-//  Vibe
+//  vibe-libs
 //
 //  The decoded row thumbnails every AudioTrackArtwork shares.
 //

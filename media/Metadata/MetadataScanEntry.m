@@ -1,6 +1,6 @@
 //
 //  MetadataScanEntry.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "MetadataScanEntry.h"
