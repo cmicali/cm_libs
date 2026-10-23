@@ -30,7 +30,9 @@ settings:
 # Each piece has a macOS test bundle over Tests/<piece> and a <piece>-iOS
 # static library, both listing its template. A macOS-only piece, marked in the
 # plan's map, has the test bundle alone: no <piece>-iOS target, and no iOS
-# target lists its template, directly or through another template.
+# target lists its template, directly or through another template. An
+# iOS-only piece is the mirror: an iOS target alone, and no macOS target lists
+# its template.
 targets:
   # core/Common, tested on macOS. Verbose logging and the signposts are on, as
   # in Vibe's Debug builds, so the stall sampler and the work tally compile and
@@ -810,6 +812,50 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
+  # dev/DebugChannel, tested on macOS. Its sources compile only under DEBUG,
+  # so the bundle defines it in every configuration, the analyzer's Release
+  # build included. The hang bound matches Vibe's.
+  DebugChannelTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsDebugChannel]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/dev/DebugChannel
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "DEBUG=1", "VIBE_TEST_HANG_TIMEOUT=10"]
+
+  # dev/DebugChannel built for iOS, with DEBUG in every configuration, so the
+  # tmp directory's watcher compiles too.
+  DebugChannel-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsDebugChannel]
+    templateAttributes:
+      excludedPlatform: Mac
+    settings:
+      base:
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "DEBUG=1"]
+
+  # dev/iOSDriver, which is iOS only. Its build is this UI-testing bundle,
+  # with no host app: the driver drives an app by bundle identifier, so an
+  # app's bundle names its own app. Nothing runs it here, since it waits for
+  # commands until told to quit.
+  iOSDriver:
+    type: bundle.ui-testing
+    platform: iOS
+    templates: [VibeLibsIOSDriver]
+    templateAttributes:
+      excludedPlatform: Mac
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+
   # third_party/: each library's tests build it alone and call into it once,
   # so a missing file or a broken link fails here. Each iOS target builds the
   # library for the simulator. None of them excludes a platform half.
@@ -1015,6 +1061,9 @@ schemes:
         ShortcutsTests: [test]
         NowPlayingTests: [test]
         NowPlaying-iOS: all
+        DebugChannelTests: [test]
+        DebugChannel-iOS: all
+        iOSDriver: all
         TaglibTests: [test]
         Taglib-iOS: all
         PINCacheTests: [test]
@@ -1039,5 +1088,5 @@ schemes:
                 RemoteFilesTests, ShareLinksTests, DecodeTests, PlayerTests, TagsTests,
                 MetadataTests, PlayQueueTests, PlaylistsTests, FolderScanTests, WaveformTests, WaveformLoadingTests,
                 WaveformStylesTests, WaveformViewTests, ControlsTests, SettingsWindowTests, ShortcutsTests,
-                NowPlayingTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests,
+                NowPlayingTests, DebugChannelTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests,
                 DrWavTests, OggTests, VorbisTests]

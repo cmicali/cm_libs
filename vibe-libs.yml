@@ -459,6 +459,27 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/system/NowPlaying"]
 
+  # The debug command channel: the command-file drain, the lookup over an
+  # app's command tables, and the wire format. It lists Common for the log
+  # macros. An app compiles it into every configuration. Each source wraps
+  # its body in #if DEBUG, so a release build ships none of it.
+  VibeLibsDebugChannel:
+    templates: [VibeLibsCommon]
+    sources:
+      - path: dev/DebugChannel
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/dev/DebugChannel"]
+
+  # iOS only: the touch driver, a resident XCUITest. Only an iOS UI-testing
+  # bundle lists it, and that bundle links XCTest itself. It has no headers,
+  # so it searches nothing.
+  VibeLibsIOSDriver:
+    sources:
+      - path: dev/iOSDriver
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+
   # ---- third_party/: other authors' code, one piece per library ----
   #
   # Each template carries the compiler flags its library builds with, so an

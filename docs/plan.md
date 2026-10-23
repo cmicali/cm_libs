@@ -138,7 +138,7 @@ vibe-libs/
 │
 ├── dev/
 │   ├── DebugChannel     drive and inspect a running debug build from a script
-│   └── iOSDriver        taps, drags and pinches in the iOS simulator, for scripts
+│   └── iOSDriver        taps, drags and pinches in the iOS simulator, for scripts; iOS only
 │
 ├── tools/strings ●      the strings registry's extraction and catalog checks, configured per app
 │
@@ -187,7 +187,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | system/AppOpening | nothing, macOS only |
 | system/Updates | third_party/Sparkle, macOS only |
 | dev/DebugChannel | nothing |
-| dev/iOSDriver | nothing |
+| dev/iOSDriver | nothing, iOS only |
 | tools/strings | nothing: it is scripts |
 | third_party/PINCache | third_party/PINOperation |
 | third_party/vorbis | third_party/ogg |
@@ -226,7 +226,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 
 **Four placements keep the map acyclic and small.** `WaveformZoomMath.h` sits in WaveformStyles, because three renderers import it. `NSURL+Hash`, the disk key, sits in `core/Common`, so FileLoading and ShareLinks need no cache. `AudioTypes` holds the format identifiers, the playable extensions, the CUE window math, and the musical key, so Tags, Playlists, FolderScan, and Metadata need neither Decode nor Analysis for them. The fake HTTP host sits in ShareLinks, because it imitates those services' hosts.
 
-**A piece whose row says macOS only builds for one platform.** It has no `iOS/` half and no iOS target. An iOS target that lists its template, directly or through another template, fails the check. It may keep its files in a `Mac/` half, so the shared files it gains later move nothing. `ui/Controls` did, until its indicators joined it in Phase 3's step 7. Its mark was lifted then, and it gained an iOS target. The checker reads those words since the shell track's step 2, on 2026-10-20, before the first such piece.
+**A piece whose row says macOS only builds for one platform.** It has no `iOS/` half and no iOS target. An iOS target that lists its template, directly or through another template, fails the check. It may keep its files in a `Mac/` half, so the shared files it gains later move nothing. `ui/Controls` did, until its indicators joined it in Phase 3's step 7. Its mark was lifted then, and it gained an iOS target. The checker reads those words since the shell track's step 2, on 2026-10-20, before the first such piece. **A row that says iOS only is the mirror**: no macOS target lists the piece, so it has no macOS test bundle, and its iOS target is its build. `dev/iOSDriver` is the first, since XCUITest's touches exist only on iOS. The checker reads those words since its move.
 
 **A stack is a template that lists other templates.** `vibe-libs.yml` offers a few, so an app's `project.yml` stays short. Examples are a Playback stack (Player and everything it needs) and a Waveform stack (the four waveform pieces).
 
@@ -380,7 +380,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **A compile alone cannot enforce every edge.** One build with the headermap off sees every header its templates expose, so an include of a piece two steps away compiles. A header nothing compiles is never checked at all. So `scripts/checks/check-pieces.py` resolves every include itself. It reads the spec through `xcodegen dump`, as XcodeGen does, and checks:
 
-- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. A `tools/` piece is scripts, so it has only the `AGENTS.md` and the row. The checker reads the words macOS only at the end of a map row: such a piece has no iOS target, no iOS target lists its template, directly or through another template, it has no `iOS/` directory, its template need not exclude one, and its files import AppKit with no platform guard.
+- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. A `tools/` piece is scripts, so it has only the `AGENTS.md` and the row. The checker reads the words macOS only at the end of a map row: such a piece has no iOS target, no iOS target lists its template, directly or through another template, it has no `iOS/` directory, its template need not exclude one, and its files import AppKit with no platform guard. It reads iOS only the same way, as the mirror: no macOS target lists the piece's template, so it has no macOS test bundle, it has no `Mac/` directory, and its files import UIKit with no platform guard.
 - the map names only known pieces and has no cycle, counting every piece's edge to `core/Common`
 - each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows. A vendored piece's template may also search `third_party/` itself, since apps spell its headers with the library's directory, as `<ogg/ogg.h>`. A vendored piece has no platform halves.
 - every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. The checker's `SETTLED` table is the one exception: it names the header an app's build must find, for a spelling two vendored pieces answer. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.
@@ -569,7 +569,7 @@ Each remaining candidate moves when a second app needs it, with the cuts it was 
 
 - **NowPlaying and Updates, by the other app's first release.** The rest of seam 19 comes with NowPlaying, and Updates' part of seam 21 with Updates. NowPlaying moved on 2026-10-22: its 5 files moved with their history (this repo's #41), their tests run here, and Vibe compiles them through the template. It takes the track's source key, title, artist, and image as values, so it needs no snapshot type and no edge to AudioTypes.
 - **HTTP, RemoteFiles, and ShareLinks**, when the other app adds a server source. Cut 2 and seam 20 come with them. Done 2026-10-23: their 27 files and the tests' `HTTPStub` moved with their history (this repo's #46), their tests run here, and Vibe compiles them through the templates. The fake HTTP host joined ShareLinks (rule 8), so HTTP's and RemoteFiles' test bundles list ShareLinks' template for `HTTPStub`'s serving engine. The pieces never import it. The link store, the Dropbox mirror and client, and every debug verb stay in Vibe. The 2 GB link budget moved from `LinkRules.h` to Vibe's link store, since it is Vibe's choice. The error domains and queue names start `vibe-libs`. The kept part's xattr keeps Vibe's name, since parts on disk carry it.
-- **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date.
+- **SandboxAccess, AppOpening, DebugChannel, and iOSDriver**, each with its part of seam 21, when a consumer needs it. The pitch fader joins `ui/Controls` with its part of seam 21. None has a date. Done 2026-10-23: DebugChannel and iOSDriver moved. Their 7 files moved with their history (this repo's #44), and Vibe compiles them through their templates. Two prep commits in Vibe came first. The channel's one reach into Vibe, the transport verbs' reply, moved to Vibe's verbs. The driver takes the app it drives, a relaunch's arguments, and the pinched view from its environment. Vibe had no tests of the channel, so its tests are new here. The minimal consumer answers one command through it. The driver builds as a UI-testing bundle with no host app, since it drives an app by bundle identifier.
 
 ## What the other app needs, and when
 

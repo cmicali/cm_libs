@@ -36,8 +36,8 @@
 //  on the manual render pump, and reads every frame back exactly. Publishes a
 //  title and a duration to Now Playing and reads them back (NowPlaying.m).
 //  Downloads a file and reads a range of it through an HTTP transfer client
-//  over the fake web server (ShareLinks.m). Exits 0 when all twenty-seven
-//  hold.
+//  over the fake web server (ShareLinks.m). Answers one command through the
+//  debug channel (DebugChannel.m). Exits 0 when all twenty-eight hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -86,6 +86,8 @@ FOUNDATION_EXTERN BOOL ConsumerWaveformViewDraws(void);
 FOUNDATION_EXTERN BOOL ConsumerPublishesNowPlaying(void);
 // ShareLinks.m's check, over the fake web server.
 FOUNDATION_EXTERN BOOL ConsumerFetchesFromTheFakeHost(void);
+// DebugChannel.m's check, beside its own table.
+FOUNDATION_EXTERN BOOL ConsumerDebugChannelAnswers(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -902,7 +904,7 @@ int main(void) {
     if (!ConsumerPublishesNowPlaying()) {
         return 1;
     }
-    if (!ConsumerFetchesFromTheFakeHost()) {
+    if (!ConsumerFetchesFromTheFakeHost() || !ConsumerDebugChannelAnswers()) {
         return 1;
     }
     printf("consumer OK\n");
