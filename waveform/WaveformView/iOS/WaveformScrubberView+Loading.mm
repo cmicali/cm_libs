@@ -1,6 +1,6 @@
 //
 //  WaveformScrubberView+Loading.mm
-//  Vibe (iOS)
+//  vibe-libs
 //
 //  When to show LoadingIndicator, and the span of the view it covers.
 //
@@ -48,7 +48,7 @@
     [_loadingIndicator layoutInBounds:_loadingTrackBounds];
 }
 
-// An empty view starts loading at progress 0. Follow the shell's next
+// An empty view starts loading at progress 0. It follows the owner's next
 // position update without interrupting an unchanged fill span.
 //
 // TRAP: keep the rect test. This is the one relayout that can land

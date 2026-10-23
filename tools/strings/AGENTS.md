@@ -89,4 +89,4 @@ The registry, the catalogs, the config, and the translations are the app's. So a
 
 `make test-strings` runs `Tests/tools/strings/strings-test.sh`. Each case copies `Tests/tools/strings/Fixture/`, a tiny app with a registry, a source, a skipped directory, an extension, two catalogs in English and German, and a config. It runs the scripts there and checks the exit status and the message. The cases cover a clean pass, a byte-identical rewrite, a new key, a reword, two defaults, a lost specifier, a stray extension key, a stale subset, a config with no subset, and GitHub mode. CI runs it. A change to a script gets a case.
 
-**TRAP: a registry with no macro of the config's prefix fails with no message.** Under `pipefail` the empty `grep` stops the script before its own error can print. The self-test pins the exit status only.
+**TRAP: `extract-strings.sh` checks for a macro of the config's prefix before it lists them.** Under `pipefail` an empty `grep` stops the script, so an error placed after it can never print. The self-test pins the message.

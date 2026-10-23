@@ -1,6 +1,6 @@
 //
 //  LoadingIndicatorView.m
-//  Vibe
+//  vibe-libs
 //
 //  See the header for why this is shared. The #if blocks are only the
 //  platform's names for "lay out", "the appearance changed" and "the backing

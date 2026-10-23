@@ -22,8 +22,8 @@ NSString *VibeAudioErrorDomain(void) {
     return domain ?: @"VibeAudioErrorDomain";
 }
 
-// Descriptions are for logs, never localized; the UI's line is
-// VibeStatusForPlayError (Common/StringRules.h).
+// Descriptions are for logs and are never localized. An app chooses the
+// line it shows from the error code, with its own rule.
 NSError *VibeAudioError(VibeAudioErrorCode code, NSString *description, NSError *underlying) {
     NSMutableDictionary *info = [NSMutableDictionary new];
     if (underlying) {

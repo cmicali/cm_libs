@@ -1,6 +1,6 @@
 //
 //  WaveformViewInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  Private to WaveformView.mm and its loading category.
 //

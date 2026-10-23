@@ -112,9 +112,7 @@ fi
 
 fresh
 sed -i '' 's/^STRINGS_MACROS=STR_$/STRINGS_MACROS=TXT_/' "$COPY/strings-config.sh"
-# TRAP: it fails silently. Under pipefail the empty grep stops the script
-# before the "no TXT_* macros" message can print.
-expect "a registry with none of the config's macros fails" 1 "" extract --check
+expect "a registry with none of the config's macros fails" 1 "error: no TXT_* macros found in" extract --check
 
 expect "no config is a usage error" 2 "usage: extract-strings.sh <config> [--check]" "$TOOLS/extract-strings.sh"
 

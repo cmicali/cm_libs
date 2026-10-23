@@ -1,6 +1,6 @@
 //
 //  WaveformScrubberView.mm
-//  Vibe (iOS)
+//  vibe-libs
 //
 
 #import "WaveformScrubberViewInternal.h"
@@ -10,9 +10,8 @@
 #import "WaveformAccessibility.h"
 #import "VibeMacros.h"
 
-// Names the element the XCUITest driver pinches (XCUITest has no
-// coordinate-based multi-touch); spelled the same in
-// Tests/iOSDriver/VibeiOSDriverTests.m.
+// Names the element a UI test pinches, since XCUITest has no
+// coordinate-based multi-touch. A driver spells it the same.
 static NSString *const kWaveformScrubberIdentifier = @"waveform-scrubber";
 
 @implementation WaveformScrubberView
@@ -116,8 +115,8 @@ static NSString *const kWaveformScrubberIdentifier = @"waveform-scrubber";
     return 0;
 }
 
-// With nothing to scrub the pan must fail, or the pager's
-// requireGestureRecognizerToFail: waits forever and an empty strip will not
+// With nothing to scrub the pan must fail. Otherwise an enclosing pager's
+// requireGestureRecognizerToFail: waits forever, and an empty strip will not
 // swipe. The track sets the zoom floor, so a new one can move the width.
 - (void)setWaveform:(CodableAudioWaveform *)waveform {
     CGFloat fraction = [self effectiveVisibleFraction];
@@ -218,8 +217,8 @@ static NSString *const kWaveformScrubberIdentifier = @"waveform-scrubber";
     _rendererHost.bounds = [self virtualBounds];
     _renderer = [WaveformRendererRegistry rendererForResolvedIdentifier:style layer:_rendererHost
                                                         bounds:[self virtualBounds] isDark:self.isDark];
-    // The mac's Normalize default, pinned: Normalize and Gain are macOS
-    // settings.
+    // Normalize is pinned on, as the mac view defaults. The owner pushes no
+    // Normalize or Gain here.
     _renderer.normalizesLevels = YES;
     [self applyResolvedTheme];
 }
@@ -244,7 +243,8 @@ static NSString *const kWaveformScrubberIdentifier = @"waveform-scrubber";
     }
     BOOL isDark = self.isDark;
     WaveformTheme *theme = [self themeForDark:isDark];
-    // No well for it here: the appearance's contrast pole at 68% opacity.
+    // No color is pushed for it here. It is the appearance's contrast pole at
+    // 68% opacity.
     if (_drawsPlayheadLine) {
         theme.playheadColor = [isDark ? UIColor.whiteColor : UIColor.blackColor colorWithAlphaComponent:0.68];
     }
@@ -275,8 +275,8 @@ static NSString *const kWaveformScrubberIdentifier = @"waveform-scrubber";
             [self themeForDark:YES].paletteSignature, [self themeForDark:NO].paletteSignature];
 }
 
-// The signature compare makes a repeated set free, and the pager reconfigures
-// a page on every pass through the reuse pool.
+// The signature compare makes a repeated set free. A pager reconfigures a
+// page on every pass through its reuse pool.
 - (void)setArtworkThemeColor:(UIColor *)artworkThemeColor {
     _artworkThemeColor = artworkThemeColor;
     [self syncWaveformTheme];
@@ -473,8 +473,7 @@ static const CGFloat kPlayheadLineOvershoot = 8;
         // which an off-center band (Sonic Cirrus) shows.
         CGRect band = [_renderer seekHitBandForBounds:bounds];
         band.origin.y = bounds.size.height - CGRectGetMaxY(band);
-        // A few points past the waveform at each end, as the widget's line
-        // reaches past its strip.
+        // A few points past the waveform at each end.
         band = CGRectIntersection(CGRectInset(band, 0, -kPlayheadLineOvershoot), bounds);
         _playheadLine.backgroundColor = color.CGColor;
         _playheadLine.frame = VibePlayheadLineRect(bounds.size.width / 2, band,
@@ -509,7 +508,7 @@ static const CGFloat kPlayheadLineOvershoot = 8;
 #pragma mark - Accessibility
 
 // The mac view's contract. The element is the scrubber ITSELF, not its scroll
-// view. The shell labels it.
+// view. The owner labels it.
 
 - (BOOL)isAccessibilityElement {
     return YES;

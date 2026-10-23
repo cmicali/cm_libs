@@ -130,7 +130,7 @@ vibe-libs/
 │                        layout, and the recorder pane over rows the app supplies
 │
 ├── system/
-│   ├── NowPlaying       Now Playing info and remote commands, fed a snapshot
+│   ├── NowPlaying       Now Playing info and remote commands, fed the track's values
 │   ├── AppOpening       on the mac, one open request from the batches Launch Services
 │   │                    splits it into, delivered in order
 │   └── Updates          Sparkle for a direct-download build, compiled out of an App Store build
@@ -217,7 +217,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | a waveform decode's observer | waveform/WaveformLoading | the app, which attaches audio/Analysis | none: the app joins them |
 | the playlist record | media/Playlists | media/FolderScan, the app | none: FolderScan already depends on Playlists |
 | the catalog scan's verdict and read policy | media/FolderScan | the app | none |
-| the Now Playing snapshot, later | system/NowPlaying | the app | none |
+| no type: Now Playing takes the track's source key, title, artist, and image as values | system/NowPlaying | the app | none |
 | the settings pane's effects sink: a block over an integer the app interprets | ui/SettingsWindow | the app | none |
 | the typography slot table | core/Graphics | ui/Controls, ui/SettingsWindow, the app | none: both already depend on Graphics |
 
@@ -496,7 +496,7 @@ The grep once listed the loading claim and transfer code, the placeholder files,
 The shell pieces touch none of the first path's files, so they move while Phase 2 cuts the path. They also prove the toolbox on a macOS-only piece with no audio, which is where the platform rule first bites. In this order, each its own move, each with the proof above:
 
 1. The prefix rename, on the pilot's branches before they merge (Decided).
-2. The macOS-only rule in the checker and `project.yml`, with its failing cases. Done 2026-10-20: the checker reads the map's words, `project.yml` states the pattern a macOS-only piece's targets follow, and the checker's tests gain four failing cases and one passing one.
+2. The macOS-only rule in the checker and `project.yml`, with its failing cases. Done 2026-10-20: the checker reads the map's words, `project.yml` states the pattern a macOS-only piece's targets follow, and the checker's tests gain four failing cases and one passing one (this repo's #5).
 3. `core/Graphics`, whole, after cut 27. Phase 3's step 2 then moves `core/Common` alone. Done 2026-10-21: its 21 files moved with their history (this repo's #6), their tests run here, and Vibe compiles them through the template (Vibe #350).
 4. `ui/Controls`' Mac/ half: the clean five, then `DrawnControls` after cut 26. `VibeLinkLabel` comes from Vibe's About window. Done 2026-10-21: its 12 files moved with their history (this repo's #9), their tests run here, and Vibe compiles them through the template (Vibe #354).
 5. `ui/SettingsWindow` after cuts 24, 25, and 29, with the walker's seam and the form views' tests. Done 2026-10-21: its 13 files moved with their history (this repo's #11), and Vibe compiles them through the template (Vibe #356). Two of them came from Vibe's `Util/`, which the done-when grep does not search: `WindowAnimation.h` joined `ui/Controls`, since Vibe's player window reads it too, and `NSString+FormLabel` joined `core/Common`, since Vibe's iOS settings use it too. Vibe had no tests of these files, so their tests are new here.
@@ -530,8 +530,8 @@ In this order, each its own move:
    - Waveform: the 6 files of Vibe's `Packages/WaveformCore` moved with their history (this repo's #31), their tests run here, and Vibe compiles them through the template. The headers left the package's `include/`, since every consumer spells them by basename. `Package.swift` did not move, so `swift test` for this code ended with the move. The template links Accelerate and `libcompression` through linker flags, since its sources are all C++. Vibe's `AudioWaveform.h` and `.mm` followed with their history and their tests (this repo's #33): the `AudioWaveform` name, the mono mix, and `CodableAudioWaveform`. The template then lists Common for the entry's log. The entry's tests name observers' identifiers of their own, since how Vibe reads its tempo and key is Vibe's.
    - WaveformLoading: the loader, the cache, the observers, and their two seams, 12 files, moved with their history and their tests (this repo's #37). Vibe compiles them through the template. The load timing had stayed in Vibe since step 2. The loader was its only writer, so it became the loader's seam, `AudioWaveformLoader+Debug.h`, and Vibe's debug verbs read it from here. The cache's seam takes a playable item where it took a URL, so the app makes its own row. The tests write their own files and run over `VibeTestTrack`, so none stayed in Vibe. Vibe's binding of its tempo and key to the decode stays in Vibe (rule 5).
    - WaveformStyles: its 23 files moved with their history (this repo's #36), their tests run here, and Vibe compiles them through the template. The theme and the zoom math came with the renderers, since the renderers read both. The renderer tests came too, with the waveforms they build bin by bin. Vibe keeps its mapping from its settings onto the theme, and the views. `WaveformAccessibility.h` stays with the views, since only they read it.
-   - WaveformView: its 13 files moved with their history (this repo's #42), their tests run here, and Vibe compiles them through the template. The mac view is its `Mac/` half, the iOS scrubber its `iOS/` half, and the accessibility contract both views share sits between them. The mac view's seam came beside its class (rule 8). The mac view's tests run over a theme provider of their own, since Vibe's settings are Vibe's. The scrubber's tests need Vibe's hosted iOS app, so they stay in Vibe. The views show the loading control but import no loader, so the piece does not depend on WaveformLoading. Vibe keeps its mapping onto the theme, and the shells that push each view its settings.
-   - Controls' indicators: the equalizer bars, their level source and rules, the loading control, its math, and its row view, 16 files with their tests, moved with their history in the same pull request. They are Controls' shared files. The map row dropped macOS only, and `Controls-iOS` builds them. The equalizer's seam came beside its class. The level source stayed out of Meter, since the meter never imports it.
+   - WaveformView: its 13 files moved with their history (this repo's #42), their tests run here, and Vibe compiles them through the template (Vibe #391). The mac view is its `Mac/` half, the iOS scrubber its `iOS/` half, and the accessibility contract both views share sits between them. The mac view's seam came beside its class (rule 8). The mac view's tests run over a theme provider of their own, since Vibe's settings are Vibe's. The scrubber's tests need Vibe's hosted iOS app, so they stay in Vibe. The views show the loading control but import no loader, so the piece does not depend on WaveformLoading. Vibe keeps its mapping onto the theme, and the shells that push each view its settings.
+   - Controls' indicators: the equalizer bars, their level source and rules, the loading control, its math, and its row view, 16 files with their tests, moved with their history in the same pull request (this repo's #42, Vibe #391). They are Controls' shared files. The map row dropped macOS only, and `Controls-iOS` builds them. The equalizer's seam came beside its class. The level source stayed out of Meter, since the meter never imports it.
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file. Done 2026-10-22: its 3 scripts moved with their history (this repo's #40), and Vibe runs them from here with its own config. A prep commit in Vibe made them read the config, a bash file they source. Vibe's widget catalog became the config's optional subset. Every message and every catalog Vibe's gates write stayed the same. The piece is scripts, so it has no template and no targets, and the checker learned that. Its self-test runs the scripts over a tiny app of its own, `make test-strings`, and CI runs it.
 9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move. FolderScan has moved, so the catalog scan can now be built here.
 
@@ -577,11 +577,11 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 | First slice: scan a folder, list its songs, play a queue | the Playback and Waveform stacks, Metadata, PlayQueue, DiskCache, and FileLoading with its fake cloud | move | 3 | the minimal consumer | |
 | First slice | Playlists and FolderScan | move | 3 | Vibe's walk and CUE tests, moved here | b02ac08 (#30) and 79487ed (#32) |
 | First slice | the catalog scan | behavior | 3 | the tests in Scanning a catalog | |
-| First slice, from its first UI string | `tools/strings` | tool | 3 | the consumer's own catalog passes the checks | |
+| First slice, from its first UI string | `tools/strings` | tool | 3 | the consumer's own catalog passes the checks | 9aef74c (#40) |
 | Full app: song matching and leveling | the tag fields, identifiers, audio MD5, and loudness tags | behavior | 4 | a parse fixture for each field | |
 | Full app: background analysis | WaveformLoading's scan requests | behavior | 5 | a throttled source yields within one block | |
 | Full app: leveling from tags | a gain per file through a gapless splice | behavior | 5 | the boundary-frame render test | |
-| First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | |
+| First release | NowPlaying and Updates | move | 6 | each app's media keys and update check | NowPlaying at 36ff73d (#41). Updates is still open. |
 
 Nothing else is scheduled for the other app. The shell pieces are scheduled for a third app, on the shell track. Portable rewrites wait until a consumer needs them.
 
