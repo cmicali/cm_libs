@@ -4,7 +4,7 @@
 
 **Waves 7 to 9 merged on 2026-10-22 with the rest of Phase 3's moves and NowPlaying: Player, the five media pieces, the four waveform pieces, Controls' indicators, and `tools/strings` (Vibe #378 to #391, this repo's #28 to #42). Wave 10 merged on 2026-10-23 and brought the pieces to 44: DebugChannel and iOSDriver, HTTP, RemoteFiles, and ShareLinks, Updates and Sparkle, SandboxAccess, and AppOpening (Vibe #393 to #397, this repo's #44 to #48). Wave 11 merged on 2026-10-23. The pitch fader joined `ui/Controls` (Vibe #399, this repo's #51). The Phase 3 consumer was met (this repo's #50). Phase 4, the tag fields, was done (Vibe #400, this repo's #52).**
 
-**Closing status, 2026-10-23: every planned move is done.** Phase 3's done-when is met, and so is Phase 4. The tree holds 44 pieces. What remains is the catalog scan, held for its design review, and Phase 5. This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
+**Closing status, 2026-10-23: every planned move is done.** Phase 3's done-when is met, and so is Phase 4. The tree holds 44 pieces. The catalog scan was done on 2026-10-23 (this repo's #56, Vibe #405). What remains is Phase 5. This replaces the plan of 2026-10-09, written when the repo was called PlaybackKit.
 
 vibe-libs is a toolbox of small libraries for macOS and iOS apps. An app takes only the pieces it wants. The first pieces come from [Vibe](https://github.com/cmicali/vibe): its audio engine, file loading, tags, waveform data and drawing, and the third-party code it vendors. Anything else in Vibe that another app could use is a candidate. **A candidate moves when a second app needs it**, so the toolbox grows from real reuse.
 
@@ -273,14 +273,16 @@ Vibe decodes a waveform only for the track on screen. An app that analyzes a who
 
 FolderScan's walk opens the readable part of a folder. `expandAndFilterList:` returns entries and a folder count, with no way to cancel and no verdict on whether it saw everything. Its enumerator logs an error and carries on. That is right for an open. It is not enough for a catalog, which may mark a file missing only after a scan that saw the whole folder. The walk also reads CUE sheets, beside the files and embedded in FLAC, so a listing may read file contents.
 
+Done 2026-10-23: `scanRoots:readPolicy:progress:batch:completion:` is the scan, and Vibe's file-name search is its first caller (this repo's #56, Vibe #405). Two corrections came with it. There are two policies, not three. No walk opens a cloud placeholder FLAC for its sheet, since the read would download it, so no policy reads every file. And the open does not read every file either. It reads each sheet beside the files and the sheet inside a large local FLAC, which is the local policy. The open also stays a caller of the one enumerator, not of the scan's batches. A batch's sheets claim only their own directory's files, while the open's claim the whole walk in its sorted order. Its entries then stay byte-identical. FolderScan's `AGENTS.md` has the rest.
+
 The catalog scan is new behavior in FolderScan. It lands after FolderScan's move, as its own change:
 
 - **Files arrive in bounded batches**, not one array at the end.
 - **Every enumeration failure is reported** with its directory.
 - **Each root ends with one verdict: complete, partial, or cancelled.** Only a complete verdict lets a catalog mark unseen files missing.
-- **A read policy says which contents the scan may read**: none, local files only, or every file. It covers CUE sheets beside the files and embedded in FLAC. Under none, a CUE sheet is reported as a file and not expanded.
+- **A read policy says which contents the scan may read**: none, or what an open reads. It covers CUE sheets beside the files and embedded in FLAC. Under none, a CUE sheet is reported as a file and not expanded.
 - **A token cancels the scan**, checked between entries. A cancelled scan never reports complete.
-- **There is one enumerator.** `expandAndFilterList:`, which Vibe's opens call, becomes a caller of the same walk and reads every file. Vibe makes its own rows from its entries. So CUE handling never runs under different access rules.
+- **There is one enumerator.** `expandAndFilterList:`, which Vibe's opens call, becomes a caller of the same walk and reads what the local policy reads. Vibe makes its own rows from its entries. So CUE handling never runs under different access rules.
 
 **Done when** tests show these: a partly unreadable tree reports partial, a cancelled scan reports cancelled, a large tree arrives in bounded batches, and a listing over the fake cloud reads no audio. Vibe's open behaves as before.
 
@@ -548,7 +550,7 @@ In this order, each its own move:
    - WaveformView: its 13 files moved with their history (this repo's #42), their tests run here, and Vibe compiles them through the template (Vibe #391). The mac view is its `Mac/` half, the iOS scrubber its `iOS/` half, and the accessibility contract both views share sits between them. The mac view's seam came beside its class (rule 8). The mac view's tests run over a theme provider of their own, since Vibe's settings are Vibe's. The scrubber's tests need Vibe's hosted iOS app, so they stay in Vibe. The views show the loading control but import no loader, so the piece does not depend on WaveformLoading. Vibe keeps its mapping onto the theme, and the shells that push each view its settings.
    - Controls' indicators: the equalizer bars, their level source and rules, the loading control, its math, and its row view, 16 files with their tests, moved with their history in the same pull request (this repo's #42, Vibe #391). They are Controls' shared files. The map row dropped macOS only, and `Controls-iOS` builds them. The equalizer's seam came beside its class. The level source stayed out of Meter, since the meter never imports it.
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file. Done 2026-10-22: its 3 scripts moved with their history (this repo's #40, Vibe #389), and Vibe runs them from here with its own config. A prep commit in Vibe made them read the config, a bash file they source. Vibe's widget catalog became the config's optional subset. Every message and every catalog Vibe's gates write stayed the same. The piece is scripts, so it has no template and no targets, and the checker learned that. Its self-test runs the scripts over a tiny app of its own, `make test-strings`, and CI runs it.
-9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move. FolderScan has moved, so the catalog scan can now be built here.
+9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move. Done 2026-10-23 (this repo's #56, Vibe #405).
 
 **Done when** a minimal consumer here, grown from `Tests/Consumer/`, uses the real templates with objects and strings of its own. It plays repeated queue entries and a CUE window, cancels a cloud open, roots a metadata cache of its own, and hits the waveform cache. Done 2026-10-23: the consumer does each of these with a row of its own, through the templates an app lists (this repo's #50). The boundary check's paragraph on the minimal consumer says what each check does.
 
@@ -602,7 +604,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 | --- | --- | --- | --- | --- | --- |
 | First slice: scan a folder, list its songs, play a queue | the Playback and Waveform stacks, Metadata, PlayQueue, DiskCache, and FileLoading with its fake cloud | move | 3 | the minimal consumer | c0b8210 (#50) |
 | First slice | Playlists and FolderScan | move | 3 | Vibe's walk and CUE tests, moved here | b02ac08 (#30) and 79487ed (#32) |
-| First slice | the catalog scan | behavior | 3 | the tests in Scanning a catalog | |
+| First slice | the catalog scan | behavior | 3 | the tests in Scanning a catalog | (#56) |
 | First slice, from its first UI string | `tools/strings` | tool | 3 | the consumer's own catalog passes the checks | 9aef74c (#40) |
 | Full app: song matching and leveling | the tag fields, identifiers, audio MD5, and loudness tags | behavior | 4 | a parse fixture for each field | 5cca1ea (#52) |
 | Full app: background analysis | WaveformLoading's scan requests | behavior | 5 | a throttled source yields within one block | |
