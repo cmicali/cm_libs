@@ -1,6 +1,6 @@
 //
 //  SettingsShortcutsViewController.h
-//  Vibe
+//  vibe-libs
 //
 
 #import "SettingsPaneViewController.h"

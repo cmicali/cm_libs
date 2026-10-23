@@ -1,6 +1,6 @@
 //
 //  AudioDeviceManager.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioDeviceManager.h"

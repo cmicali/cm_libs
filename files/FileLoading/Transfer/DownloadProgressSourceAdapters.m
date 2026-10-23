@@ -1,6 +1,6 @@
 //
 //  DownloadProgressSourceAdapters.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "DownloadProgressSourceAdaptersInternal.h"

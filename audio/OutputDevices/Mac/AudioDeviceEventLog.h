@@ -1,6 +1,6 @@
 //
 //  AudioDeviceEventLog.h
-//  Vibe
+//  vibe-libs
 //
 //  Verbose logging only: the "HAL:" device event log. It follows
 //  AudioDeviceManager's published snapshot, watches each device and its first

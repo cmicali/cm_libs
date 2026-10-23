@@ -1,6 +1,6 @@
 //
 //  AudioDeviceEventLog.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioDeviceEventLog.h"

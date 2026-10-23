@@ -1,6 +1,6 @@
 //
 //  CloudTransferRegistryTests.m
-//  VibeTests
+//  vibe-libs
 //
 //  The registry with an injected monitor factory, through its Internal.h seam.
 //

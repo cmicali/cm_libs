@@ -275,7 +275,7 @@ static const NSTimeInterval kMP3Duration = 38 * 1152 / 44100.0;
 
 // Art that cannot decode fails without a crash or a full-size allocation. The
 // file still carries art, so the row is not artless; the bytes are marked
-// undecodable, which lets the folder's cover stand in (media/Metadata/AGENTS.md).
+// undecodable, which lets the folder's cover stand in (this piece's AGENTS.md).
 - (void)assertArtFailsCleanly:(NSData *)art named:(NSString *)label {
     for (NSNumber *fixture in @[@(VibeTagFixtureMP3ID3v24), @(VibeTagFixtureFLAC)]) {
         NSURL *url = [self write:(VibeTagFixture)fixture.integerValue art:art];

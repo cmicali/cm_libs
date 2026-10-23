@@ -1,6 +1,6 @@
 //
 //  FolderArtFileIO.h
-//  Vibe
+//  vibe-libs
 //
 //  The resolver's file probe and bounded read. Never on main: a cover
 //  on a sleeping disk or a dataless placeholder blocks.

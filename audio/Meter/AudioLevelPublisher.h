@@ -1,6 +1,6 @@
 //
 //  AudioLevelPublisher.h
-//  Vibe
+//  vibe-libs
 //
 //  The coherent audio-thread to main-thread handoff of equalizer levels.
 //

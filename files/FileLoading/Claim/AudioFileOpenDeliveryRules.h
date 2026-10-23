@@ -1,6 +1,6 @@
 //
 //  AudioFileOpenDeliveryRules.h
-//  Vibe
+//  vibe-libs
 //
 //  An open token's one delivery (AudioFileMaterializationTokens.m).
 //

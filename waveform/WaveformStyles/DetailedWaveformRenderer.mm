@@ -1,6 +1,6 @@
 //
 //  DetailedWaveformRenderer.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "DetailedWaveformRenderer.h"

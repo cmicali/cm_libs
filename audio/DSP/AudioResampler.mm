@@ -1,6 +1,6 @@
 //
 //  AudioResampler.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioResampler.h"

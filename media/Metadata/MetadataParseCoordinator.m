@@ -1,6 +1,6 @@
 //
 //  MetadataParseCoordinator.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "MetadataParseCoordinator.h"

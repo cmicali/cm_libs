@@ -1,6 +1,6 @@
 //
 //  AudioFileMaterializationCoordinatorTestCase.h
-//  VibeTests
+//  vibe-libs
 //
 //  The harness the stage-1 coordinator tests share: a real coordinator over
 //  the fakes in MaterializationTestFakes, a clock the test sets, and a

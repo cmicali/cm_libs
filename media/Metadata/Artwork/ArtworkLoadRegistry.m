@@ -1,6 +1,6 @@
 //
 //  ArtworkLoadRegistry.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "ArtworkLoadRegistry.h"

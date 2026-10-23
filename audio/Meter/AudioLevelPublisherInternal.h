@@ -1,6 +1,6 @@
 //
 //  AudioLevelPublisherInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The meter-session writer surface. Display clients use AudioLevelPublisher.h.
 //

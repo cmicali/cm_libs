@@ -1,6 +1,6 @@
 //
 //  WaveformLevelMath.h
-//  Vibe
+//  vibe-libs
 //
 //  Level mapping, display gain, bar counts and Spectrum color mixing.
 //  Header-only for tests without the renderers' C++ or Core Animation.

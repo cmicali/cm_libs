@@ -1,6 +1,6 @@
 //
 //  AudioWaveformLoaderTests.mm
-//  VibeTests
+//  vibe-libs
 //
 //  Pins the completeness rule: a file a little short looks identical on
 //  screen, and a wrong answer either caches a truncated waveform under the

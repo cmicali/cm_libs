@@ -1,6 +1,6 @@
 //
 //  VibeFakeCloud.h
-//  Vibe
+//  vibe-libs
 //
 //  A stand-in file provider for stress runs: chosen files answer as
 //  placeholders, each takes a fixed time to "download", and a cancelled

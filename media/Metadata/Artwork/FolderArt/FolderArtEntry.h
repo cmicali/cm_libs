@@ -1,6 +1,6 @@
 //
 //  FolderArtEntry.h
-//  Vibe
+//  vibe-libs
 //
 //  Everything the resolver knows about one directory, so eviction and both
 //  invalidations are one pass over one dictionary. The resolver owns every

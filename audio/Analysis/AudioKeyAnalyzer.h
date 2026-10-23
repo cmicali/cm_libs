@@ -1,6 +1,6 @@
 //
 //  AudioKeyAnalyzer.h
-//  Vibe
+//  vibe-libs
 //
 //  A streaming musical-key estimator fed by the waveform loader's decode
 //  pass, exactly like AudioBPMAnalyzer, so key detection never costs a second

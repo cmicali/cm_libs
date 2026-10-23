@@ -1,6 +1,6 @@
 //
 //  WindowAnimation.h
-//  Vibe
+//  vibe-libs
 //
 //  Here because both the main and Settings windows use it.
 //

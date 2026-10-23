@@ -1,6 +1,6 @@
 //
 //  AudioWaveformObserver.h
-//  Vibe
+//  vibe-libs
 //
 //  What rides a waveform decode beside the summary. The app attaches
 //  observers to its requests (VibeWaveformAnalysis.observers), and the loader

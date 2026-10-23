@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataLoaderInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The private header the loader's three files share: every ivar, and the
 //  methods one file implements for the others. AudioTrackMetadataLoader.m is

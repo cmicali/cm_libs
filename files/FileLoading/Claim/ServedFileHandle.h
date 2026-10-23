@@ -1,6 +1,6 @@
 //
 //  ServedFileHandle.h
-//  Vibe
+//  vibe-libs
 //
 //  What the coordinator needs of a handle its opener returns (stage 2). The
 //  loader never names the handle's class: the caller's opener makes it.

@@ -1,6 +1,6 @@
 //
 //  AudioLevelAnalyzer.h
-//  Vibe
+//  vibe-libs
 //
 //  Pure, preallocated FFT analysis, with no pipeline, publication or view
 //  knowledge, so the host-less suite tests it.

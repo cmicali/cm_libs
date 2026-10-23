@@ -1,6 +1,6 @@
 //
 //  AudioWaveformCache+Debug.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioWaveformCache+Debug.h"

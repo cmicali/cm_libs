@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataLoader+Materialization.m
-//  Vibe
+//  vibe-libs
 //
 //  The materialization lane: priority marks, the two slots' picks, the
 //  foreground gate, and each completion's settlement and retry.

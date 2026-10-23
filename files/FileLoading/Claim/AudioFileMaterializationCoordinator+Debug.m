@@ -1,6 +1,6 @@
 //
 //  AudioFileMaterializationCoordinator+Debug.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioFileMaterializationCoordinator+Debug.h"

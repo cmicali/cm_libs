@@ -1,6 +1,6 @@
 //
 //  DownloadProgressMonitorInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  The source-independent delivery seam, for tests, and the state the debug
 //  seam's fake progress reads (DownloadProgressMonitor+Debug.m).

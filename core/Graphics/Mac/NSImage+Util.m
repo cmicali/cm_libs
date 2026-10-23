@@ -1,6 +1,6 @@
 //
 //  NSImage+Util.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "NSImage+Util.h"

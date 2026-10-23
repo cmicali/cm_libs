@@ -1,6 +1,6 @@
 //
 //  CloudFileAvailability.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "CloudFileAvailability.h"

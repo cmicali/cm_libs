@@ -1,6 +1,6 @@
 //
 //  AudioFileMaterializationCoordinatorTestCase.m
-//  VibeTests
+//  vibe-libs
 //
 
 #import "AudioFileMaterializationCoordinatorTestCase.h"

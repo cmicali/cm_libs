@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataCacheInternal.h
-//  Vibe
+//  vibe-libs
 //
 //  What AudioTrackMetadataLoader needs from the cache that owns it, and the
 //  loader the debug seam reads (AudioTrackMetadataCache+Debug.m).

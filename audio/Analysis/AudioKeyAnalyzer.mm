@@ -1,6 +1,6 @@
 //
 //  AudioKeyAnalyzer.mm
-//  Vibe
+//  vibe-libs
 //
 
 #import "AudioKeyAnalyzer.h"

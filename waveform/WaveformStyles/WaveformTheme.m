@@ -1,6 +1,6 @@
 //
 //  WaveformTheme.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "WaveformTheme.h"
@@ -46,8 +46,8 @@ static NSArray<VibeColor *> *VibeBandColors(VibeColor *low, VibeColor *mid, Vibe
              VibeColorBlended(high, lowMid, shade ? tint * kBandAllThreeTint : tint)];
 }
 
-// The built-in palettes. Rekord Bin's is shaded. A mac theme draws it until it
-// sets its own, and the app's theme shows it in its unset band wells.
+// The built-in palettes. Rekord Bin's is shaded. A theme draws it until it
+// sets its own bands, and an app's theme editor may show it for unset bands.
 // Dengine's is Engine DJ's deck, unshaded; its dark bands are the Dengine theme's, and its
 // light ones darken the mid and the high so they read on white.
 static NSArray<VibeColor *> *VibeBuiltInBandColors(BOOL dengine, BOOL isDark) {

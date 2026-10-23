@@ -1,6 +1,6 @@
 //
 //  ArtworkLoadRegistry.h
-//  Vibe
+//  vibe-libs
 //
 //  Admission for AudioTrackArtwork's async art loads, its only client: across
 //  all rows at most two run and five pend; a request past that is dropped

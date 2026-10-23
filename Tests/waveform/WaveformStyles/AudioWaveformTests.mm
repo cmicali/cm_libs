@@ -146,7 +146,8 @@ static CALayer *VibeMaskLayer(WaveformRenderer *renderer) {
             [self previewPixelsForStyle:@"basic" theme:orange barDensity:1 barWidth:1 normalize:NO gainDB:0]);
 }
 
-// iOS's rule: until the user chooses, only the band styles draw the line.
+// The loose choice's rule: until the user chooses, only the band styles draw
+// the line.
 - (void)testPlayheadLineIsTheBandStylesDefaultUntilChosen {
     for (NSString *style in WaveformRendererRegistry.availableIdentifiers) {
         XCTAssertEqual([WaveformRendererRegistry drawsPlayheadLineForIdentifier:style chosen:nil],
@@ -1452,11 +1453,11 @@ static CGFloat VibeInkAt(const VibeTestPicture &picture, size_t x) {
     XCTAssertEqualWithAccuracy(VibeLitBounds(spectrum, 128).size.height, VibeLitBounds(threeBand, 128).size.height, 0.5);
 }
 
-#pragma mark - The convert sweep
+#pragma mark - The progress sweep
 
-// The convert sweep zeroes a step style's columns over the span in every
+// The progress sweep zeroes a step style's columns over the span in every
 // step, so the notch is a hairline, and the ease brings them back.
-- (void)testTheConvertSweepDipsAStepStylesColumns {
+- (void)testTheProgressSweepDipsAStepStylesColumns {
     auto steady = VibeTestSteadyWaveform(8192, {-0.5f, 0.5f, 0.25f});
     auto banded = VibeThreeBandTestWaveform({1, 0.01f, 0.0001f});
     for (NSString *style in @[@"detailed", @"oversampling_detailed_x4", @"three_band"]) {
@@ -1647,7 +1648,7 @@ static CGPathRef VibeReferenceWigglePath(CGSize size, const float *samples, NSUI
 }
 
 
-// The iOS scrubber's window, flipped at 3x, moved by steps from a few points
+// A zoomed view's window, flipped at 3x, moved by steps from a few points
 // to more than its width. Each picture must be the one drawn whole there.
 - (void)testAWindowMovedInPartMatchesOneDrawnWhole {
     const size_t frames = 60 * 44100;

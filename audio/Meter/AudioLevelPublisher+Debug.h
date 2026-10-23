@@ -1,6 +1,6 @@
 //
 //  AudioLevelPublisher+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  The publisher's counters, for a host's debug report of its levels.
 //  Implemented in AudioLevelPublisher+Debug.m.

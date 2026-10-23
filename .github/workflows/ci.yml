@@ -16,7 +16,9 @@ concurrency:
 jobs:
   pieces:
     runs-on: macos-26
-    # Builds, tests, and analyzes every piece in one job. The limit grows with the piece count.
+    # Checks the piece rules, tests every piece on macOS, builds every piece
+    # for iOS, and builds and runs the minimal consumer. The analyzer runs in
+    # the analyze job beside it. The limit grows with the piece count.
     timeout-minutes: 60
 
     steps:
@@ -54,6 +56,18 @@ jobs:
 
       - name: Build and run a minimal consumer
         run: make consumer
+
+  analyze:
+    runs-on: macos-26
+    # Runs clang's static analyzer over every piece's macOS test bundle. It
+    # runs on its own runner, in parallel with the pieces job, with a limit of
+    # its own. The workflow's one concurrency group covers both jobs.
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-xcodegen
 
       - name: Analyze every piece
         run: make analyze

@@ -1,6 +1,6 @@
 //
 // FolderArtResolver.m
-// Vibe
+// vibe-libs
 //
 // The lock covers _directories and the two providers, and is never held
 // across a stat, read, decode or provider call: main takes it on every cell draw. Drawing paths only read cached
@@ -68,7 +68,7 @@ static NSString *const kNoArtMarker = @"";
 }
 
 - (instancetype)init {
-    // Off until the app installs its answers (setEnabledProvider:).
+    // Off until an app installs its answers (setEnabledProvider:).
     return [self initWithEnabledProvider:^BOOL{
         return NO;
     } accessProvider:^BOOL(NSString *directory) {
@@ -131,7 +131,7 @@ static NSString *const kNoArtMarker = @"";
         _displayImages.countLimit = kDisplayCacheLimit;
         atomic_init(&_enabledCache, enabledProvider());
         // Serial: one folder at a time, so scrolling is no disk storm.
-        _queue = dispatch_queue_create("com.vibe.folderart",
+        _queue = dispatch_queue_create("vibe-libs.metadata.folderart",
                 dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_UTILITY, 0));
         _enabledProvider = [enabledProvider copy];
         _accessProvider = [accessProvider copy];
@@ -323,9 +323,8 @@ static NSString *const kNoArtMarker = @"";
 
 - (void)folderArtSettingDidChange {
     // TRAP: outside init, setEnabledProvider: and the test-only invalidate,
-    // the only refresh of the cached answer, so a writer of the app's setting
-    // that skips VibeSettingsLiveEffectFolderArt is never observed. Not a
-    // full wipe.
+    // this is the only refresh of the cached answer. A write of an app's
+    // setting that does not call it is never observed. Not a full wipe.
     atomic_store_explicit(&_enabledCache, [self currentEnabledProvider](), memory_order_relaxed);
     [_thumbnails removeAllObjects];
     [_displayImages removeAllObjects];
@@ -609,7 +608,7 @@ static NSString *const kNoArtMarker = @"";
     }
     // Unasked-for work must not raise a consent panel, so an ungranted folder
     // is not probed. A later grant clears this answer
-    // (MainPlayerController.grantedFoldersDidChange:).
+    // (invalidateDirectoriesSettledWithoutGrant).
     if (![self currentAccessProvider](directory)) {
         LogDebug(@"No folder grant for %@ — skipping folder art", directory);
         if ([self settleDirectory:directory artPath:nil answerGeneration:answerGeneration withoutGrant:YES] &&

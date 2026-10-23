@@ -1,6 +1,6 @@
 //
 //  AudioFX+Pipeline.h
-//  Vibe
+//  vibe-libs
 //
 //  The player pipeline's half of AudioFX: the connect, the media-services
 //  reset, the hosting the master bus renders, and the render itself. The tests

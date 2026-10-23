@@ -1,6 +1,6 @@
 //
 //  SettingsFormViews.h
-//  Vibe
+//  vibe-libs
 //
 //  The debug walker keys off these classes — a row's title addresses the
 //  controls beside it — so a pane built from anything else loses

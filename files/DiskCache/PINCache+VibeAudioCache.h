@@ -1,6 +1,6 @@
 //
 //  PINCache+VibeAudioCache.h
-//  Vibe
+//  vibe-libs
 //
 //  The disk-cache policy shared by the app's PINDiskCache-backed stores, such
 //  as its tag cache and its waveform cache. One home stops the policies

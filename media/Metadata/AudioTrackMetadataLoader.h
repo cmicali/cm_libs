@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataLoader.h
-//  Vibe
+//  vibe-libs
 //
 //  One sweep over one playlist; the current track is a priority record in
 //  the same pending list. Cancellation drops pending work and detaches its

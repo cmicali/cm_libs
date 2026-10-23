@@ -1,6 +1,6 @@
 //
 //  AudioTrackArtwork.h
-//  Vibe
+//  vibe-libs
 //
 //  One metadata row's art state behind the AudioTrackMetadata facade.
 //  AudioTrackArtworkInternal.h holds the state shared with +Loading.
@@ -20,8 +20,8 @@ typedef VibeImage *_Nullable (^AudioTrackThumbnailDecoder)(NSData *_Nonnull data
 
 NS_ASSUME_NONNULL_BEGIN
 
-// The TagLib read TagLibAudioFile.mm supplies; blocking, never called
-// with the monitor held.
+// The embedded art read the parse supplies, VibeTagLibArtExtractor over
+// media/Tags. Blocking, and never called with the monitor held.
 typedef NS_ENUM(NSUInteger, VibeEmbeddedArtExtractionResult) {
     VibeEmbeddedArtExtractionReadFailed,
     VibeEmbeddedArtExtractionNoArt,

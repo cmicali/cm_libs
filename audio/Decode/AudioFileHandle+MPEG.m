@@ -1,6 +1,6 @@
 //
 //  AudioFileHandle+MPEG.m
-//  Vibe
+//  vibe-libs
 //
 //  dr_mp3's decode of an MPEG file: the open, which frames the stream in
 //  place of CoreAudio's parser, the walk that indexes its frames, the packet

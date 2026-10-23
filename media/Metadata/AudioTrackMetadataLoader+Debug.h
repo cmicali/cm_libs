@@ -1,6 +1,6 @@
 //
 //  AudioTrackMetadataLoader+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Visibility into one loader's materialization lanes. Implemented in
 //  AudioTrackMetadataLoader+Debug.m.

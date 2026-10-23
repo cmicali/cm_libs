@@ -1,6 +1,6 @@
 //
 //  AudioLevelPublisherTests.m
-//  VibeTests
+//  vibe-libs
 //
 
 #import <XCTest/XCTest.h>
