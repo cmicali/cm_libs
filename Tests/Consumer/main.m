@@ -35,9 +35,11 @@
 //  when they leave their window. Plays another WAV of a ramp through a player
 //  on the manual render pump, and reads every frame back exactly. Publishes a
 //  title and a duration to Now Playing and reads them back (NowPlaying.m).
-//  Makes a folder grants' store over a defaults suite of its own, and checks
-//  that a new temporary folder is not readable (SandboxAccess.m).
-//  Exits 0 when all twenty-seven hold.
+//  Downloads a file and reads a range of it through an HTTP transfer client
+//  over the fake web server (ShareLinks.m). Answers one command through the
+//  debug channel (DebugChannel.m). Makes a folder grants' store over a
+//  defaults suite of its own, and checks that a new temporary folder is not
+//  readable (SandboxAccess.m). Exits 0 when all twenty-nine hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -84,6 +86,10 @@ FOUNDATION_EXTERN BOOL ConsumerWaveformStylesHold(void);
 FOUNDATION_EXTERN BOOL ConsumerWaveformViewDraws(void);
 // NowPlaying.m's check, beside the delegate its commands need.
 FOUNDATION_EXTERN BOOL ConsumerPublishesNowPlaying(void);
+// ShareLinks.m's check, over the fake web server.
+FOUNDATION_EXTERN BOOL ConsumerFetchesFromTheFakeHost(void);
+// DebugChannel.m's check, beside its own table.
+FOUNDATION_EXTERN BOOL ConsumerDebugChannelAnswers(void);
 // SandboxAccess.m's check.
 FOUNDATION_EXTERN BOOL ConsumerSandboxAccessHolds(void);
 
@@ -900,6 +906,9 @@ int main(void) {
         return 1;
     }
     if (!ConsumerPublishesNowPlaying()) {
+        return 1;
+    }
+    if (!ConsumerFetchesFromTheFakeHost() || !ConsumerDebugChannelAnswers()) {
         return 1;
     }
     if (!ConsumerSandboxAccessHolds()) {

@@ -141,6 +141,45 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/files/DiskCache"]
 
+  # Ranged HTTP transfers: a download streamed into a file, a ranged read,
+  # and a probe of the first bytes. Foundation only.
+  VibeLibsHTTP:
+    templates: [VibeLibsCommon]
+    sources:
+      - path: files/HTTP
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/files/HTTP"]
+
+  # A file on a server kept as a local placeholder, fetched over HTTP, and
+  # served as FileLoading's remote backend. It lists Decode for the tail
+  # window math.
+  #
+  # TRAP: an app that also takes VibeLibsTaglib lists this template first, as
+  # it would VibeLibsDecode, which this one lists.
+  VibeLibsRemoteFiles:
+    templates: [VibeLibsCommon, VibeLibsFileLoading, VibeLibsHTTP, VibeLibsDecode]
+    sources:
+      - path: files/RemoteFiles
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/files/RemoteFiles"]
+
+  # Share links turned into the address of their bytes, the rules for any web
+  # link, and the client that looks up an iCloud Drive share first. The fake
+  # web server compiles in every configuration. It wraps its body in #if
+  # DEBUG, so a release build ships none of it.
+  VibeLibsShareLinks:
+    templates: [VibeLibsCommon, VibeLibsHTTP]
+    sources:
+      - path: files/ShareLinks
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/files/ShareLinks"]
+
   # The audio file handle and the decoders it hosts. It lists FileLoading for
   # a stream's and a read-ahead's bytes. The read-ahead's seam compiles in
   # every configuration and wraps its body in #if DEBUG, so a release build
@@ -432,6 +471,27 @@ targetTemplates:
     settings:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/system/NowPlaying"]
+
+  # The debug command channel: the command-file drain, the lookup over an
+  # app's command tables, and the wire format. It lists Common for the log
+  # macros. An app compiles it into every configuration. Each source wraps
+  # its body in #if DEBUG, so a release build ships none of it.
+  VibeLibsDebugChannel:
+    templates: [VibeLibsCommon]
+    sources:
+      - path: dev/DebugChannel
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/dev/DebugChannel"]
+
+  # iOS only: the touch driver, a resident XCUITest. Only an iOS UI-testing
+  # bundle lists it, and that bundle links XCTest itself. It has no headers,
+  # so it searches nothing.
+  VibeLibsIOSDriver:
+    sources:
+      - path: dev/iOSDriver
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
 
   # ---- third_party/: other authors' code, one piece per library ----
   #
