@@ -187,6 +187,7 @@ Each piece may import only these, besides `core/Common`, which every piece may u
 | system/Updates | third_party/Sparkle, macOS only |
 | dev/DebugChannel | nothing |
 | dev/iOSDriver | nothing |
+| tools/strings | nothing: it is scripts |
 | third_party/PINCache | third_party/PINOperation |
 | third_party/vorbis | third_party/ogg |
 | every other third_party piece | nothing |
@@ -378,7 +379,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **A compile alone cannot enforce every edge.** One build with the headermap off sees every header its templates expose, so an include of a piece two steps away compiles. A header nothing compiles is never checked at all. So `scripts/checks/check-pieces.py` resolves every include itself. It reads the spec through `xcodegen dump`, as XcodeGen does, and checks:
 
-- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. The checker reads the words macOS only at the end of a map row: such a piece has no iOS target, no iOS target lists its template, directly or through another template, it has no `iOS/` directory, its template need not exclude one, and its files import AppKit with no platform guard.
+- every piece has an `AGENTS.md`, a row in the map, a template, a macOS test bundle over its tests, and an iOS target. A `tools/` piece is scripts, so it has only the `AGENTS.md` and the row. The checker reads the words macOS only at the end of a map row: such a piece has no iOS target, no iOS target lists its template, directly or through another template, it has no `iOS/` directory, its template need not exclude one, and its files import AppKit with no platform guard.
 - the map names only known pieces and has no cycle, counting every piece's edge to `core/Common`
 - each template compiles and searches only inside its piece, excludes the other platform's half, and lists only the templates the map allows. A vendored piece's template may also search `third_party/` itself, since apps spell its headers with the library's directory, as `<ogg/ogg.h>`. A vendored piece has no platform halves.
 - every include, quoted or angled, resolves as the compiler would: a quoted one in its own directory first, then every piece's search paths, then a unique basename, as an app's headermap would. An include that reaches two pieces fails. The checker's `SETTLED` table is the one exception: it names the header an app's build must find, for a spelling two vendored pieces answer. An include of a piece the map does not allow fails. A quoted include that reaches no piece fails, since an isolated build cannot find it.
@@ -395,7 +396,7 @@ This repo's `project.yml` has one test bundle per piece. Each sets `USE_HEADERMA
 
 **A minimal consumer builds like an app.** `Tests/Consumer/` is a project of its own. It includes `vibe-libs.yml` from two directories up, sets `VIBE_LIBS_ROOT`, lists a template, builds with no prefix header and no headermap, and runs. It grows into the consumer the end of Phase 3 asks for.
 
-CI runs `make check-pieces`, `make test`, `make build-ios`, `make consumer`, and `make analyze`. `make analyze` joined on 2026-10-21, after `core/Graphics` moved. It runs clang's static analyzer over every piece's macOS test bundle in Release. It fails on any finding outside `third_party/`. GitHub Actions is free for a public repo, macOS runners included.
+CI runs `make check-pieces`, `make test-strings`, `make test`, `make build-ios`, `make consumer`, and `make analyze`. `make analyze` joined on 2026-10-21, after `core/Graphics` moved. It runs clang's static analyzer over every piece's macOS test bundle in Release. It fails on any finding outside `third_party/`. GitHub Actions is free for a public repo, macOS runners included.
 
 ## The work, in order
 
@@ -530,7 +531,7 @@ In this order, each its own move:
    - WaveformLoading: the loader, the cache, the observers, and their two seams, 12 files, moved with their history and their tests (this repo's #37). Vibe compiles them through the template. The load timing had stayed in Vibe since step 2. The loader was its only writer, so it became the loader's seam, `AudioWaveformLoader+Debug.h`, and Vibe's debug verbs read it from here. The cache's seam takes a playable item where it took a URL, so the app makes its own row. The tests write their own files and run over `VibeTestTrack`, so none stayed in Vibe. Vibe's binding of its tempo and key to the decode stays in Vibe (rule 5).
    - WaveformStyles: its 23 files moved with their history (this repo's #36), their tests run here, and Vibe compiles them through the template. The theme and the zoom math came with the renderers, since the renderers read both. The renderer tests came too, with the waveforms they build bin by bin. Vibe keeps its mapping from its settings onto the theme, and the views. `WaveformAccessibility.h` stays with the views, since only they read it.
    - WaveformView and Controls' indicators remain.
-8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file.
+8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file. Done 2026-10-22: its 3 scripts moved with their history (this repo's #40), and Vibe runs them from here with its own config. A prep commit in Vibe made them read the config, a bash file they source. Vibe's widget catalog became the config's optional subset. Every message and every catalog Vibe's gates write stayed the same. The piece is scripts, so it has no template and no targets, and the checker learned that. Its self-test runs the scripts over a tiny app of its own, `make test-strings`, and CI runs it.
 9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move. FolderScan has moved, so the catalog scan can now be built here.
 
 **Done when** a minimal consumer here, grown from `Tests/Consumer/`, uses the real templates with objects and strings of its own. It plays repeated queue entries and a CUE window, cancels a cloud open, roots a metadata cache of its own, and hits the waveform cache.

@@ -211,6 +211,10 @@ CASES = [
     ("a marker in vendored code",
      lambda r: append(r, "third_party/dr_flac/AGENTS.md", "\n" + "=" * 7 + "\n"),
      None),
+    # A tools/ piece is scripts, so it has no template, but it is still a piece.
+    ("a tools piece with no AGENTS.md",
+     lambda r: os.remove(os.path.join(r, "tools/strings/AGENTS.md")),
+     "tools/strings: no AGENTS.md"),
 ]
 
 

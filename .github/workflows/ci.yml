@@ -29,6 +29,9 @@ jobs:
       - name: Check the piece rules
         run: make check-pieces
 
+      - name: Test the strings tools
+        run: make test-strings
+
       - name: Test every piece on macOS
         id: test
         run: make test
