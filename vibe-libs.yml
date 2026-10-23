@@ -337,16 +337,48 @@ targetTemplates:
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "Foundation", "-framework", "QuartzCore",
                         "-framework", "CoreGraphics"]
 
-  # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
-  # so the shared files it gains later move nothing.
+  # The views that host a renderer: Mac/ the mac's NSView, and iOS/ the
+  # scrubber. The accessibility contract they share sits between the halves.
+  # It lists WaveformStyles for the renderers and the theme, Waveform for the
+  # summary, Controls for the loading indicator, Graphics for the appearance
+  # helpers, and Common for the signpost and tally macros. Each half's headers
+  # are searched on both platforms, as Graphics' are.
+  #
+  # TRAP: it links QuartzCore, and AppKit or UIKit, itself. Its sources are
+  # all Objective-C++, which Xcode builds with -fno-cxx-modules, so their
+  # framework imports link nothing on their own. The platform's framework is
+  # a setting of its own, conditional on the SDK. A conditional OTHER_LDFLAGS
+  # would replace the flags every other template passes.
+  VibeLibsWaveformView:
+    templates: [VibeLibsCommon, VibeLibsWaveformStyles, VibeLibsWaveform, VibeLibsControls, VibeLibsGraphics]
+    sources:
+      - path: waveform/WaveformView
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(inherited)"
+          - "$(VIBE_LIBS_ROOT)/waveform/WaveformView"
+          - "$(VIBE_LIBS_ROOT)/waveform/WaveformView/Mac"
+          - "$(VIBE_LIBS_ROOT)/waveform/WaveformView/iOS"
+        "VIBE_LIBS_WAVEFORM_VIEW_UI_FRAMEWORK[sdk=macosx*]": AppKit
+        "VIBE_LIBS_WAVEFORM_VIEW_UI_FRAMEWORK[sdk=iphone*]": UIKit
+        OTHER_LDFLAGS: ["$(inherited)", "-framework", "QuartzCore", "-framework",
+                        "$(VIBE_LIBS_WAVEFORM_VIEW_UI_FRAMEWORK)"]
+
+  # The loading and equalizer indicators are shared files, which both
+  # platforms draw. Mac/ holds the mac's drawn controls, so an iOS target
+  # compiles only the shared files. The Mac/ half's headers are searched on
+  # both platforms, as Graphics' are. It lists Common for the weak proxy and
+  # the helper macros.
   VibeLibsControls:
-    templates: [VibeLibsGraphics]
+    templates: [VibeLibsGraphics, VibeLibsCommon]
     sources:
       - path: ui/Controls
         excludes: ["**/*.md", "${excludedPlatform}/**"]
     settings:
       base:
-        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/Controls/Mac"]
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/Controls", "$(VIBE_LIBS_ROOT)/ui/Controls/Mac"]
 
   # macOS only, so no iOS target may list it. Its files sit in its Mac/ half,
   # as Controls' do. It lists Common for NSString+FormLabel, the colon rule

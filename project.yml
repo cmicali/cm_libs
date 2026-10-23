@@ -606,8 +606,34 @@ targets:
     templateAttributes:
       excludedPlatform: Mac
 
-  # ui/Controls, tested on macOS. It is macOS only, so it has no iOS target.
-  # Its tests draw through the shared drawn-view support in Tests/Support.
+  # waveform/WaveformView, tested on macOS: the mac view drawn into a bitmap
+  # through the shared drawn-view support, over waveforms built bin by bin.
+  # The signposts compile, as in WaveformStyles' tests.
+  WaveformViewTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsWaveformView]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/waveform/WaveformView
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+        GCC_PREPROCESSOR_DEFINITIONS: ["$(inherited)", "VIBE_VERBOSE_LOGGING=1", "VIBE_SIGNPOSTS=1"]
+
+  # waveform/WaveformView built for iOS: the shared header and the scrubber.
+  WaveformView-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsWaveformView]
+    templateAttributes:
+      excludedPlatform: Mac
+
+  # ui/Controls, tested on macOS. Its tests draw through the shared drawn-view
+  # support in Tests/Support.
   ControlsTests:
     type: bundle.unit-test
     platform: macOS
@@ -621,6 +647,17 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(SRCROOT)/Tests/Support"]
+
+  # ui/Controls built for iOS: its shared files, the indicators, with a probe
+  # of the equalizer's seam, which only tests import.
+  Controls-iOS:
+    type: library.static
+    platform: iOS
+    templates: [VibeLibsControls]
+    templateAttributes:
+      excludedPlatform: Mac
+    sources:
+      - path: Tests/ui/Controls/ControlsProbe.m
 
   # ui/SettingsWindow, tested on macOS. It is macOS only, so it has no iOS
   # target. Its tests share the drawn-view support with Controls'.
@@ -843,7 +880,10 @@ schemes:
         WaveformLoading-iOS: all
         WaveformStylesTests: [test]
         WaveformStyles-iOS: all
+        WaveformViewTests: [test]
+        WaveformView-iOS: all
         ControlsTests: [test]
+        Controls-iOS: all
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
         TaglibTests: [test]
@@ -868,5 +908,5 @@ schemes:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, DecodeTests, PlayerTests, TagsTests,
                 MetadataTests, PlayQueueTests, PlaylistsTests, FolderScanTests, WaveformTests, WaveformLoadingTests,
-                WaveformStylesTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests,
+                WaveformStylesTests, WaveformViewTests, ControlsTests, SettingsWindowTests, ShortcutsTests, TaglibTests, PINCacheTests,
                 PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests]

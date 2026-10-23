@@ -29,8 +29,12 @@
 //  opens the M3U in its own order. Summarizes a tone and draws it, and loads
 //  a WAV of it through the waveform loader (Waveform.mm). Draws the tone in
 //  every waveform style and reads back that each drew (WaveformStyles.mm).
-//  Plays another WAV of a ramp through a player on the manual render pump,
-//  and reads every frame back exactly. Exits 0 when all twenty-three hold.
+//  Lays the mac waveform view out with the tone's summary and reads back that
+//  both sides drew (WaveformView.mm). Draws the equalizer bars from a level
+//  source of its own, and checks the bars ask it for levels once and let go
+//  when they leave their window. Plays another WAV of a ramp through a player
+//  on the manual render pump, and reads every frame back exactly. Exits 0
+//  when all twenty-five hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -52,6 +56,7 @@
 #import "PlaylistFile.h"
 #import "CrossfadingImageView.h"
 #import "DrawnControls.h"
+#import "EqualizerIndicatorView.h"
 #import "FolderWalk.h"
 #import "ScaledImageView.h"
 #import "SymbolButton.h"
@@ -72,6 +77,8 @@ FOUNDATION_EXTERN BOOL ConsumerWaveformHolds(void);
 FOUNDATION_EXTERN BOOL ConsumerLoadsAWaveform(void);
 // WaveformStyles.mm's check, since the renderers' headers are C++.
 FOUNDATION_EXTERN BOOL ConsumerWaveformStylesHold(void);
+// WaveformView.mm's check, since the summary's header is C++.
+FOUNDATION_EXTERN BOOL ConsumerWaveformViewDraws(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -451,6 +458,61 @@ static BOOL Draws(NSView *view) {
     return NO;
 }
 
+// The equalizer's levels: the same five, always, and a count of the bars
+// that want them.
+@interface ConsumerLevels : NSObject <EqualizerLevelSource>
+@property (nonatomic) NSInteger consumers;
+@end
+
+@implementation ConsumerLevels
+- (BOOL)copyEqualizerLevels:(float *)outLevels count:(NSUInteger)count sequence:(uint64_t *)outSequence {
+    for (NSUInteger i = 0; i < count; i++) {
+        outLevels[i] = 0.8f;
+    }
+    *outSequence = 1;
+    return YES;
+}
+- (void)equalizerLevelsWanted:(BOOL)wanted {
+    self.consumers += wanted ? 1 : -1;
+}
+@end
+
+// The bars ask their source once they are visible, in a window, and audio
+// plays. They draw, and they let go when they leave the window.
+static BOOL EqualizerDrawsFromItsSource(void) {
+    ConsumerLevels *levels = [ConsumerLevels new];
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 40, 24)
+                                                   styleMask:NSWindowStyleMaskBorderless
+                                                     backing:NSBackingStoreBuffered
+                                                       defer:YES];
+    window.releasedWhenClosed = NO;
+    EqualizerIndicatorView *bars = [[EqualizerIndicatorView alloc] initWithFrame:NSMakeRect(0, 0, 16, 12)];
+    bars.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
+    bars.levelSource = levels;
+    bars.presentationVisible = YES;
+    bars.audioOutputActive = YES;
+    [window.contentView addSubview:bars];
+    NSInteger wanted = levels.consumers;
+    [bars layoutSubtreeIfNeeded];
+    NSBitmapImageRep *rep = [bars bitmapImageRepForCachingDisplayInRect:bars.bounds];
+    NSGraphicsContext *context = [NSGraphicsContext graphicsContextWithBitmapImageRep:rep];
+    [bars.layer renderInContext:context.CGContext];
+    [context flushGraphics];
+    NSUInteger lit = 0;
+    for (NSInteger y = 0; y < rep.pixelsHigh; y++) {
+        for (NSInteger x = 0; x < rep.pixelsWide; x++) {
+            lit += [rep colorAtX:x y:y].alphaComponent > 0;
+        }
+    }
+    [bars removeFromSuperview];
+    if (wanted != 1 || lit == 0 || levels.consumers != 0) {
+        fprintf(stderr, "consumer: the bars wanted %ld, lit %lu pixels, and left %ld\n", (long)wanted,
+                (unsigned long)lit, (long)levels.consumers);
+        return NO;
+    }
+    return YES;
+}
+
 enum { kFrames = 512 };
 
 static OSStatus Ramp(void *context, const AudioTimeStamp *stamp, UInt32 frames, AudioBufferList *into) CA_REALTIME_API {
@@ -821,7 +883,10 @@ int main(void) {
     if (!ConsumerWaveformHolds() || !ConsumerLoadsAWaveform()) {
         return 1;
     }
-    if (!ConsumerWaveformStylesHold()) {
+    if (!ConsumerWaveformStylesHold() || !ConsumerWaveformViewDraws()) {
+        return 1;
+    }
+    if (!EqualizerDrawsFromItsSource()) {
         return 1;
     }
     if (!PlaysAWAVThroughThePump()) {

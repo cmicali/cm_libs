@@ -1,6 +1,6 @@
 # waveform/WaveformStyles
 
-Each waveform style's look: its columns, its levels, its colors, the zoom math, and the morph engine that eases between them. It depends on `waveform/Waveform` for the summary it draws, on `core/Graphics` for the platform colors, and on `core/Common` for the log, signpost, and helper macros. **Today it holds what Vibe moved here**: the six renderers and their base, the registry, the morph engine, the bar and level math, the theme, and the zoom math. It names no app type. It reads no setting and no string. The views that host a renderer, Vibe's mac view and iOS scrubber, are `waveform/WaveformView`, a later move.
+Each waveform style's look: its columns, its levels, its colors, the zoom math, and the morph engine that eases between them. It depends on `waveform/Waveform` for the summary it draws, on `core/Graphics` for the platform colors, and on `core/Common` for the log, signpost, and helper macros. **Today it holds what Vibe moved here**: the six renderers and their base, the registry, the morph engine, the bar and level math, the theme, and the zoom math. It names no app type. It reads no setting and no string. The views that host a renderer, the mac view and the iOS scrubber, are `waveform/WaveformView`.
 
 | File | Owns |
 | --- | --- |
@@ -105,7 +105,7 @@ Two families and one flat style, split by how progress and hover quantize:
 
 **Each style says how deep a zoom may show it** (`minimumFramesPerPointForWaveform:`). The bar styles stop where their 1,024 bars stop growing in number, since past that they only widen. 3-Band, Spectrum, and Wiggle stop at a bin a point. The Detailed types reach the stream's own frames once the waveform is complete.
 
-`WaveformZoomMath.h` is the zoom floor of Vibe's iOS scrubber. It sits here because three renderers read it.
+`WaveformZoomMath.h` is the zoom floor of the iOS scrubber, `waveform/WaveformView`'s. It sits here because three renderers read it.
 
 ## Level mapping
 
@@ -187,6 +187,6 @@ Spectrum reads `spectrumColors`. Each renderer declares its palette through `pal
 
 `Tests/waveform/WaveformStyles/` holds the tests that came from Vibe with the code. `AudioWaveformTests` keeps its name from Vibe. It draws every style into a layer with no window and checks its pixels: the bakes, the played side and the hover, Centered, the bar count and width, Normalize, the morph across a resize, 3-Band's rings and ceilings, Spectrum's colors and sections, the convert sweep, and every step style drawn in part and whole. `WaveformThemeTests` holds the palettes and the clamps. It sits in the tests' `Mac/` half, since it imports AppKit. `WaveformLevelMathTests` and `WaveformZoomMathTests` hold the math. The waveforms they draw are built bin by bin through `Tests/Support/WaveformTestSupport.h`. The minimal consumer draws a tone in every style and reads back that each drew.
 
-Vibe keeps the tests of its own mapping onto the theme, `WaveformThemeSettingsTests`, and of its views.
+Vibe keeps the tests of its own mapping onto the theme, `WaveformThemeSettingsTests`. The views' tests are `waveform/WaveformView`'s.
 
 **Measuring.** A change that could move cost is measured in Vibe, with its `vibe-perf` skill, before and after. Its `ui-waveform` benchmarks draw every style, and dump every picture for a byte comparison. A change that could move a picture is drawn with its `vibe-waveform` skill at both commits, and the pictures are compared with `cmp`.
