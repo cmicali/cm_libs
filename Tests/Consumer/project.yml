@@ -39,9 +39,9 @@ targets:
     # libvorbis: see the TRAP beside VibeLibsTags.
     templates: [VibeLibsAudioTypes, VibeLibsDSP, VibeLibsAnalysis, VibeLibsOutputDevices, VibeLibsFX,
                 VibeLibsMeter, VibeLibsFileLoading, VibeLibsDecode, VibeLibsPlayer, VibeLibsTags, VibeLibsMetadata,
-                VibeLibsWaveform, VibeLibsWaveformLoading,
-                VibeLibsDiskCache, VibeLibsGraphics, VibeLibsPlayQueue, VibeLibsPlaylists, VibeLibsFolderScan, VibeLibsControls,
-                VibeLibsSettingsWindow, VibeLibsShortcuts]
+                VibeLibsWaveform, VibeLibsWaveformLoading, VibeLibsWaveformStyles, VibeLibsDiskCache, VibeLibsGraphics,
+                VibeLibsPlayQueue, VibeLibsPlaylists, VibeLibsFolderScan, VibeLibsControls, VibeLibsSettingsWindow,
+                VibeLibsShortcuts]
     templateAttributes:
       excludedPlatform: iOS
     sources:
@@ -49,4 +49,5 @@ targets:
       - path: Tags.mm
       - path: Metadata.mm
       - path: Waveform.mm
+      - path: WaveformStyles.mm
     scheme: {}
