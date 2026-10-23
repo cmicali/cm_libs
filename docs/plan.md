@@ -540,7 +540,7 @@ In this order, each its own move:
 8. `tools/strings`: Vibe's strings extraction and catalog checks, reading each app's registry, catalogs, and names from a config file. Done 2026-10-22: its 3 scripts moved with their history (this repo's #40), and Vibe runs them from here with its own config. A prep commit in Vibe made them read the config, a bash file they source. Vibe's widget catalog became the config's optional subset. Every message and every catalog Vibe's gates write stayed the same. The piece is scripts, so it has no template and no targets, and the checker learned that. Its self-test runs the scripts over a tiny app of its own, `make test-strings`, and CI runs it.
 9. The catalog scan ([Scanning a catalog](#scanning-a-catalog)), a change of behavior after FolderScan's move. FolderScan has moved, so the catalog scan can now be built here.
 
-**Done when** a minimal consumer here, grown from `Tests/Consumer/`, uses the real templates with objects and strings of its own. It plays repeated queue entries and a CUE window, cancels a cloud open, roots a metadata cache of its own, and hits the waveform cache.
+**Done when** a minimal consumer here, grown from `Tests/Consumer/`, uses the real templates with objects and strings of its own. It plays repeated queue entries and a CUE window, cancels a cloud open, roots a metadata cache of its own, and hits the waveform cache. Done 2026-10-23: the consumer does each of these with a row of its own, through the templates an app lists (this repo's #50). The boundary check's paragraph on the minimal consumer says what each check does.
 
 **The other app's first slice starts after this phase.** It scans a folder, lists its songs, and plays a queue.
 
@@ -579,7 +579,7 @@ One list of what the other app waits on, so no prerequisite stays "later". A mov
 
 | The other app's milestone | Delivery here | Kind | Phase | Proven by | Delivered at |
 | --- | --- | --- | --- | --- | --- |
-| First slice: scan a folder, list its songs, play a queue | the Playback and Waveform stacks, Metadata, PlayQueue, DiskCache, and FileLoading with its fake cloud | move | 3 | the minimal consumer | |
+| First slice: scan a folder, list its songs, play a queue | the Playback and Waveform stacks, Metadata, PlayQueue, DiskCache, and FileLoading with its fake cloud | move | 3 | the minimal consumer | Done 2026-10-23 (this repo's #50) |
 | First slice | Playlists and FolderScan | move | 3 | Vibe's walk and CUE tests, moved here | b02ac08 (#30) and 79487ed (#32) |
 | First slice | the catalog scan | behavior | 3 | the tests in Scanning a catalog | |
 | First slice, from its first UI string | `tools/strings` | tool | 3 | the consumer's own catalog passes the checks | 9aef74c (#40) |
