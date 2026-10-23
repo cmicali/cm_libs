@@ -404,6 +404,19 @@ targetTemplates:
       base:
         HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/ui/Shortcuts/Mac"]
 
+  # Security-scoped bookmarks and folder grants, with the grant panel. macOS
+  # only, so no iOS target may list it. Its files sit in its Mac/ half, as
+  # Shortcuts' do. It lists Common for the path spelling and the log and
+  # main-thread macros. Its AppKit import links the framework.
+  VibeLibsSandboxAccess:
+    templates: [VibeLibsCommon]
+    sources:
+      - path: files/SandboxAccess
+        excludes: ["**/*.md", "${excludedPlatform}/**"]
+    settings:
+      base:
+        HEADER_SEARCH_PATHS: ["$(inherited)", "$(VIBE_LIBS_ROOT)/files/SandboxAccess/Mac"]
+
   # Now Playing info and remote commands, over MediaPlayer. It lists Graphics
   # for the image alias and the mac's artwork resize, PlayQueue for the
   # repeat mode, and Common for the log and main-thread macros. Its sources

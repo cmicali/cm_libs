@@ -54,7 +54,6 @@ PIECES = [
     ("app", "Vibe/Loading/Net/LinkStore"),
     ("files/ShareLinks", "Vibe/Loading/Net/"),
     ("app", "Vibe/Loading/iOS/"),
-    ("files/SandboxAccess", "Vibe/Mac/App/FolderAccess"),
     # media
     # ui, system, media
     ("app", "Vibe/Mac/Controls/ArtworkImageView"),
