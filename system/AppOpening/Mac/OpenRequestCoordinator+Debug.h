@@ -1,6 +1,6 @@
 //
 //  OpenRequestCoordinator+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Implemented beside the coordinator, whose buffer is private to it.
 //

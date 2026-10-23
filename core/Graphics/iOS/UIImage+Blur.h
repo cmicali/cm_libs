@@ -1,6 +1,6 @@
 //
 //  UIImage+Blur.h
-//  Vibe (iOS)
+//  vibe-libs
 //
 
 #import <UIKit/UIKit.h>

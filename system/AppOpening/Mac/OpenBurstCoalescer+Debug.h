@@ -1,6 +1,6 @@
 //
 //  OpenBurstCoalescer+Debug.h
-//  Vibe
+//  vibe-libs
 //
 //  Implemented beside the coalescer, whose queue is private to it.
 //

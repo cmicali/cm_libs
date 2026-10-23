@@ -1,6 +1,6 @@
 //
 //  OpenBurstCoalescer.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "OpenBurstCoalescer.h"

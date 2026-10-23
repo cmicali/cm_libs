@@ -1,6 +1,6 @@
 //
 //  OpenRequestCoordinator.m
-//  Vibe
+//  vibe-libs
 //
 
 #import "OpenRequestCoordinator.h"

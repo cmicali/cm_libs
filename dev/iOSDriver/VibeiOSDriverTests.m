@@ -100,7 +100,7 @@ static void DisableQuiescenceWaits(void) {
 // TRAP: XCTest snapshots only a process it launched or activated. Against
 // one the app's launcher started, every query retries for 60 s and then
 // RELAUNCHES the app itself — its state gone, and without the launcher's
-// arguments. So the player is activated, which attaches without a relaunch,
+// arguments. So the app is activated, which attaches without a relaunch,
 // on the first gesture and after every relaunch (`attach`, which the
 // launcher sends).
 - (void)ensureForeground {
@@ -243,7 +243,8 @@ static void DisableQuiescenceWaits(void) {
     // gives the view it pinches an accessibilityIdentifier purely to be
     // findable here, and passes it as VIBE_DRIVER_PINCH_ELEMENT.
     //
-    // Scale > 1 opens the fingers, which zooms IN (less of the track visible).
+    // Scale > 1 opens the fingers, which zooms IN (less of the view's content
+    // visible).
     // Velocity is scale-factors per second and must be negative to zoom out.
     if ([verb isEqualToString:@"pinch"]) {
         if (tokens.count != 3 || !ParseDouble(tokens[1], &a1) || !ParseDouble(tokens[2], &a2)

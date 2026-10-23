@@ -1,6 +1,6 @@
 //
 //  OpenRequestCoordinator.h
-//  Vibe
+//  vibe-libs
 //
 //  Orders the asynchronously expanded batches of every open funnel. A
 //  replacing request supersedes every unfinished older one; appends in the
