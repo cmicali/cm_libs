@@ -789,6 +789,25 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: YES
 
+  # files/SandboxAccess, tested on macOS. It is macOS only, so it has no iOS
+  # target. Its tests store grants in a defaults suite of their own.
+  SandboxAccessTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsSandboxAccess]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/files/SandboxAccess
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        GCC_PREPROCESSOR_DEFINITIONS:
+          - "$(inherited)"
+          - "VIBE_TEST_HANG_TIMEOUT=10"
+          - "VIBE_TEST_GATE_TIMEOUT=30"
+
   # system/NowPlaying, tested on macOS through its publication path, with an
   # injected clock and sinks in place of the system's centers.
   NowPlayingTests:
@@ -811,6 +830,21 @@ targets:
     templates: [VibeLibsNowPlaying]
     templateAttributes:
       excludedPlatform: Mac
+
+  # system/Updates, tested on macOS. It is macOS only, so it has no iOS target.
+  # Its tests make the updater unstarted, so no feed is read.
+  UpdatesTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsUpdates]
+    templateAttributes:
+      excludedPlatform: iOS
+    sources:
+      - path: Tests/system/Updates
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
 
   # dev/DebugChannel, tested on macOS. Its sources compile only under DEBUG,
   # so the bundle defines it in every configuration, the analyzer's Release
@@ -1018,6 +1052,18 @@ targets:
     platform: iOS
     templates: [VibeLibsVorbis]
 
+  # Sparkle is macOS only, so it has no iOS target.
+  SparkleTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [VibeLibsSparkle]
+    sources:
+      - path: Tests/third_party/Sparkle
+        excludes: ["**/*.md"]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   vibe-libs:
     build:
@@ -1074,9 +1120,11 @@ schemes:
         Controls-iOS: all
         SettingsWindowTests: [test]
         ShortcutsTests: [test]
+        SandboxAccessTests: [test]
         NowPlayingTests: [test]
         NowPlaying-iOS: all
         AppOpeningTests: [test]
+        UpdatesTests: [test]
         DebugChannelTests: [test]
         DebugChannel-iOS: all
         iOSDriver: all
@@ -1098,11 +1146,13 @@ schemes:
         Ogg-iOS: all
         VorbisTests: [test]
         Vorbis-iOS: all
+        SparkleTests: [test]
     test:
       targets: [CommonTests, GraphicsTests, AudioTypesTests, DSPTests, AnalysisTests, OutputDevicesTests,
                 FXTests, MeterTests, FileLoadingTests, DiskCacheTests, HTTPTests,
                 RemoteFilesTests, ShareLinksTests, DecodeTests, PlayerTests, TagsTests,
                 MetadataTests, PlayQueueTests, PlaylistsTests, FolderScanTests, WaveformTests, WaveformLoadingTests,
                 WaveformStylesTests, WaveformViewTests, ControlsTests, SettingsWindowTests, ShortcutsTests,
-                NowPlayingTests, AppOpeningTests, DebugChannelTests, TaglibTests, PINCacheTests, PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests,
-                DrWavTests, OggTests, VorbisTests]
+                SandboxAccessTests, NowPlayingTests, AppOpeningTests, UpdatesTests, DebugChannelTests, TaglibTests, PINCacheTests,
+                PINOperationTests, R8brainTests, DrMp3Tests, DrFlacTests, DrWavTests, OggTests, VorbisTests,
+                SparkleTests]

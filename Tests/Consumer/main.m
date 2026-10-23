@@ -37,9 +37,11 @@
 //  title and a duration to Now Playing and reads them back (NowPlaying.m).
 //  Downloads a file and reads a range of it through an HTTP transfer client
 //  over the fake web server (ShareLinks.m). Answers one command through the
-//  debug channel (DebugChannel.m).
+//  debug channel (DebugChannel.m). Makes a folder grants' store over a
+//  defaults suite of its own, and checks that a new temporary folder is not
+//  readable (SandboxAccess.m).
 //  Coalesces an open split into batches into one ordered open, through the
-//  open coordinator (AppOpening.m). Exits 0 when all twenty-nine hold.
+//  open coordinator (AppOpening.m). Exits 0 when all thirty hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -92,6 +94,8 @@ FOUNDATION_EXTERN BOOL ConsumerOrdersASplitOpen(void);
 FOUNDATION_EXTERN BOOL ConsumerFetchesFromTheFakeHost(void);
 // DebugChannel.m's check, beside its own table.
 FOUNDATION_EXTERN BOOL ConsumerDebugChannelAnswers(void);
+// SandboxAccess.m's check.
+FOUNDATION_EXTERN BOOL ConsumerSandboxAccessHolds(void);
 
 // A pane whose sections a block builds, so main needs no pane classes.
 @interface ConsumerPane : SettingsPaneViewController
@@ -909,6 +913,9 @@ int main(void) {
         return 1;
     }
     if (!ConsumerFetchesFromTheFakeHost() || !ConsumerDebugChannelAnswers()) {
+        return 1;
+    }
+    if (!ConsumerSandboxAccessHolds()) {
         return 1;
     }
     if (!ConsumerOrdersASplitOpen()) {

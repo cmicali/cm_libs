@@ -17,6 +17,7 @@ vibe-libs is licensed under Apache 2.0 (see `LICENSE`). Each library under `thir
 | dr_wav | `third_party/dr_wav/` | MIT No Attribution (or public domain, at the recipient's choice); modified |
 | libogg | `third_party/ogg/` | BSD 3-Clause |
 | libvorbis | `third_party/vorbis/` | BSD 3-Clause |
+| Sparkle | `third_party/Sparkle/` | MIT, with its bundled components' permissive notices |
 
 ## TagLib
 
@@ -145,3 +146,13 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
+
+## Sparkle
+
+The software update framework, for a macOS app that updates itself. It is
+vendored unmodified, as the prebuilt release. Copyright 2006-2013 Andy
+Matuschak, 2009-2013 Elgato Systems GmbH, 2011-2014 Kornel Lesiński,
+2015-2017 Mayur Pawashe, 2014 C.W. Betts, 2014 Petroules Corporation, and
+2014 Big Nerd Ranch. MIT license. It bundles bsdiff 4.3 (Colin Percival, BSD
+2-clause), sais-lite (Yuta Mori, MIT), and orlp/ed25519 (Orson Peters, zlib).
+Sparkle's license and all three notices are `third_party/Sparkle/LICENSE.txt`.
