@@ -213,8 +213,6 @@ static const NSTimeInterval kWaveformClaimWaitSeconds = 20.0;
     AudioWaveformLoader *loader = [[AudioWaveformLoader alloc] initWithDelegate:self];
     loader.analysis = analysis;
     loader.claimKey = key;
-    loader.cueStart = track.cueStart;
-    loader.cueEnd = track.cueEnd;
     VibeWaveformLoadClaim *claim = [[VibeWaveformLoadClaim alloc] init];
     claim.key = key;
     claim.loader = loader;
@@ -234,7 +232,7 @@ static const NSTimeInterval kWaveformClaimWaitSeconds = 20.0;
     // loader's detached/current state fences UI delivery.
     claim.workToken = [_lookupScheduler submitWork:^{
         // Per window: a cue row's waveform, tempo and key are its own.
-        NSString *cacheKey = VibeKeyByAppendingCueWindow(track.cacheKey, track.cueStart, track.cueEnd);
+        NSString *cacheKey = VibeWaveformEntryKey(track);
         if (!cacheKey) {
             // The file cannot be statted; see NSURL+Hash. Settle this attempt
             // so a same-file request cannot reattach a loader with no work.
@@ -307,7 +305,7 @@ static const NSTimeInterval kWaveformClaimWaitSeconds = 20.0;
     VibeWaveformAnalysis analysis = self.analysisProvider ? self.analysisProvider() : (VibeWaveformAnalysis){};
     uint64_t generation = _cacheGeneration.load(std::memory_order_relaxed);
     return [_previewScheduler submitWork:^{
-        NSString *cacheKey = VibeKeyByAppendingCueWindow(track.cacheKey, track.cueStart, track.cueEnd);
+        NSString *cacheKey = VibeWaveformEntryKey(track);
         __block CodableAudioWaveform *waveform = nil;
         if (cacheKey) {
             dispatch_sync(self->_loaderQueue, ^{
@@ -523,6 +521,10 @@ awaitPersist:(BOOL)awaitPersist
     PINCache *cache = _waveformCache; // snapshot: the ivar is confined to _loaderQueue
     uint64_t generation = _cacheGeneration.load(std::memory_order_relaxed);
     AudioWorkToken *decodeToken = [_decodeScheduler submitWork:^{
+        // The window is set here, beside the key, so every caller decodes
+        // what its entry is filed under.
+        loader.cueStart = track.cueStart;
+        loader.cueEnd = track.cueEnd;
         CodableAudioWaveform *waveform = [loader load:track.url.path];
         // TRAP: the version is checked here, at completion, never at the
         // decode's start. The key was taken before the open, and a download
@@ -532,7 +534,7 @@ awaitPersist:(BOOL)awaitPersist
         // since its bytes may be either version's. A current load decodes
         // once more under the new key, through the claim's retry.
         BOOL stale = waveform && loader.isComplete
-                && ![VibeKeyByAppendingCueWindow(track.cacheKey, track.cueStart, track.cueEnd) isEqualToString:cacheKey];
+                && ![VibeWaveformEntryKey(track) isEqualToString:cacheKey];
         if (stale && !loader.isCancelled) {
             LogInfo(@"Waveform of %@ finished on another version than its key's; decoding again",
                     track.url.lastPathComponent);

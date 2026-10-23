@@ -2,8 +2,9 @@
 //  AudioWaveformCacheInternal.h
 //  vibe-libs
 //
-//  The state and the lookup-or-decode path the debug seam's per-file cache
-//  control shares with the delegate path (AudioWaveformCache+Debug.mm).
+//  The state, the entry key, and the lookup-or-decode path the debug seam's
+//  per-file cache control shares with the delegate path
+//  (AudioWaveformCache+Debug.mm).
 //
 
 #import "AudioWaveformCache.h"
@@ -15,6 +16,13 @@
 @class VibeWaveformLoadClaim;
 
 NS_ASSUME_NONNULL_BEGIN
+
+// The key a track's entry is filed under: its file's disk key, with the
+// window appended for a cue row. nil when the file cannot be statted. It
+// stats the file, so it is called off main and off the loader queue.
+static inline NSString *_Nullable VibeWaveformEntryKey(id<VibePlayableItem> track) {
+    return VibeKeyByAppendingCueWindow(track.cacheKey, track.cueStart, track.cueEnd);
+}
 
 @interface AudioWaveformCache () {
     dispatch_queue_t                _loaderQueue;

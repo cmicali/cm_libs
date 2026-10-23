@@ -44,7 +44,7 @@ static std::atomic<double> sDebugDecodeSeconds{0};
     loader.analysis = self.analysisProvider ? self.analysisProvider() : (VibeWaveformAnalysis){};
     // The key is computed off the loader queue; see loadWaveformForTrack:.
     [_lookupScheduler submitWork:^{
-        NSString *cacheKey = track.cacheKey;
+        NSString *cacheKey = VibeWaveformEntryKey(track);
         if (!cacheKey) {
             LogWarn(@"No cache key for %@ — cannot cache waveform", url.path);
             run_on_main_thread({ completion(nil, NO); });
@@ -116,7 +116,7 @@ static std::atomic<double> sDebugDecodeSeconds{0};
     NSURL *url = track.url;
     // The key is computed off the loader queue; see loadWaveformForTrack:.
     [_lookupScheduler submitWork:^{
-        NSString *cacheKey = track.cacheKey;
+        NSString *cacheKey = VibeWaveformEntryKey(track);
         if (!cacheKey) {
             // The file cannot be statted, so its entry cannot be resolved
             // anyway: the key derives from the current size and mtime.

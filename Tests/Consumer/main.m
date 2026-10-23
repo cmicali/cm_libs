@@ -32,7 +32,8 @@
 //  sheet. Walks a folder of two tracks and an M3U in each folder order, and
 //  opens the M3U in its own order. Summarizes a tone and draws it, and loads
 //  a WAV of it through the waveform loader. Roots a waveform cache of its
-//  own, and loads the tone through it twice. The second load is a hit
+//  own, and loads the tone through it twice. The second load is a hit. A
+//  CUE window of the tone loads twice, and its second load is a hit too
 //  (Waveform.mm). Draws the tone in
 //  every waveform style and reads back that each drew (WaveformStyles.mm).
 //  Lays the mac waveform view out with the tone's summary and reads back that
