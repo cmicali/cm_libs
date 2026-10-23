@@ -30,7 +30,8 @@
 //  two of them for one file, and walks what follows each track's end under
 //  repeat and shuffle. Writes an M3U, reads it back, and reads a small CUE
 //  sheet. Walks a folder of two tracks and an M3U in each folder order, and
-//  opens the M3U in its own order. Summarizes a tone and draws it, and loads
+//  opens the M3U in its own order. Scans the same folder with a token, and
+//  reads back a complete verdict and both tracks in batches. Summarizes a tone and draws it, and loads
 //  a WAV of it through the waveform loader. Roots a waveform cache of its
 //  own, and loads the tone through it twice. The second load is a hit. A
 //  CUE window of the tone loads twice, and its second load is a hit too
@@ -49,7 +50,7 @@
 //  defaults suite of its own, and checks that a new temporary folder is not
 //  readable (SandboxAccess.m).
 //  Coalesces an open split into batches into one ordered open, through the
-//  open coordinator (AppOpening.m). Exits 0 when all thirty-three hold.
+//  open coordinator (AppOpening.m). Exits 0 when all thirty-four hold.
 //
 
 #import <Foundation/Foundation.h>
@@ -253,6 +254,38 @@ static BOOL PlaylistsRoundTrip(void) {
     return YES;
 }
 
+// The same folder as a catalog scans it: both tracks in batches, the M3U
+// dropped, reading nothing, and a complete verdict once the token counts both.
+static BOOL FolderScanScansACatalog(NSURL *album) {
+    NSProgress *token = [NSProgress discreteProgressWithTotalUnitCount:-1];
+    NSMutableArray<NSString *> *scanned = [NSMutableArray array];
+    __block NSUInteger batches = 0;
+    __block NSArray<NSNumber *> *verdicts = nil;
+    __block NSArray<NSArray<NSError *> *> *failures = nil;
+    [FolderWalk scanRoots:@[album] readPolicy:VibeFolderScanReadPolicyNone progress:token
+                    batch:^(NSArray<PlaylistEntry *> *entries) {
+        batches++;
+        [scanned addObjectsFromArray:[entries valueForKeyPath:@"url.lastPathComponent"]];
+    } completion:^(NSArray<NSNumber *> *rootVerdicts, NSArray<NSArray<NSError *> *> *rootFailures) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            failures = rootFailures;
+            verdicts = rootVerdicts;
+        });
+    }];
+    BOOL settled = Settles(^BOOL { return verdicts != nil; });
+    BOOL complete = settled && [verdicts isEqual:@[@(VibeFolderScanVerdictComplete)]]
+            && [failures isEqual:@[@[]]] && batches == 1 && token.completedUnitCount == 2
+            && [[NSSet setWithArray:scanned] isEqual:[NSSet setWithArray:@[@"Track 2.mp3", @"Track 10.flac"]]]
+            && scanned.count == 2;
+    if (!complete) {
+        fprintf(stderr, "consumer: the scan gave %s in %lu batches, %s, and %lld counted\n",
+                scanned.description.UTF8String, (unsigned long)batches, verdicts.description.UTF8String,
+                token.completedUnitCount);
+        return NO;
+    }
+    return YES;
+}
+
 // A folder of two tracks and an M3U, walked in each order. The walk drops the
 // M3U, since it would double the tracks, and the newer track leads under
 // newest first. Opened alone, the M3U keeps its own order under any sort.
@@ -295,7 +328,11 @@ static BOOL FolderScanWalksATree(void) {
     NSArray<NSString *> *newest = walk(album, VibeFolderOpenSortNewestFirst, &newestFolders);
     NSArray<NSString *> *received = walk(album, VibeFolderOpenSortAsReceived, &receivedFolders);
     NSArray<NSString *> *listed = walk(list, VibeFolderOpenSortName, &listFolders);
+    BOOL scanned = FolderScanScansACatalog(album);
     [NSFileManager.defaultManager removeItemAtURL:directory error:NULL];
+    if (!scanned) {
+        return NO;
+    }
     NSArray<NSString *> *numeric = @[@"Track 2.mp3", @"Track 10.flac"];
     NSArray<NSString *> *reversed = @[@"Track 10.flac", @"Track 2.mp3"];
     BOOL walked = [byName isEqual:numeric] && [newest isEqual:reversed]

@@ -13,6 +13,7 @@
 #import "PlaceholderFiles+Debug.h"
 #import "FolderWalkInternal.h"
 #import "PlayableExtensions.h"
+#import "VibeFakeCloud.h"
 #import "VibePlayableItem.h"
 
 @interface FolderWalkTests : XCTestCase
@@ -998,6 +999,278 @@ static const unsigned long long kLargeFLACBytes = 100ULL * 1024 * 1024 + 1;
     XCTAssertEqual(reported.count, 3u);
     XCTAssertEqualObjects(kept, (@{[library stringByAppendingPathComponent:@"a"]: @"best.txt",
                                    [library stringByAppendingPathComponent:@"b"]: @"fair.txt"}));
+}
+
+#pragma mark - The catalog scan
+
+// Runs a scan to its end. The batches and the completion share one worker, so
+// what they gathered is read here only once the completion has run.
+- (NSArray<NSArray<PlaylistEntry *> *> *)scan:(NSArray<NSURL *> *)roots
+                                       policy:(VibeFolderScanReadPolicy)policy
+                                     progress:(NSProgress *)progress
+                                     verdicts:(NSArray<NSNumber *> **)verdicts
+                                     failures:(NSArray<NSArray<NSError *> *> **)failures {
+    NSMutableArray<NSArray<PlaylistEntry *> *> *batches = [NSMutableArray array];
+    __block NSArray<NSNumber *> *verdictsSeen = nil;
+    __block NSArray<NSArray<NSError *> *> *failuresSeen = nil;
+    XCTestExpectation *finished = [self expectationWithDescription:@"scan"];
+    [FolderWalk scanRoots:roots readPolicy:policy progress:progress
+                    batch:^(NSArray<PlaylistEntry *> *entries) {
+        XCTAssertFalse(NSThread.isMainThread);
+        [batches addObject:entries];
+    } completion:^(NSArray<NSNumber *> *rootVerdicts, NSArray<NSArray<NSError *> *> *rootFailures) {
+        verdictsSeen = rootVerdicts;
+        failuresSeen = rootFailures;
+        [finished fulfill];
+    }];
+    [self waitForExpectations:@[finished] timeout:VIBE_TEST_HANG_TIMEOUT];
+    if (verdicts) {
+        *verdicts = verdictsSeen;
+    }
+    if (failures) {
+        *failures = failuresSeen;
+    }
+    return batches;
+}
+
+- (NSArray<NSArray<PlaylistEntry *> *> *)scan:(NSArray<NSURL *> *)roots policy:(VibeFolderScanReadPolicy)policy {
+    return [self scan:roots policy:policy progress:[NSProgress discreteProgressWithTotalUnitCount:-1]
+             verdicts:NULL failures:NULL];
+}
+
+// A scan sorts nothing, so its entries are compared by name.
+- (NSArray<NSString *> *)sortedRelativePaths:(NSArray<NSArray<PlaylistEntry *> *> *)batches {
+    NSMutableArray<PlaylistEntry *> *entries = [NSMutableArray array];
+    for (NSArray<PlaylistEntry *> *batch in batches) {
+        [entries addObjectsFromArray:batch];
+    }
+    return [[self relativePaths:entries] sortedArrayUsingSelector:@selector(compare:)];
+}
+
+- (void)testAPartlyUnreadableTreeScansPartialWithEveryReadableEntry {
+    XCTSkipIf(geteuid() == 0, @"root reads through every permission bit, so nothing can be denied");
+    [self makeFile:@"library/a.mp3"];
+    [self makeFile:@"library/open/b.flac"];
+    [self makeFile:@"library/locked/c.mp3"];
+    NSURL *locked = [_root URLByAppendingPathComponent:@"library/locked" isDirectory:YES];
+    chmod(locked.fileSystemRepresentation, 0000);
+    NSArray<NSNumber *> *verdicts = nil;
+    NSArray<NSArray<NSError *> *> *failures = nil;
+
+    NSArray<NSArray<PlaylistEntry *> *> *batches =
+            [self scan:@[[self makeDirectory:@"library"]] policy:VibeFolderScanReadPolicyNone
+              progress:[NSProgress discreteProgressWithTotalUnitCount:-1] verdicts:&verdicts failures:&failures];
+
+    XCTAssertEqualObjects(verdicts, @[@(VibeFolderScanVerdictPartial)]);
+    XCTAssertEqual(failures.firstObject.count, 1u, @"%@", failures);
+    XCTAssertEqualObjects([failures.firstObject.firstObject.userInfo[NSURLErrorKey] path], locked.path);
+    XCTAssertEqualObjects([self sortedRelativePaths:batches], (@[@"library/a.mp3", @"library/open/b.flac"]));
+}
+
+- (void)testARootThatCannotBeReadIsPartialWithOneFailureNamingIt {
+    XCTSkipIf(geteuid() == 0, @"root reads through every permission bit, so nothing can be denied");
+    NSURL *missing = [_root URLByAppendingPathComponent:@"missing" isDirectory:YES];
+    [self makeFile:@"locked/a.mp3"];
+    NSURL *locked = [self makeDirectory:@"locked"];
+    chmod(locked.fileSystemRepresentation, 0000);
+    [self makeFile:@"open/a.mp3"];
+    NSArray<NSNumber *> *verdicts = nil;
+    NSArray<NSArray<NSError *> *> *failures = nil;
+
+    NSArray<NSArray<PlaylistEntry *> *> *batches =
+            [self scan:@[missing, locked, [self makeDirectory:@"open"]] policy:VibeFolderScanReadPolicyNone
+              progress:[NSProgress discreteProgressWithTotalUnitCount:-1] verdicts:&verdicts failures:&failures];
+
+    XCTAssertEqualObjects(verdicts, (@[@(VibeFolderScanVerdictPartial), @(VibeFolderScanVerdictPartial),
+                                       @(VibeFolderScanVerdictComplete)]));
+    XCTAssertEqual(failures.count, 3u);
+    XCTAssertEqual(failures[0].count, 1u, @"%@", failures[0]);
+    XCTAssertEqualObjects([failures[0].firstObject.userInfo[NSURLErrorKey] path], missing.path);
+    XCTAssertEqual(failures[1].count, 1u, @"%@", failures[1]);
+    XCTAssertEqualObjects([failures[1].firstObject.userInfo[NSURLErrorKey] path], locked.path);
+    XCTAssertEqualObjects(failures[2], @[]);
+    XCTAssertEqualObjects([self sortedRelativePaths:batches], (@[@"open/a.mp3"]));
+}
+
+// Each folder is a batch of its own, so the cancel lands between two.
+- (void)testACancelledScanReportsCancelledAndDeliversNoBatchAfterTheCancel {
+    for (NSUInteger disc = 0; disc < 8; disc++) {
+        [self makeFile:[NSString stringWithFormat:@"library/disc%lu/track.mp3", (unsigned long)disc]];
+    }
+    NSURL *library = [self makeDirectory:@"library"];
+    NSProgress *progress = [NSProgress discreteProgressWithTotalUnitCount:-1];
+    __block NSUInteger delivered = 0;
+    __block NSUInteger deliveredAfterCancel = 0;
+    __block NSArray<NSNumber *> *verdicts = nil;
+    XCTestExpectation *finished = [self expectationWithDescription:@"scan"];
+
+    [FolderWalk scanRoots:@[library, library] readPolicy:VibeFolderScanReadPolicyNone progress:progress
+                    batch:^(NSArray<PlaylistEntry *> *entries) {
+        if (progress.isCancelled) {
+            deliveredAfterCancel++;
+        }
+        delivered++;
+        [progress cancel];
+    } completion:^(NSArray<NSNumber *> *rootVerdicts, NSArray<NSArray<NSError *> *> *failures) {
+        verdicts = rootVerdicts;
+        [finished fulfill];
+    }];
+    [self waitForExpectations:@[finished] timeout:VIBE_TEST_HANG_TIMEOUT];
+
+    XCTAssertEqual(delivered, 1u);
+    XCTAssertEqual(deliveredAfterCancel, 0u);
+    XCTAssertEqual(progress.completedUnitCount, 1);
+    XCTAssertEqualObjects(verdicts, (@[@(VibeFolderScanVerdictCancelled), @(VibeFolderScanVerdictCancelled)]));
+
+    // Cancelled before it starts, it delivers nothing and still never says complete.
+    NSProgress *early = [NSProgress discreteProgressWithTotalUnitCount:-1];
+    [early cancel];
+    NSArray<NSNumber *> *earlyVerdicts = nil;
+    XCTAssertEqualObjects([self scan:@[library] policy:VibeFolderScanReadPolicyNone progress:early
+                            verdicts:&earlyVerdicts failures:NULL], @[]);
+    XCTAssertEqualObjects(earlyVerdicts, @[@(VibeFolderScanVerdictCancelled)]);
+}
+
+// One-byte files: the walk drops empty ones.
+- (void)testALargeTreeArrivesInBoundedBatches {
+    NSUInteger flatCount = VibeFolderScanBatchLimit * 2 + 7;
+    for (NSUInteger track = 0; track < flatCount; track++) {
+        [self makeFile:[NSString stringWithFormat:@"library/flat/%04lu.mp3", (unsigned long)track]];
+    }
+    [self makeFile:@"library/a/one.flac"];
+    [self makeFile:@"library/a/b/two.wav"];
+    NSProgress *progress = [NSProgress discreteProgressWithTotalUnitCount:-1];
+    NSArray<NSNumber *> *verdicts = nil;
+
+    NSArray<NSArray<PlaylistEntry *> *> *batches =
+            [self scan:@[[self makeDirectory:@"library"]] policy:VibeFolderScanReadPolicyLocal
+              progress:progress verdicts:&verdicts failures:NULL];
+
+    NSUInteger total = 0;
+    NSUInteger flatBatches = 0;
+    for (NSArray<PlaylistEntry *> *batch in batches) {
+        XCTAssertGreaterThan(batch.count, 0u);
+        XCTAssertLessThanOrEqual(batch.count, VibeFolderScanBatchLimit);
+        NSString *directory = batch.firstObject.url.URLByDeletingLastPathComponent.path;
+        for (PlaylistEntry *entry in batch) {
+            XCTAssertEqualObjects(entry.url.URLByDeletingLastPathComponent.path, directory);
+        }
+        flatBatches += [directory.lastPathComponent isEqualToString:@"flat"] ? 1 : 0;
+        total += batch.count;
+    }
+    XCTAssertEqual(flatBatches, 3u);
+    XCTAssertEqual(total, flatCount + 2);
+    XCTAssertEqual(progress.completedUnitCount, (int64_t)(flatCount + 2));
+    XCTAssertEqualObjects(verdicts, @[@(VibeFolderScanVerdictComplete)]);
+}
+
+// The fake cloud counts every download its files ask for. A sheet is then
+// either reported as a file or read for its tracks, never downloaded.
+- (void)testAListingOverTheFakeCloudReadsNoAudio {
+    [self makeFile:@"library/a.mp3"];
+    [self makeFile:@"library/mix.flac"];
+    [self makeText:kTwoTrackSheet at:@"library/mix.cue"];
+    NSURL *library = [self makeDirectory:@"library"];
+    [VibeFakeCloud installWithTransferSeconds:0.1 datalessPercent:100];
+    [VibeFakeCloud clearTrace];
+
+    NSArray<NSString *> *listed = [self sortedRelativePaths:[self scan:@[library]
+                                                                policy:VibeFolderScanReadPolicyNone]];
+    NSArray<NSString *> *read = [self sortedRelativePaths:[self scan:@[library]
+                                                              policy:VibeFolderScanReadPolicyLocal]];
+    NSDictionary *statistics = [VibeFakeCloud statistics];
+    NSArray<NSDictionary *> *trace = [VibeFakeCloud traceEvents];
+    [VibeFakeCloud uninstall];
+
+    XCTAssertEqualObjects(listed, (@[@"library/a.mp3", @"library/mix.cue", @"library/mix.flac"]));
+    XCTAssertEqualObjects(read, (@[@"library/a.mp3", @"library/mix.flac#0-4500", @"library/mix.flac#4500-0"]));
+    XCTAssertEqualObjects(statistics[@"materialized"], @0);
+    XCTAssertEqualObjects(statistics[@"completed"], @0);
+    XCTAssertEqualObjects(statistics[@"cancelled"], @0);
+    XCTAssertEqualObjects(statistics[@"executing"], @0);
+    XCTAssertEqualObjects(statistics[@"queued"], @0);
+    XCTAssertEqualObjects(trace, @[]);
+}
+
+// The only other content a walk reads is a large local FLAC's own sheet.
+- (void)testOnlyTheLocalPolicyOpensAFLACForItsSheet {
+    [self makeFLAC:@"library/mix.flac" sheet:kTwoTrackSheet size:kLargeFLACBytes];
+    NSURL *library = [self makeDirectory:@"library"];
+
+    XCTAssertEqualObjects([self sortedRelativePaths:[self scan:@[library] policy:VibeFolderScanReadPolicyNone]],
+                          (@[@"library/mix.flac"]));
+    XCTAssertEqualObjects([self sortedRelativePaths:[self scan:@[library] policy:VibeFolderScanReadPolicyLocal]],
+                          (@[@"library/mix.flac#0-4500", @"library/mix.flac#4500-0"]));
+}
+
+// A folder's files are split around its subfolders in enumeration order, and
+// a large one is split again into batches. Neither may let an image through
+// whole beside its tracks.
+- (void)testANestedTreesDirectoryBoundariesHoldTheClaims {
+    NSArray<NSString *> *albums = @[@"library/album", @"library/album/disc1", @"library/album/disc2",
+                                    @"library/flat"];
+    for (NSString *album in albums) {
+        [self makeFile:[album stringByAppendingPathComponent:@"mix.flac"]];
+        [self makeText:kTwoTrackSheet at:[album stringByAppendingPathComponent:@"mix.cue"]];
+        [self makeFile:[album stringByAppendingPathComponent:@"a.mp3"]];
+        [self makeFile:[album stringByAppendingPathComponent:@"z.mp3"]];
+    }
+    for (NSUInteger track = 0; track < VibeFolderScanBatchLimit + 10; track++) {
+        [self makeFile:[NSString stringWithFormat:@"library/flat/%04lu.mp3", (unsigned long)track]];
+    }
+    for (NSUInteger extra = 0; extra < 6; extra++) {
+        [self makeFile:[NSString stringWithFormat:@"library/album/extra%lu/song.mp3", (unsigned long)extra]];
+    }
+
+    NSArray<NSArray<PlaylistEntry *> *> *batches = [self scan:@[[self makeDirectory:@"library"]]
+                                                       policy:VibeFolderScanReadPolicyLocal];
+
+    NSMutableDictionary<NSString *, NSNumber *> *rowsByImage = [NSMutableDictionary dictionary];
+    for (NSArray<PlaylistEntry *> *batch in batches) {
+        NSString *directory = batch.firstObject.url.URLByDeletingLastPathComponent.path;
+        for (PlaylistEntry *entry in batch) {
+            XCTAssertEqualObjects(entry.url.URLByDeletingLastPathComponent.path, directory);
+            if ([entry.url.lastPathComponent isEqualToString:@"mix.flac"]) {
+                XCTAssertTrue(entry.isWindowed, @"%@ arrived whole", entry.url.path);
+                NSString *image = entry.url.path;
+                rowsByImage[image] = @(rowsByImage[image].unsignedIntegerValue + 1);
+            }
+        }
+    }
+    XCTAssertEqual(rowsByImage.count, albums.count);
+    for (NSString *image in rowsByImage) {
+        XCTAssertEqualObjects(rowsByImage[image], @2, @"%@", image);
+    }
+    XCTAssertEqual([self sortedRelativePaths:batches].count,
+                   albums.count * 4 + VibeFolderScanBatchLimit + 10 + 6);
+}
+
+// Background work never raises a panel: a sheet naming a file the scan may not
+// read reports it instead.
+- (void)testAScanNeverAsksForAGrantAndReportsTheDenialInstead {
+    XCTSkipIf(geteuid() == 0, @"root reads through every permission bit, so nothing can be denied");
+    [self makeFile:@"library/a.mp3"];
+    [self makeText:[kTwoTrackSheet stringByReplacingOccurrencesOfString:@"mix.flac" withString:@"../vault/mix.flac"]
+                at:@"library/mix.cue"];
+    NSURL *image = [self makeFile:@"vault/mix.flac"];
+    chmod(image.fileSystemRepresentation, 0000);
+    __block NSUInteger asked = 0;
+    [FolderWalk setPlaylistFolderGrantHandler:^BOOL(NSURL *url) {
+        asked++;
+        return NO;
+    }];
+    NSArray<NSNumber *> *verdicts = nil;
+    NSArray<NSArray<NSError *> *> *failures = nil;
+
+    NSArray<NSArray<PlaylistEntry *> *> *batches =
+            [self scan:@[[self makeDirectory:@"library"]] policy:VibeFolderScanReadPolicyLocal
+              progress:[NSProgress discreteProgressWithTotalUnitCount:-1] verdicts:&verdicts failures:&failures];
+
+    XCTAssertEqual(asked, 0u);
+    XCTAssertEqualObjects(verdicts, @[@(VibeFolderScanVerdictPartial)]);
+    XCTAssertEqual(failures.firstObject.count, 1u, @"%@", failures);
+    XCTAssertEqualObjects([failures.firstObject.firstObject.userInfo[NSURLErrorKey] lastPathComponent], @"vault");
+    XCTAssertEqualObjects([self sortedRelativePaths:batches], (@[@"library/a.mp3"]));
 }
 
 @end
