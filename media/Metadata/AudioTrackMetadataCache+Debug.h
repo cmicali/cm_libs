@@ -21,9 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 // its configuration snapshot.
 - (void)applyLoadingConfiguration:(AudioLoadingConfiguration *)loadingConfiguration;
 
-// The versioned PINCache store name reported by clear_caches.
-+ (NSString *)cacheName;
-
 @end
 
 @interface AudioTrackMetadataCache (DebugMaterialization)

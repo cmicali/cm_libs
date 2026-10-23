@@ -18,7 +18,6 @@
 @interface AudioTrackMetadataCache ()
 @property (nonatomic, readonly) AudioLoadingConfiguration *loadingConfiguration;
 - (void)applyLoadingConfiguration:(AudioLoadingConfiguration *)loadingConfiguration;
-+ (NSString *)cacheName;
 - (void)setNeighborhoodURLs:(nullable NSArray<NSURL *> *)urls;
 @end
 
