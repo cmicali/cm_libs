@@ -1,18 +1,20 @@
 //
 //  Metadata.mm
 //
-//  Roots a metadata cache of its own and tags a WAV with a title and a PNG
-//  picture through TagLib's own writer. Loads the WAV through the cache into
-//  the consumer's row. Reads the title back, the picture's bytes through the
-//  artwork's extractor, and waits for the row thumbnail. Then reopens the
-//  cache over the same root and loads a fresh row from the disk cache alone,
-//  which hits. Objective-C++, since TagLib's writer is C++.
+//  Roots a metadata cache of its own and tags a WAV with a title, an album,
+//  and a PNG picture through TagLib's own writer. Loads the WAV through the
+//  cache into the consumer's row. Reads the title and the album back, groups
+//  the album, reads the picture's bytes through the artwork's extractor, and
+//  waits for the row thumbnail. Then reopens the cache over the same root and
+//  loads a fresh row from the disk cache alone, which hits with the same title
+//  and album. Objective-C++, since TagLib's writer is C++.
 //
 
 #import <AppKit/AppKit.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#import "AlbumGroupingRules.h"
 #import "AudioTrackMetadataCache.h"
 #import "AudioTrackMetadataInternal.h"
 #import "ConsumerTrack.h"
@@ -100,6 +102,7 @@ BOOL ConsumerLoadsMetadata(void) {
     if (saved) {
         TagLib::RIFF::WAV::File file(url.fileSystemRepresentation);
         file.ID3v2Tag()->setTitle(TagLib::String("Consumer", TagLib::String::UTF8));
+        file.ID3v2Tag()->setAlbum(TagLib::String("Consumer Album", TagLib::String::UTF8));
         auto frame = new TagLib::ID3v2::AttachedPictureFrame();
         frame->setMimeType("image/png");
         frame->setType(TagLib::ID3v2::AttachedPictureFrame::FrontCover);
@@ -139,6 +142,12 @@ BOOL ConsumerLoadsMetadata(void) {
         else if (!track.metadata.parsedOK || ![track.metadata.title isEqualToString:@"Consumer"]) {
             Fail("the metadata cache did not read the tagged title");
         }
+        else if (![track.metadata.album isEqualToString:@"Consumer Album"]
+                 || !VibeAlbumGroupKey(track.metadata.musicBrainzReleaseID, track.metadata.album,
+                                       track.metadata.albumArtist, track.metadata.artist, track.metadata.year,
+                                       track.metadata.isCompilation)) {
+            Fail("the metadata cache did not read the tagged album, or it groups under no album");
+        }
         else if (VibeTagLibArtExtractor()(url.path, &art) != VibeEmbeddedArtExtractionFoundArt
                  || ![art isEqualToData:picture]) {
             Fail("the artwork's extractor did not read the picture's bytes");
@@ -162,8 +171,9 @@ BOOL ConsumerLoadsMetadata(void) {
                 Fail("the reopened metadata cache did not hit");
             }
             else if (!again.metadata.parsedOK || ![again.metadata.title isEqualToString:@"Consumer"]
+                     || ![again.metadata.album isEqualToString:@"Consumer Album"]
                      || again.metadata == track.metadata) {
-                Fail("the reopened metadata cache did not read the tagged title back from disk");
+                Fail("the reopened metadata cache did not read the tagged title and album back from disk");
             }
             else {
                 holds = YES;

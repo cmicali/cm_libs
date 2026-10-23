@@ -43,7 +43,12 @@
     // The archive-format version: bump it whenever the archived fields, the
     // rendition or their meaning change, or stale entries live until their
     // cache key changes.
-    return @"Audio Track Metadata v7";
+    // TRAP: an entry from before the tag fields (v7) must be a miss. It
+    // decodes cleanly, with every field it lacks absent. So a hit would say
+    // "untagged" for an album or a gain the file carries, until the file
+    // changes. A new store name makes every old entry a miss, at the cost of
+    // one parse of each file.
+    return @"Audio Track Metadata v8";
 }
 
 - (instancetype)init {

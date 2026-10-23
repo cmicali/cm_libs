@@ -2,11 +2,11 @@
 
 TagLib's fields and embedded art bytes. It depends on `third_party/taglib`, on `audio/AudioTypes` for the format names, and on `core/Common` for the log macros. **Today it holds what Vibe moved here**: `TagLibAudioFile`, Vibe's TagLib wrapper, in Objective-C++. It reads no app's settings, strings, or types.
 
-`media/Metadata`'s parse is its one user. It reads the title, the artist, the audio properties, the tempo, and the key from the wrapper's `TagLib::File`. What it does with them, the cache, the scan, and the artwork, is `media/Metadata/AGENTS.md`.
+`media/Metadata`'s parse is its one user. It reads the title, the artist, the audio properties, and every tag field from the wrapper's `TagLib::File` (`media/Metadata/AGENTS.md`, The tag fields). What it does with them, the cache, the scan, and the artwork, is `media/Metadata/AGENTS.md`.
 
 ## How an app uses it
 
-**`TagLibAudioFile` opens a file the way `TagLib::FileRef` would.** It answers the parsed `TagLib::File` and its tag, or null when no parser takes the file. `fileTypeForTagLibFile` names the format, as `audio/AudioTypes` spells it. `albumArtDataFromTagLibFile` answers the embedded picture's bytes. `VibeTagLibReadEmbeddedArt` opens a file for its art alone, with no audio properties. It answers NO for a failed read: no parser took the file, or TagLib threw. YES with nil art is a file that carries none. An app keeps the two apart, so a failed read is never mistaken for a file without art.
+**`TagLibAudioFile` opens a file the way `TagLib::FileRef` would.** It answers the parsed `TagLib::File` and its tag, or null when no parser takes the file. `fileTypeForTagLibFile` names the format, as `audio/AudioTypes` spells it. `albumArtDataFromTagLibFile` answers the embedded picture's bytes. `audioMD5FromTagLibFile` answers a FLAC's audio MD5 from its STREAMINFO block, or nil for the zeros an encoder writes when it computed none. `VibeTagLibReadEmbeddedArt` opens a file for its art alone, with no audio properties. It answers NO for a failed read: no parser took the file, or TagLib threw. YES with nil art is a file that carries none. An app keeps the two apart, so a failed read is never mistaken for a file without art.
 
 **The header is C++**, so only Objective-C++ and C++ can include it. A file that includes it also needs TagLib's header paths, which the template brings. An app that takes it builds C++ as C++17 or later, since TagLib's sources are C++17.
 

@@ -19,6 +19,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 
 #include <exception>
+#include <initializer_list>
 #include <sys/stat.h>
 #include <audioproperties.h>
 #include <tpropertymap.h>
@@ -37,6 +38,27 @@ NSNotificationName const AudioTrackMetadataThumbnailDidLoadNotification =
 @property (assign, readwrite) NSTimeInterval duration;
 @property (assign, readwrite) float bpm;
 @property (assign, readwrite) VibeMusicalKey key;
+@property (copy, nullable, readwrite) NSString *album;
+@property (copy, nullable, readwrite) NSString *albumArtist;
+@property (copy, nullable, readwrite) NSString *genre;
+@property (copy, nullable, readwrite) NSString *composer;
+@property (assign, readwrite) NSInteger year;
+@property (assign, readwrite) NSInteger trackNumber;
+@property (assign, readwrite) NSInteger trackCount;
+@property (assign, readwrite) NSInteger discNumber;
+@property (assign, readwrite) NSInteger discCount;
+@property (assign, readwrite) BOOL compilation;
+@property (copy, nullable, readwrite) NSString *musicBrainzReleaseID;
+@property (copy, nullable, readwrite) NSString *musicBrainzRecordingID;
+@property (copy, nullable, readwrite) NSString *isrc;
+@property (copy, nullable, readwrite) NSData *audioMD5;
+@property (copy, nullable, readwrite) NSNumber *replayGainTrackGain;
+@property (copy, nullable, readwrite) NSNumber *replayGainTrackPeak;
+@property (copy, nullable, readwrite) NSNumber *replayGainAlbumGain;
+@property (copy, nullable, readwrite) NSNumber *replayGainAlbumPeak;
+@property (copy, nullable, readwrite) NSNumber *r128TrackGain;
+@property (copy, nullable, readwrite) NSNumber *r128AlbumGain;
+@property (copy, nullable, readwrite) NSNumber *soundCheckGain;
 @property (assign) BOOL parsedOK;
 @property (copy, nullable, readwrite) NSString *cacheKey;
 // Never nil on a live instance. A property, not a bare ivar: written on a
@@ -84,6 +106,56 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
     if (![value isKindOfClass:NSString.class]) return nil;
     NSString *trimmed = [value stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     return trimmed.length > 0 ? trimmed : nil;
+}
+
+// The first value of a tag, trimmed, or nil when that leaves none.
+static NSString *_Nullable PropertyText(const TagLib::PropertyMap &properties, const char *key) {
+    const TagLib::StringList values = properties.value(key);
+    return values.isEmpty() ? nil : trimmedTagText([NSString stringWithStdString:values.front().to8Bit(true)]);
+}
+
+// The whole number a tag starts with, or 0 when it has none above 0.
+static NSInteger LeadingCount(NSString *_Nullable text) {
+    NSInteger value = 0;
+    return text && [[NSScanner scannerWithString:text] scanInteger:&value] && value > 0 ? value : 0;
+}
+
+// A number and its count, from "3/12", or from a count tag of its own.
+static void ReadNumberAndCount(const TagLib::PropertyMap &properties, const char *key,
+                               std::initializer_list<const char *> countKeys, NSInteger *number, NSInteger *count) {
+    NSString *text = PropertyText(properties, key);
+    *number = LeadingCount(text);
+    NSRange slash = text ? [text rangeOfString:@"/"] : NSMakeRange(NSNotFound, 0);
+    *count = slash.location != NSNotFound ? LeadingCount([text substringFromIndex:NSMaxRange(slash)]) : 0;
+    for (const char *countKey : countKeys) {
+        if (*count == 0) *count = LeadingCount(PropertyText(properties, countKey));
+    }
+}
+
+// The decimal a loudness tag starts with, as in "-6.54 dB", or nil.
+static NSNumber *_Nullable LeadingDecimal(NSString *_Nullable text) {
+    double value = 0;
+    return text && [[NSScanner scannerWithString:text] scanDouble:&value] && isfinite(value) ? @(value) : nil;
+}
+
+// An R128 gain is a Q7.8 whole number of 1/256 dB.
+static NSNumber *_Nullable R128Gain(NSString *_Nullable text) {
+    NSInteger value = 0;
+    if (!text || ![[NSScanner scannerWithString:text] scanInteger:&value] || value < INT16_MIN || value > INT16_MAX) {
+        return nil;
+    }
+    return @(value / 256.0);
+}
+
+// iTunNORM is ten hex words. The first two are the left and right channels'
+// gain against 1/1000 W. The louder channel sets the gain.
+static NSNumber *_Nullable SoundCheckGain(NSString *_Nullable text) {
+    unsigned int left = 0, right = 0;
+    NSScanner *scanner = text ? [NSScanner scannerWithString:text] : nil;
+    if (![scanner scanHexInt:&left] || ![scanner scanHexInt:&right] || MAX(left, right) == 0) {
+        return nil;
+    }
+    return @(-10 * log10(MAX(left, right) / 1000.0));
 }
 
 @implementation AudioTrackMetadata
@@ -174,10 +246,39 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
     copy.duration = self.duration;
     copy.bpm = self.bpm;
     copy.key = self.key;
+    copy.album = self.album;
+    copy.albumArtist = self.albumArtist;
+    copy.genre = self.genre;
+    copy.composer = self.composer;
+    copy.year = self.year;
+    copy.trackNumber = self.trackNumber;
+    copy.trackCount = self.trackCount;
+    copy.discNumber = self.discNumber;
+    copy.discCount = self.discCount;
+    copy.compilation = self.compilation;
+    copy.musicBrainzReleaseID = self.musicBrainzReleaseID;
+    copy.musicBrainzRecordingID = self.musicBrainzRecordingID;
+    copy.isrc = self.isrc;
+    copy.audioMD5 = self.audioMD5;
+    copy.replayGainTrackGain = self.replayGainTrackGain;
+    copy.replayGainTrackPeak = self.replayGainTrackPeak;
+    copy.replayGainAlbumGain = self.replayGainAlbumGain;
+    copy.replayGainAlbumPeak = self.replayGainAlbumPeak;
+    copy.r128TrackGain = self.r128TrackGain;
+    copy.r128AlbumGain = self.r128AlbumGain;
+    copy.soundCheckGain = self.soundCheckGain;
     copy.parsedOK = self.parsedOK;
     copy.cacheKey = self.cacheKey;
     copy.artwork = [self.artwork copy];
     return copy;
+}
+
+static void EncodePresent(NSCoder *coder, id _Nullable value, NSString *key) {
+    if (value) [coder encodeObject:value forKey:key];
+}
+
+static void EncodePresentCount(NSCoder *coder, NSInteger value, NSString *key) {
+    if (value) [coder encodeInteger:value forKey:key];
 }
 
 // The thumbnail and scalars only, so the cache holds thousands of tracks;
@@ -197,6 +298,45 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
     // As an object, not encodeInteger: an absent integer decodes as 0, which
     // as a key means C major, whereas an absent object is unambiguously nil.
     [coder encodeObject:@(self.key) forKey:@"key"];
+    // The tag fields only when present, so most entries stay small.
+    EncodePresent(coder, self.album, @"album");
+    EncodePresent(coder, self.albumArtist, @"albumArtist");
+    EncodePresent(coder, self.genre, @"genre");
+    EncodePresent(coder, self.composer, @"composer");
+    EncodePresentCount(coder, self.year, @"year");
+    EncodePresentCount(coder, self.trackNumber, @"trackNumber");
+    EncodePresentCount(coder, self.trackCount, @"trackCount");
+    EncodePresentCount(coder, self.discNumber, @"discNumber");
+    EncodePresentCount(coder, self.discCount, @"discCount");
+    EncodePresentCount(coder, self.compilation, @"compilation");
+    EncodePresent(coder, self.musicBrainzReleaseID, @"musicBrainzReleaseID");
+    EncodePresent(coder, self.musicBrainzRecordingID, @"musicBrainzRecordingID");
+    EncodePresent(coder, self.isrc, @"isrc");
+    EncodePresent(coder, self.audioMD5, @"audioMD5");
+    EncodePresent(coder, self.replayGainTrackGain, @"replayGainTrackGain");
+    EncodePresent(coder, self.replayGainTrackPeak, @"replayGainTrackPeak");
+    EncodePresent(coder, self.replayGainAlbumGain, @"replayGainAlbumGain");
+    EncodePresent(coder, self.replayGainAlbumPeak, @"replayGainAlbumPeak");
+    EncodePresent(coder, self.r128TrackGain, @"r128TrackGain");
+    EncodePresent(coder, self.r128AlbumGain, @"r128AlbumGain");
+    EncodePresent(coder, self.soundCheckGain, @"soundCheckGain");
+}
+
+// The object archived under key, or nil. An object of another class sets
+// *wrong, which makes the entry a miss.
+static id _Nullable DecodedObject(NSCoder *coder, NSString *key, Class kind, BOOL *wrong) {
+    id value = [coder decodeObjectForKey:key];
+    if (value && ![value isKindOfClass:kind]) {
+        *wrong = YES;
+        return nil;
+    }
+    return value;
+}
+
+// The parse archives no count below 1, so anything else reads as untagged.
+static NSInteger DecodedCount(NSCoder *coder, NSString *key) {
+    NSInteger value = [coder decodeIntegerForKey:key];
+    return value > 0 ? value : 0;
 }
 
 + (BOOL)supportsSecureCoding {
@@ -208,30 +348,43 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
     if (self) {
         // PINDiskCache unarchives without secure coding: any wrong class is a
         // miss, or a persistent bad entry crashes every launch.
-        id title = [coder decodeObjectForKey:@"title"];
-        id artist = [coder decodeObjectForKey:@"artist"];
-        id encodedThumbnail = [coder decodeObjectForKey:@"thumbnailJPEG"];
-        id sourceFilePath = [coder decodeObjectForKey:@"sourceFilePath"];
-        id fileType = [coder decodeObjectForKey:@"fileType"];
-        id bitrate = [coder decodeObjectForKey:@"bitrate"];
-        id sampleRate = [coder decodeObjectForKey:@"sampleRate"];
-        if (title && ![title isKindOfClass:[NSString class]]) return nil;
-        if (artist && ![artist isKindOfClass:[NSString class]]) return nil;
-        if (encodedThumbnail && ![encodedThumbnail isKindOfClass:[NSData class]]) return nil;
-        if (sourceFilePath && ![sourceFilePath isKindOfClass:[NSString class]]) return nil;
-        if (fileType && ![fileType isKindOfClass:[NSString class]]) return nil;
-        if (bitrate && ![bitrate isKindOfClass:[NSNumber class]]) return nil;
-        if (sampleRate && ![sampleRate isKindOfClass:[NSNumber class]]) return nil;
-        self.title = title;
-        self.artist = artist;
+        BOOL wrong = NO;
+        NSData *encodedThumbnail = DecodedObject(coder, @"thumbnailJPEG", NSData.class, &wrong);
+        NSString *sourceFilePath = DecodedObject(coder, @"sourceFilePath", NSString.class, &wrong);
+        self.title = DecodedObject(coder, @"title", NSString.class, &wrong);
+        self.artist = DecodedObject(coder, @"artist", NSString.class, &wrong);
+        self.fileType = DecodedObject(coder, @"fileType", NSString.class, &wrong);
+        self.bitrate = DecodedObject(coder, @"bitrate", NSNumber.class, &wrong);
+        self.sampleRate = DecodedObject(coder, @"sampleRate", NSNumber.class, &wrong);
+        self.album = DecodedObject(coder, @"album", NSString.class, &wrong);
+        self.albumArtist = DecodedObject(coder, @"albumArtist", NSString.class, &wrong);
+        self.genre = DecodedObject(coder, @"genre", NSString.class, &wrong);
+        self.composer = DecodedObject(coder, @"composer", NSString.class, &wrong);
+        self.musicBrainzReleaseID = DecodedObject(coder, @"musicBrainzReleaseID", NSString.class, &wrong);
+        self.musicBrainzRecordingID = DecodedObject(coder, @"musicBrainzRecordingID", NSString.class, &wrong);
+        self.isrc = DecodedObject(coder, @"isrc", NSString.class, &wrong);
+        self.audioMD5 = DecodedObject(coder, @"audioMD5", NSData.class, &wrong);
+        self.replayGainTrackGain = DecodedObject(coder, @"replayGainTrackGain", NSNumber.class, &wrong);
+        self.replayGainTrackPeak = DecodedObject(coder, @"replayGainTrackPeak", NSNumber.class, &wrong);
+        self.replayGainAlbumGain = DecodedObject(coder, @"replayGainAlbumGain", NSNumber.class, &wrong);
+        self.replayGainAlbumPeak = DecodedObject(coder, @"replayGainAlbumPeak", NSNumber.class, &wrong);
+        self.r128TrackGain = DecodedObject(coder, @"r128TrackGain", NSNumber.class, &wrong);
+        self.r128AlbumGain = DecodedObject(coder, @"r128AlbumGain", NSNumber.class, &wrong);
+        self.soundCheckGain = DecodedObject(coder, @"soundCheckGain", NSNumber.class, &wrong);
+        if (wrong) {
+            return nil;
+        }
+        self.year = DecodedCount(coder, @"year");
+        self.trackNumber = DecodedCount(coder, @"trackNumber");
+        self.trackCount = DecodedCount(coder, @"trackCount");
+        self.discNumber = DecodedCount(coder, @"discNumber");
+        self.discCount = DecodedCount(coder, @"discCount");
+        self.compilation = DecodedCount(coder, @"compilation") > 0;
         self.artwork = [[AudioTrackArtwork alloc] initWithSourceFilePath:sourceFilePath
                                                                extractor:VibeTagLibArtExtractor()];
         // An entry without the key decodes NO; a thumbnail still proves art.
         BOOL hasEmbeddedArt = [coder decodeBoolForKey:@"hasEmbeddedArt"] || encodedThumbnail != nil;
         [self.artwork adoptArchivedThumbnailData:encodedThumbnail hasEmbeddedArt:hasEmbeddedArt];
-        self.fileType = fileType;
-        self.bitrate = bitrate;
-        self.sampleRate = sampleRate;
         double duration = [coder decodeDoubleForKey:@"duration"];
         if (!isfinite(duration) || duration < 0) {
             return nil;
@@ -379,6 +532,8 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
             self.key = VibeMusicalKeyFromString(
                     [NSString stringWithStdString:keyValues.front().to8Bit(true)]);
         }
+        [self readFieldsFromProperties:properties];
+        self.audioMD5 = audioMD5FromTagLibFile(file);
 
         self.fileType = fileTypeForTagLibFile(file);
         [self.artwork adoptParsedArtData:albumArtDataFromTagLibFile(file)];
@@ -390,6 +545,37 @@ static NSString * _Nullable trimmedTagText(id _Nullable value) {
     catch (...) {
         LogError(@"TagLib parse failed for %@", url.path);
     }
+}
+
+// The fields from the same map, where each format's frame or atom arrives
+// under one key (this piece's AGENTS.md, The tag fields). Sound Check is an
+// ID3v2 comment's, or an MP4 freeform atom's.
+- (void)readFieldsFromProperties:(const TagLib::PropertyMap &)properties {
+    self.album = PropertyText(properties, "ALBUM");
+    self.albumArtist = PropertyText(properties, "ALBUMARTIST");
+    self.genre = PropertyText(properties, "GENRE");
+    self.composer = PropertyText(properties, "COMPOSER");
+    NSInteger year = LeadingCount(PropertyText(properties, "DATE"));
+    self.year = year <= 9999 ? year : 0;
+    NSInteger number = 0, count = 0;
+    ReadNumberAndCount(properties, "TRACKNUMBER", {"TRACKTOTAL", "TOTALTRACKS"}, &number, &count);
+    self.trackNumber = number;
+    self.trackCount = count;
+    ReadNumberAndCount(properties, "DISCNUMBER", {"DISCTOTAL", "TOTALDISCS"}, &number, &count);
+    self.discNumber = number;
+    self.discCount = count;
+    self.compilation = LeadingCount(PropertyText(properties, "COMPILATION")) > 0;
+    self.musicBrainzReleaseID = PropertyText(properties, "MUSICBRAINZ_ALBUMID");
+    self.musicBrainzRecordingID = PropertyText(properties, "MUSICBRAINZ_TRACKID");
+    self.isrc = PropertyText(properties, "ISRC");
+    self.replayGainTrackGain = LeadingDecimal(PropertyText(properties, "REPLAYGAIN_TRACK_GAIN"));
+    self.replayGainTrackPeak = LeadingDecimal(PropertyText(properties, "REPLAYGAIN_TRACK_PEAK"));
+    self.replayGainAlbumGain = LeadingDecimal(PropertyText(properties, "REPLAYGAIN_ALBUM_GAIN"));
+    self.replayGainAlbumPeak = LeadingDecimal(PropertyText(properties, "REPLAYGAIN_ALBUM_PEAK"));
+    self.r128TrackGain = R128Gain(PropertyText(properties, "R128_TRACK_GAIN"));
+    self.r128AlbumGain = R128Gain(PropertyText(properties, "R128_ALBUM_GAIN"));
+    self.soundCheckGain = SoundCheckGain(PropertyText(properties, "COMMENT:ITUNNORM")
+                                         ?: PropertyText(properties, "ITUNNORM"));
 }
 
 // CoreAudio's facts for a file TagLib cannot read (this piece's AGENTS.md).

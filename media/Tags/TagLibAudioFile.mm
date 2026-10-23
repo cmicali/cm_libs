@@ -6,6 +6,7 @@
 #import "TagLibAudioFile.h"
 #import "VibeMacros.h"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -274,6 +275,19 @@ VibeAudioFileFormat _Nullable fileTypeForTagLibFile(TagLib::File *file) {
         return VibeAudioFileFormatOpus;
     }
     return nil;
+}
+
+NSData *_Nullable audioMD5FromTagLibFile(TagLib::File *file) {
+    auto flac = dynamic_cast<TagLib::FLAC::File *>(file);
+    auto props = flac ? flac->audioProperties() : nullptr;
+    if (!props) {
+        return nil;
+    }
+    const TagLib::ByteVector md5 = props->signature();
+    if (md5.size() != 16 || std::all_of(md5.begin(), md5.end(), [](char byte) { return byte == 0; })) {
+        return nil;
+    }
+    return [[NSData alloc] initWithBytes:md5.data() length:md5.size()];
 }
 
 static NSData *getAlbumArtMP3(TagLib::MPEG::File *mp3File);

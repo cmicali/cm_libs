@@ -6,8 +6,8 @@
 //  AudioFileFixtures.h or a stock Apple encoder. The tags come from TagLib's own
 //  writers, except APE, which the vendored TagLib cannot write to MPEG. Ogg
 //  has no Apple encoder. So Vorbis and Opus start from the render suite's
-//  generated fixtures, and are nil without them. C++, so only .mm files
-//  import it.
+//  generated fixtures, and are nil without them. Each fixture carries every
+//  tag field its format does (VibeTagField). C++, so only .mm files import it.
 //
 
 #import "AudioFileFixtures.h"
@@ -16,6 +16,7 @@
 
 #include <attachedpictureframe.h>
 #include <aifffile.h>
+#include <commentsframe.h>
 #include <flacfile.h>
 #include <flacpicture.h>
 #include <id3v1tag.h>
@@ -68,6 +69,162 @@ static inline BOOL VibeTagFixtureHasBPMAndKey(VibeTagFixture fixture) {
 
 static inline BOOL VibeTagFixtureHasArt(VibeTagFixture fixture) {
     return VibeTagFixtureHasBPMAndKey(fixture) && fixture != VibeTagFixtureMP3APE;
+}
+
+static inline BOOL VibeTagFixtureIsXiph(VibeTagFixture fixture) {
+    return fixture == VibeTagFixtureFLAC || fixture == VibeTagFixtureFLACCueSheet
+            || fixture == VibeTagFixtureVorbis || fixture == VibeTagFixtureOpus;
+}
+
+static inline BOOL VibeTagFixtureIsID3v2(VibeTagFixture fixture) {
+    return fixture == VibeTagFixtureMP3ID3v23 || fixture == VibeTagFixtureMP3ID3v24
+            || fixture == VibeTagFixtureWAVID3 || fixture == VibeTagFixtureAIFF;
+}
+
+#pragma mark - The tag fields
+
+// The fields AudioTrackMetadata reads past the title, artist, tempo, and key.
+// A number and its count are one field, since one tag can carry both.
+typedef NS_ENUM(NSInteger, VibeTagField) {
+    VibeTagFieldAlbum,
+    VibeTagFieldAlbumArtist,
+    VibeTagFieldGenre,
+    VibeTagFieldComposer,
+    VibeTagFieldYear,
+    VibeTagFieldTrack,
+    VibeTagFieldDisc,
+    VibeTagFieldCompilation,
+    VibeTagFieldReleaseID,
+    VibeTagFieldRecordingID,
+    VibeTagFieldISRC,
+    VibeTagFieldReplayGainTrackGain,
+    VibeTagFieldReplayGainTrackPeak,
+    VibeTagFieldReplayGainAlbumGain,
+    VibeTagFieldReplayGainAlbumPeak,
+    VibeTagFieldR128TrackGain,
+    VibeTagFieldR128AlbumGain,
+    VibeTagFieldSoundCheck,
+    VibeTagFieldCount,
+};
+
+static NSString *const kVibeTagAlbum = @"Tagged Album";
+static NSString *const kVibeTagAlbumArtist = @"Tagged Album Artist";
+// A name ID3v1's genre list holds, since ID3v1 stores an index.
+static NSString *const kVibeTagGenre = @"Jazz";
+static NSString *const kVibeTagComposer = @"Tagged Composer";
+static const NSInteger kVibeTagYear = 1999;
+static NSString *const kVibeTagReleaseID = @"f5093c06-23e3-404f-aeaa-40f72885ee3a";
+static NSString *const kVibeTagRecordingID = @"8f8cc91f-0bca-4351-90d4-ef334ac0a0cf";
+static NSString *const kVibeTagISRC = @"USRC17607839";
+// iTunNORM's channels against 1/1000 W are 1000 and 2000. The louder one
+// gives -10 log10(2) dB.
+static NSString *const kVibeTagSoundCheck =
+        @" 000003E8 000007D0 00002710 00004E20 00024CA8 00024CA8 00007FFF 00007FFF 00024CA8 00024CA8";
+static const double kVibeTagSoundCheckGain = -3.0102999566398120;
+
+static inline NSString *VibeTagFieldName(VibeTagField field) {
+    static NSString *const names[VibeTagFieldCount] = {
+            @"album", @"album artist", @"genre", @"composer", @"year", @"track", @"disc", @"compilation",
+            @"release ID", @"recording ID", @"ISRC", @"ReplayGain track gain", @"ReplayGain track peak",
+            @"ReplayGain album gain", @"ReplayGain album peak", @"R128 track gain", @"R128 album gain",
+            @"Sound Check"};
+    return names[field];
+}
+
+// What each format's tag carries. ID3v1 has an album, a year, a genre, and a
+// track number. RIFF INFO adds a composer and an ISRC. R128 gains are read
+// from any Xiph comment, though Opus is the format that defines them.
+static inline BOOL VibeTagFixtureCarries(VibeTagFixture fixture, VibeTagField field) {
+    switch (fixture) {
+        case VibeTagFixtureMP3ID3v1:
+            return field == VibeTagFieldAlbum || field == VibeTagFieldYear || field == VibeTagFieldGenre
+                    || field == VibeTagFieldTrack;
+        case VibeTagFixtureWAVInfo:
+            return field == VibeTagFieldAlbum || field == VibeTagFieldYear || field == VibeTagFieldGenre
+                    || field == VibeTagFieldTrack || field == VibeTagFieldComposer || field == VibeTagFieldISRC;
+        case VibeTagFixtureCAF: case VibeTagFixtureW64: case VibeTagFixtureCount:
+            return NO;
+        default:
+            break;
+    }
+    BOOL r128 = field == VibeTagFieldR128TrackGain || field == VibeTagFieldR128AlbumGain;
+    if (VibeTagFixtureIsXiph(fixture)) {
+        return field != VibeTagFieldSoundCheck;
+    }
+    if (fixture == VibeTagFixtureMP3APE) {
+        return !r128 && field != VibeTagFieldSoundCheck;
+    }
+    return !r128; // ID3v2 and MP4
+}
+
+// Whether a format's tag holds a count beside its number: ID3v1 and RIFF
+// INFO hold only the number.
+static inline BOOL VibeTagFixtureHasCounts(VibeTagFixture fixture) {
+    return fixture != VibeTagFixtureMP3ID3v1 && fixture != VibeTagFixtureWAVInfo;
+}
+
+static inline TagLib::String VibeTagString(NSString *string) {
+    return TagLib::String(string.UTF8String, TagLib::String::UTF8);
+}
+
+static inline TagLib::ByteVector VibeTagBytes(NSData *data) {
+    return TagLib::ByteVector((const char *)data.bytes, (unsigned int)data.length);
+}
+
+// One field's tags as each format's writer spells them. Xiph comments keep a
+// count in a tag of its own. Sound Check is no property: the writer adds it.
+static inline void VibeAddTagField(TagLib::PropertyMap &properties, VibeTagFixture fixture, VibeTagField field) {
+    auto set = [&properties](const char *key, NSString *value) {
+        properties[key] = TagLib::StringList(VibeTagString(value));
+    };
+    BOOL xiph = VibeTagFixtureIsXiph(fixture);
+    BOOL counts = VibeTagFixtureHasCounts(fixture);
+    switch (field) {
+        case VibeTagFieldAlbum: set("ALBUM", kVibeTagAlbum); break;
+        case VibeTagFieldAlbumArtist: set("ALBUMARTIST", kVibeTagAlbumArtist); break;
+        case VibeTagFieldGenre: set("GENRE", kVibeTagGenre); break;
+        case VibeTagFieldComposer: set("COMPOSER", kVibeTagComposer); break;
+        // ID3v1 stores four digits.
+        case VibeTagFieldYear: set("DATE", fixture == VibeTagFixtureMP3ID3v1 ? @"1999" : @"1999-04-01"); break;
+        case VibeTagFieldTrack:
+            set("TRACKNUMBER", xiph || !counts ? @"3" : @"3/12");
+            if (xiph) set("TRACKTOTAL", @"12");
+            break;
+        case VibeTagFieldDisc:
+            set("DISCNUMBER", xiph ? @"1" : @"1/2");
+            if (xiph) set("DISCTOTAL", @"2");
+            break;
+        case VibeTagFieldCompilation: set("COMPILATION", @"1"); break;
+        case VibeTagFieldReleaseID: set("MUSICBRAINZ_ALBUMID", kVibeTagReleaseID); break;
+        case VibeTagFieldRecordingID: set("MUSICBRAINZ_TRACKID", kVibeTagRecordingID); break;
+        case VibeTagFieldISRC: set("ISRC", kVibeTagISRC); break;
+        case VibeTagFieldReplayGainTrackGain: set("REPLAYGAIN_TRACK_GAIN", @"-6.54 dB"); break;
+        case VibeTagFieldReplayGainTrackPeak: set("REPLAYGAIN_TRACK_PEAK", @"0.988547"); break;
+        case VibeTagFieldReplayGainAlbumGain: set("REPLAYGAIN_ALBUM_GAIN", @"+1.25 dB"); break;
+        case VibeTagFieldReplayGainAlbumPeak: set("REPLAYGAIN_ALBUM_PEAK", @"1.000000"); break;
+        // Q7.8: -1234/256 and -512/256 dB.
+        case VibeTagFieldR128TrackGain: set("R128_TRACK_GAIN", @"-1234"); break;
+        case VibeTagFieldR128AlbumGain: set("R128_ALBUM_GAIN", @"-512"); break;
+        case VibeTagFieldSoundCheck: case VibeTagFieldCount: break;
+    }
+}
+
+// The fixture's whole tag: the title, the artist, the tempo and key where the
+// format carries them, and every field it carries.
+static inline TagLib::PropertyMap VibeTagProperties(VibeTagFixture fixture) {
+    TagLib::PropertyMap properties;
+    properties["TITLE"] = TagLib::StringList(VibeTagString(kVibeTagTitle));
+    properties["ARTIST"] = TagLib::StringList(VibeTagString(kVibeTagArtist));
+    if (VibeTagFixtureHasBPMAndKey(fixture)) {
+        properties["BPM"] = TagLib::StringList(VibeTagString([NSString stringWithFormat:@"%g", kVibeTagBPM]));
+        properties["INITIALKEY"] = TagLib::StringList(VibeTagString(kVibeTagKey));
+    }
+    for (NSInteger field = 0; field < VibeTagFieldCount; field++) {
+        if (VibeTagFixtureCarries(fixture, (VibeTagField)field)) {
+            VibeAddTagField(properties, fixture, (VibeTagField)field);
+        }
+    }
+    return properties;
 }
 
 // A fresh directory under the temporary directory. The test that made it
@@ -133,6 +290,21 @@ static inline NSData *VibeAPETag(NSArray<NSArray<NSString *> *> *items) {
     return tag;
 }
 
+// A property map as APE items, under the names MP3Gain and foobar2000 write.
+static inline NSArray<NSArray<NSString *> *> *VibeAPEItems(const TagLib::PropertyMap &properties) {
+    NSDictionary<NSString *, NSString *> *names = @{@"TITLE": @"Title", @"ARTIST": @"Artist", @"ALBUM": @"Album",
+                                                    @"ALBUMARTIST": @"Album Artist", @"DATE": @"Year",
+                                                    @"TRACKNUMBER": @"Track", @"DISCNUMBER": @"Disc",
+                                                    @"GENRE": @"Genre", @"COMPOSER": @"Composer",
+                                                    @"COMPILATION": @"Compilation"};
+    NSMutableArray<NSArray<NSString *> *> *items = [NSMutableArray array];
+    for (const auto &[key, values] : properties) {
+        NSString *name = @(key.toCString(true));
+        [items addObject:@[names[name] ?: name, @(values.front().toCString(true))]];
+    }
+    return items;
+}
+
 // AAC in M4A or FLAC through AVAudioFile, so the container is Apple's own.
 static inline NSURL *VibeTagFixtureEncode(NSURL *url, AudioFormatID codec) {
     NSError *error = nil;
@@ -169,30 +341,21 @@ static inline BOOL VibeInsertFLACBlock(NSURL *url, uint8_t type, NSData *block) 
     return [file writeToURL:url atomically:YES];
 }
 
-static inline TagLib::String VibeTagString(NSString *string) {
-    return TagLib::String(string.UTF8String, TagLib::String::UTF8);
-}
-
-static inline TagLib::ByteVector VibeTagBytes(NSData *data) {
-    return TagLib::ByteVector((const char *)data.bytes, (unsigned int)data.length);
-}
-
-static inline TagLib::PropertyMap VibeTagProperties(BOOL bpmAndKey) {
-    TagLib::PropertyMap properties;
-    properties["TITLE"] = TagLib::StringList(VibeTagString(kVibeTagTitle));
-    properties["ARTIST"] = TagLib::StringList(VibeTagString(kVibeTagArtist));
-    if (bpmAndKey) {
-        properties["BPM"] = TagLib::StringList(VibeTagString([NSString stringWithFormat:@"%g", kVibeTagBPM]));
-        properties["INITIALKEY"] = TagLib::StringList(VibeTagString(kVibeTagKey));
-    }
-    return properties;
-}
-
 static inline void VibeAddAPIC(TagLib::ID3v2::Tag *tag, NSData *art) {
+    if (!art) return;
     auto frame = new TagLib::ID3v2::AttachedPictureFrame();
     frame->setMimeType("image/png");
     frame->setType(TagLib::ID3v2::AttachedPictureFrame::FrontCover);
     frame->setPicture(VibeTagBytes(art));
+    tag->addFrame(frame);
+}
+
+// Sound Check as iTunes writes it in ID3v2: a comment described iTunNORM.
+static inline void VibeAddSoundCheck(TagLib::ID3v2::Tag *tag) {
+    auto frame = new TagLib::ID3v2::CommentsFrame(TagLib::String::Latin1);
+    frame->setLanguage("eng");
+    frame->setDescription("iTunNORM");
+    frame->setText(VibeTagString(kVibeTagSoundCheck));
     tag->addFrame(frame);
 }
 
@@ -204,151 +367,170 @@ static inline TagLib::FLAC::Picture *VibeFLACPicture(NSData *art) {
     return picture;
 }
 
-// Writes `fixture` into `dir`, its audio first and then its tags, with `art`
-// as its picture where the format carries one. `untagged` receives a copy
-// from before the tags, which the fuzz diffs to find the tag's bytes. nil
-// when the format's source is unavailable.
-static inline NSURL *VibeWriteTagFixture(NSURL *dir, VibeTagFixture fixture, NSData *art,
-                                         NSURL *__autoreleasing *untagged) {
-    NSString *name = VibeTagFixtureName(fixture);
-    NSURL *url = [dir URLByAppendingPathComponent:name];
+// The fixture's untagged audio at url. NO when the format's source is
+// unavailable, as Ogg's is without the render fixtures.
+static inline BOOL VibeWriteTagFixtureAudio(NSURL *url, VibeTagFixture fixture) {
     NSError *error = nil;
     switch (fixture) {
         case VibeTagFixtureMP3ID3v23: case VibeTagFixtureMP3ID3v24:
         case VibeTagFixtureMP3ID3v1: case VibeTagFixtureMP3APE:
-            if (![VibeMP3WithInfoFrame(38, NO) writeToURL:url atomically:YES]) return nil;
-            break;
+            return [VibeMP3WithInfoFrame(38, NO) writeToURL:url atomically:YES];
         case VibeTagFixtureM4A:
-            if (!VibeTagFixtureEncode(url, kAudioFormatMPEG4AAC)) return nil;
-            break;
+            return VibeTagFixtureEncode(url, kAudioFormatMPEG4AAC) != nil;
         case VibeTagFixtureFLAC: case VibeTagFixtureFLACCueSheet:
-            if (!VibeTagFixtureEncode(url, kAudioFormatFLAC)) return nil;
-            break;
+            if (!VibeTagFixtureEncode(url, kAudioFormatFLAC)) return NO;
+            if (fixture == VibeTagFixtureFLACCueSheet) {
+                NSData *sheet = VibeFLACCueSheetBlock(@[@[@1, @0, @0, @NO], @[@2, @(11025), @0, @NO]], 22050);
+                return VibeInsertFLACBlock(url, 5, sheet);
+            }
+            return YES;
         case VibeTagFixtureVorbis: case VibeTagFixtureOpus: {
             NSString *root = NSProcessInfo.processInfo.environment[@"VIBE_AUDIO_FIXTURES"];
             NSString *source = [root stringByAppendingPathComponent:
                     fixture == VibeTagFixtureVorbis ? @"lossy.ogg" : @"lossy.opus"];
-            if (!root || ![NSFileManager.defaultManager copyItemAtPath:source toPath:url.path error:NULL]) {
-                return nil;
-            }
-            break;
+            return root && [NSFileManager.defaultManager copyItemAtPath:source toPath:url.path error:NULL];
         }
         case VibeTagFixtureWAVID3: case VibeTagFixtureWAVInfo: case VibeTagFixtureAIFF:
         case VibeTagFixtureCAF: case VibeTagFixtureW64:
-            if (!VibeWriteFixture(url, VibeToneBuffer(22050, 44100, 2, AVAudioPCMFormatInt16), &error)) return nil;
-            break;
+            return VibeWriteFixture(url, VibeToneBuffer(22050, 44100, 2, AVAudioPCMFormatInt16), &error) != nil;
         case VibeTagFixtureCount:
-            return nil;
+            return NO;
     }
-    if (fixture == VibeTagFixtureFLACCueSheet) {
-        NSData *sheet = VibeFLACCueSheetBlock(@[@[@1, @0, @0, @NO], @[@2, @(11025), @0, @NO]], 22050);
-        if (!VibeInsertFLACBlock(url, 5, sheet)) return nil;
-    }
-    if (untagged) {
-        NSURL *copy = [dir URLByAppendingPathComponent:[@"untagged-" stringByAppendingString:name]];
-        [NSFileManager.defaultManager copyItemAtURL:url toURL:copy error:NULL];
-        *untagged = copy;
-    }
+}
 
+// Writes `properties` into the fixture's file at url with its format's writer,
+// with `art` as its picture and Sound Check where the format carries them.
+static inline BOOL VibeSaveTagFixtureTags(NSURL *url, VibeTagFixture fixture, const TagLib::PropertyMap &properties,
+                                          NSData *art, BOOL soundCheck) {
     const char *path = url.fileSystemRepresentation;
-    BOOL bpmAndKey = VibeTagFixtureHasBPMAndKey(fixture);
-    TagLib::PropertyMap properties = VibeTagProperties(bpmAndKey);
-    bool saved = true;
     switch (fixture) {
         case VibeTagFixtureMP3ID3v23: case VibeTagFixtureMP3ID3v24: {
             TagLib::MPEG::File file(path);
             file.ID3v2Tag(true)->setProperties(properties);
             VibeAddAPIC(file.ID3v2Tag(), art);
-            saved = file.save(TagLib::MPEG::File::ID3v2, TagLib::File::StripOthers,
-                              fixture == VibeTagFixtureMP3ID3v23 ? TagLib::ID3v2::v3 : TagLib::ID3v2::v4,
-                              TagLib::File::DoNotDuplicate);
-            break;
+            if (soundCheck) VibeAddSoundCheck(file.ID3v2Tag());
+            return file.save(TagLib::MPEG::File::ID3v2, TagLib::File::StripOthers,
+                             fixture == VibeTagFixtureMP3ID3v23 ? TagLib::ID3v2::v3 : TagLib::ID3v2::v4,
+                             TagLib::File::DoNotDuplicate);
         }
         case VibeTagFixtureMP3ID3v1: {
             TagLib::MPEG::File file(path);
             file.ID3v1Tag(true)->setProperties(properties);
-            saved = file.save(TagLib::MPEG::File::ID3v1, TagLib::File::StripOthers,
-                              TagLib::ID3v2::v4, TagLib::File::DoNotDuplicate);
-            break;
+            return file.save(TagLib::MPEG::File::ID3v1, TagLib::File::StripOthers,
+                             TagLib::ID3v2::v4, TagLib::File::DoNotDuplicate);
         }
         case VibeTagFixtureMP3APE: {
             // Written by hand: the vendored TagLib has no APE writer for MPEG.
             NSFileHandle *handle = [NSFileHandle fileHandleForWritingToURL:url error:NULL];
             [handle seekToEndReturningOffset:NULL error:NULL];
-            saved = [handle writeData:VibeAPETag(@[@[@"Title", kVibeTagTitle], @[@"Artist", kVibeTagArtist],
-                                                   @[@"BPM", [NSString stringWithFormat:@"%g", kVibeTagBPM]],
-                                                   @[@"INITIALKEY", kVibeTagKey]])
-                                error:NULL] && [handle closeAndReturnError:NULL];
-            break;
+            return [handle writeData:VibeAPETag(VibeAPEItems(properties)) error:NULL]
+                    && [handle closeAndReturnError:NULL];
         }
         case VibeTagFixtureM4A: {
             TagLib::MP4::File file(path);
             file.setProperties(properties);
             // No property maps a key in MP4: iTunes' freeform atom carries it.
-            file.tag()->setItem("----:com.apple.iTunes:initialkey",
-                                TagLib::MP4::Item(TagLib::StringList(VibeTagString(kVibeTagKey))));
-            TagLib::MP4::CoverArtList covers;
-            covers.append(TagLib::MP4::CoverArt(TagLib::MP4::CoverArt::PNG, VibeTagBytes(art)));
-            file.tag()->setItem("covr", TagLib::MP4::Item(covers));
-            saved = file.save();
-            break;
+            if (properties.contains("INITIALKEY")) {
+                file.tag()->setItem("----:com.apple.iTunes:initialkey",
+                                    TagLib::MP4::Item(TagLib::StringList(VibeTagString(kVibeTagKey))));
+            }
+            if (soundCheck) {
+                file.tag()->setItem("----:com.apple.iTunes:iTunNORM",
+                                    TagLib::MP4::Item(TagLib::StringList(VibeTagString(kVibeTagSoundCheck))));
+            }
+            if (art) {
+                TagLib::MP4::CoverArtList covers;
+                covers.append(TagLib::MP4::CoverArt(TagLib::MP4::CoverArt::PNG, VibeTagBytes(art)));
+                file.tag()->setItem("covr", TagLib::MP4::Item(covers));
+            }
+            return file.save();
         }
         case VibeTagFixtureFLAC: case VibeTagFixtureFLACCueSheet: {
             TagLib::FLAC::File file(path);
             file.setProperties(properties);
-            file.addPicture(VibeFLACPicture(art));
-            saved = file.save();
-            break;
+            if (art) file.addPicture(VibeFLACPicture(art));
+            return file.save();
         }
         case VibeTagFixtureVorbis: {
             TagLib::Ogg::Vorbis::File file(path);
             file.setProperties(properties);
-            file.tag()->addPicture(VibeFLACPicture(art));
-            saved = file.save();
-            break;
+            if (art) file.tag()->addPicture(VibeFLACPicture(art));
+            return file.save();
         }
         case VibeTagFixtureOpus: {
             TagLib::Ogg::Opus::File file(path);
             file.setProperties(properties);
-            file.tag()->addPicture(VibeFLACPicture(art));
-            saved = file.save();
-            break;
+            if (art) file.tag()->addPicture(VibeFLACPicture(art));
+            return file.save();
         }
         case VibeTagFixtureWAVID3: {
             TagLib::RIFF::WAV::File file(path);
             file.ID3v2Tag()->setProperties(properties);
             VibeAddAPIC(file.ID3v2Tag(), art);
-            saved = file.save(TagLib::RIFF::WAV::File::ID3v2);
-            break;
+            if (soundCheck) VibeAddSoundCheck(file.ID3v2Tag());
+            return file.save(TagLib::RIFF::WAV::File::ID3v2);
         }
         case VibeTagFixtureWAVInfo: {
             TagLib::RIFF::WAV::File file(path);
             file.InfoTag()->setProperties(properties);
-            saved = file.save(TagLib::RIFF::WAV::File::Info);
-            break;
+            return file.save(TagLib::RIFF::WAV::File::Info);
         }
         case VibeTagFixtureAIFF: {
             TagLib::RIFF::AIFF::File file(path);
             file.tag()->setProperties(properties);
             VibeAddAPIC(file.tag(), art);
-            saved = file.save();
-            break;
+            if (soundCheck) VibeAddSoundCheck(file.tag());
+            return file.save();
         }
         case VibeTagFixtureCAF: {
             // CoreAudio's own info chunk: TagLib has no CAF writer.
             AudioFileID file = NULL;
             if (AudioFileOpenURL((__bridge CFURLRef)url, kAudioFileReadWritePermission, kAudioFileCAFType,
                                  &file) != noErr) {
-                return nil;
+                return NO;
             }
             CFDictionaryRef info = (__bridge CFDictionaryRef)@{@kAFInfoDictionary_Title: kVibeTagTitle,
                                                                @kAFInfoDictionary_Artist: kVibeTagArtist};
-            saved = AudioFileSetProperty(file, kAudioFilePropertyInfoDictionary, sizeof info, &info) == noErr;
+            BOOL saved = AudioFileSetProperty(file, kAudioFilePropertyInfoDictionary, sizeof info, &info) == noErr;
             AudioFileClose(file);
-            break;
+            return saved;
         }
         case VibeTagFixtureW64: case VibeTagFixtureCount:
-            break;
+            return YES;
     }
+}
+
+// Writes `fixture` into `dir`, its audio first and then its whole tag, with
+// `art` as its picture where the format carries one. `untagged` receives a
+// copy from before the tags, which the fuzz diffs to find the tag's bytes.
+// nil when the format's source is unavailable.
+static inline NSURL *VibeWriteTagFixture(NSURL *dir, VibeTagFixture fixture, NSData *art,
+                                         NSURL *__autoreleasing *untagged) {
+    NSString *name = VibeTagFixtureName(fixture);
+    NSURL *url = [dir URLByAppendingPathComponent:name];
+    if (!VibeWriteTagFixtureAudio(url, fixture)) {
+        return nil;
+    }
+    if (untagged) {
+        NSURL *copy = [dir URLByAppendingPathComponent:[@"untagged-" stringByAppendingString:name]];
+        [NSFileManager.defaultManager copyItemAtURL:url toURL:copy error:NULL];
+        *untagged = copy;
+    }
+    BOOL saved = VibeSaveTagFixtureTags(url, fixture, VibeTagProperties(fixture),
+                                        VibeTagFixtureHasArt(fixture) ? art : nil,
+                                        VibeTagFixtureCarries(fixture, VibeTagFieldSoundCheck));
     return saved ? url : nil;
+}
+
+// The fixture's audio in `dir`, tagged with `field` alone. nil when the
+// format's source is unavailable.
+static inline NSURL *VibeWriteTagFieldFixture(NSURL *dir, VibeTagFixture fixture, VibeTagField field) {
+    NSURL *url = [dir URLByAppendingPathComponent:VibeTagFixtureName(fixture)];
+    [NSFileManager.defaultManager removeItemAtURL:url error:NULL];
+    if (!VibeWriteTagFixtureAudio(url, fixture)) {
+        return nil;
+    }
+    TagLib::PropertyMap properties;
+    VibeAddTagField(properties, fixture, field);
+    return VibeSaveTagFixtureTags(url, fixture, properties, nil, field == VibeTagFieldSoundCheck) ? url : nil;
 }
