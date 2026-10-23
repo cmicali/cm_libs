@@ -273,6 +273,14 @@ static NSNumber *_Nullable SoundCheckGain(NSString *_Nullable text) {
     return copy;
 }
 
+static void EncodePresent(NSCoder *coder, id _Nullable value, NSString *key) {
+    if (value) [coder encodeObject:value forKey:key];
+}
+
+static void EncodePresentCount(NSCoder *coder, NSInteger value, NSString *key) {
+    if (value) [coder encodeInteger:value forKey:key];
+}
+
 // The thumbnail and scalars only, so the cache holds thousands of tracks;
 // original art would blow its byte limit. hasEmbeddedArt is its own key: a
 // file with art can archive no thumbnail (undecodable, or encode failed).
@@ -290,27 +298,28 @@ static NSNumber *_Nullable SoundCheckGain(NSString *_Nullable text) {
     // As an object, not encodeInteger: an absent integer decodes as 0, which
     // as a key means C major, whereas an absent object is unambiguously nil.
     [coder encodeObject:@(self.key) forKey:@"key"];
-    [coder encodeObject:self.album forKey:@"album"];
-    [coder encodeObject:self.albumArtist forKey:@"albumArtist"];
-    [coder encodeObject:self.genre forKey:@"genre"];
-    [coder encodeObject:self.composer forKey:@"composer"];
-    [coder encodeInteger:self.year forKey:@"year"];
-    [coder encodeInteger:self.trackNumber forKey:@"trackNumber"];
-    [coder encodeInteger:self.trackCount forKey:@"trackCount"];
-    [coder encodeInteger:self.discNumber forKey:@"discNumber"];
-    [coder encodeInteger:self.discCount forKey:@"discCount"];
-    [coder encodeBool:self.compilation forKey:@"compilation"];
-    [coder encodeObject:self.musicBrainzReleaseID forKey:@"musicBrainzReleaseID"];
-    [coder encodeObject:self.musicBrainzRecordingID forKey:@"musicBrainzRecordingID"];
-    [coder encodeObject:self.isrc forKey:@"isrc"];
-    [coder encodeObject:self.audioMD5 forKey:@"audioMD5"];
-    [coder encodeObject:self.replayGainTrackGain forKey:@"replayGainTrackGain"];
-    [coder encodeObject:self.replayGainTrackPeak forKey:@"replayGainTrackPeak"];
-    [coder encodeObject:self.replayGainAlbumGain forKey:@"replayGainAlbumGain"];
-    [coder encodeObject:self.replayGainAlbumPeak forKey:@"replayGainAlbumPeak"];
-    [coder encodeObject:self.r128TrackGain forKey:@"r128TrackGain"];
-    [coder encodeObject:self.r128AlbumGain forKey:@"r128AlbumGain"];
-    [coder encodeObject:self.soundCheckGain forKey:@"soundCheckGain"];
+    // The tag fields only when present, so most entries stay small.
+    EncodePresent(coder, self.album, @"album");
+    EncodePresent(coder, self.albumArtist, @"albumArtist");
+    EncodePresent(coder, self.genre, @"genre");
+    EncodePresent(coder, self.composer, @"composer");
+    EncodePresentCount(coder, self.year, @"year");
+    EncodePresentCount(coder, self.trackNumber, @"trackNumber");
+    EncodePresentCount(coder, self.trackCount, @"trackCount");
+    EncodePresentCount(coder, self.discNumber, @"discNumber");
+    EncodePresentCount(coder, self.discCount, @"discCount");
+    EncodePresentCount(coder, self.compilation, @"compilation");
+    EncodePresent(coder, self.musicBrainzReleaseID, @"musicBrainzReleaseID");
+    EncodePresent(coder, self.musicBrainzRecordingID, @"musicBrainzRecordingID");
+    EncodePresent(coder, self.isrc, @"isrc");
+    EncodePresent(coder, self.audioMD5, @"audioMD5");
+    EncodePresent(coder, self.replayGainTrackGain, @"replayGainTrackGain");
+    EncodePresent(coder, self.replayGainTrackPeak, @"replayGainTrackPeak");
+    EncodePresent(coder, self.replayGainAlbumGain, @"replayGainAlbumGain");
+    EncodePresent(coder, self.replayGainAlbumPeak, @"replayGainAlbumPeak");
+    EncodePresent(coder, self.r128TrackGain, @"r128TrackGain");
+    EncodePresent(coder, self.r128AlbumGain, @"r128AlbumGain");
+    EncodePresent(coder, self.soundCheckGain, @"soundCheckGain");
 }
 
 // The object archived under key, or nil. An object of another class sets
@@ -370,7 +379,7 @@ static NSInteger DecodedCount(NSCoder *coder, NSString *key) {
         self.trackCount = DecodedCount(coder, @"trackCount");
         self.discNumber = DecodedCount(coder, @"discNumber");
         self.discCount = DecodedCount(coder, @"discCount");
-        self.compilation = [coder decodeBoolForKey:@"compilation"];
+        self.compilation = DecodedCount(coder, @"compilation") > 0;
         self.artwork = [[AudioTrackArtwork alloc] initWithSourceFilePath:sourceFilePath
                                                                extractor:VibeTagLibArtExtractor()];
         // An entry without the key decodes NO; a thumbnail still proves art.
