@@ -90,7 +90,7 @@ static void VibeEqualizerDebugDisplayLinkStopped(void) {
         for (NSUInteger i = 0; i < kBarCount; i++) {
             CALayer *bar = [CALayer layer];
             // A centered anchor, so the bars grow and shrink symmetrically
-            // around the vertical midline, like the app icon's waveform.
+            // around the vertical midline.
             bar.anchorPoint = CGPointMake(0.5, 0.5);
             // NSNull permanently disables implicit animations for geometry,
             // color and model-transform writes. Explicit level animations are
@@ -190,7 +190,7 @@ static void VibeEqualizerDebugDisplayLinkStopped(void) {
         bar.bounds = CGRectMake(0, 0, barWidth, height);
         bar.position = CGPointMake(minX + i * (barWidth + kBarGap) + barWidth / 2,
                                    minY + height / 2);
-        bar.cornerRadius = barWidth / 2; // pill ends, like the icon's bars
+        bar.cornerRadius = barWidth / 2; // pill ends
     }
     [self applyBarScales];
     [self refreshActivity];

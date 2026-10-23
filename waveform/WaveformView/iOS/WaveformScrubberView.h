@@ -1,6 +1,6 @@
 //
 //  WaveformScrubberView.h
-//  Vibe (iOS)
+//  vibe-libs
 //
 //  The iOS counterpart of WaveformView: the same registry, renderers,
 //  morph engine and waveform data, hosted in a UIView. DJ semantics: the
@@ -33,8 +33,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)waveformScrubberView:(WaveformScrubberView *)view
           didScrubToProgress:(CGFloat)progress;
 
-// On release, not per frame. The value is the REQUEST, which is what the owner
-// persists and shares across pages (Vibe/iOS/Player/AGENTS.md).
+// On release, not per frame. The value is the REQUEST. The owner persists it
+// and shares it across pages.
 - (void)waveformScrubberView:(WaveformScrubberView *)view
     didChangeVisibleFraction:(CGFloat)fraction;
 
@@ -65,7 +65,8 @@ NS_ASSUME_NONNULL_BEGIN
 // page-swipe surface.
 @property (nonatomic, readonly, getter=isScrubbingEnabled) BOOL scrubbingEnabled;
 
-// So the pager can require it to fail; the inner scroll view owns it.
+// So an enclosing pager can require it to fail. The inner scroll view owns
+// it.
 @property (nonatomic, readonly) UIPanGestureRecognizer *scrubPanRecognizer;
 
 // Likewise.
@@ -88,7 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Resolves the theme on every resolution: the renderer's install, the
 // appearance flip, syncWaveformTheme. The owner installs it with the
-// settings below (PlayerViewController.applyWaveformSettingsToCell:).
+// settings below.
 @property (nonatomic, copy, nullable) WaveformThemeProvider themeProvider;
 
 // Pushed by the owner, never read from a store. Each lands on the next
@@ -103,9 +104,9 @@ NS_ASSUME_NONNULL_BEGIN
 // provider's answer or the pushed settings changed.
 - (void)syncWaveformTheme;
 
-// THIS page's dominant art color for album_art; nil resolves to Mono. Per view
-// because each pager page is a different track. Setting it re-resolves the
-// palette.
+// THIS page's dominant art color for album_art; nil resolves to Mono. It is
+// per view, because each page of a pager can show a different track.
+// Setting it re-resolves the palette.
 @property (nonatomic, strong, nullable) UIColor *artworkThemeColor;
 
 // Ends a track's gesture without discarding its cached pixels or seeking.

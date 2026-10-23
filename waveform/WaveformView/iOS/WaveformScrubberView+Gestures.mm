@@ -1,6 +1,6 @@
 //
 //  WaveformScrubberView+Gestures.mm
-//  Vibe (iOS)
+//  vibe-libs
 //
 //  The touch scrub, the tap and the pinch to zoom.
 //

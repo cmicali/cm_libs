@@ -225,7 +225,7 @@ static VibeImage *_Nullable VibeArtworkForPublishing(VibeImage *artwork) {
         }];
     }];
 
-    // Enabled until updateWithSourceKey: tracks the playlist's boundaries.
+    // Enabled until updateWithSourceKey: passes hasNext and hasPrevious.
     center.nextTrackCommand.enabled = YES;
     _publishedHasNext = YES;
     [center.nextTrackCommand addTargetWithHandler:^MPRemoteCommandHandlerStatus(MPRemoteCommandEvent *event) {

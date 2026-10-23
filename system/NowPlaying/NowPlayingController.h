@@ -3,13 +3,13 @@
 //  vibe-libs
 //
 //  The MPRemoteCommandCenter / MPNowPlayingInfoCenter bridge. It owns no
-//  playback state: each shell's +NowPlaying category drives it and takes the
-//  commands back through the delegate.
+//  playback state. The app drives it and takes the commands back through the
+//  delegate.
 //
-//  TRAP: the debug-only --no-audio-hw and --no-now-playing flags suppress all
-//  of it, no publish and no command registration, because publishing can pull
-//  AirPods from another device even when rendering to a virtual output.
-//  Verifying this class needs a launch without either flag (vibe-debug).
+//  TRAP: a debug build's --no-audio-hw and --no-now-playing launch flags
+//  suppress all of it: no publish and no command registration. Publishing can
+//  pull AirPods from another device even when rendering to a virtual output.
+//  Verifying this class needs a launch without either flag.
 //
 
 #import <Foundation/Foundation.h>

@@ -2,18 +2,17 @@
 //  EqualizerIndicatorView.h
 //  vibe-libs
 //
-//  The playing-row indicator: five vertically centered pill bars, the app
-//  icon's waveform, that grow and shrink independently. Five retained CALayers
-//  represent them. Snapshot updates retarget only materially changed vertical
-//  transforms; no path is rebuilt or rasterized on each displayed frame.
+//  The playing-row indicator: five vertically centered pill bars that grow
+//  and shrink independently. Five retained CALayers represent them. Snapshot
+//  updates retarget only materially changed vertical transforms; no path is
+//  rebuilt or rasterized on each displayed frame.
 //
-//  SHARED, because the bars ARE the app's playing marker and both platforms
-//  must draw the same ones — the mac playlist table's number column and the
-//  iOS Playlist tab's. Everything that gives the indicator its character is
-//  QuartzCore and identical on both: the pill layers, the collapsed-to-dots
-//  idle pose, the snapshot poller capped at 30 Hz, and explicit scalar
-//  animations for material level changes. Only the superclass, layout
-//  and appearance hooks, and alpha property differ.
+//  SHARED, because the bars ARE an app's playing marker, and both platforms
+//  must draw the same ones in their rows. Everything that gives the indicator
+//  its character is QuartzCore and identical on both: the pill layers, the
+//  collapsed-to-dots idle pose, the snapshot poller capped at 30 Hz, and
+//  explicit scalar animations for material level changes. Only the
+//  superclass, layout and appearance hooks, and alpha property differ.
 //
 
 #import "EqualizerLevelSource.h"
@@ -50,7 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 // white or black default.
 @property (nonatomic, strong, nullable) VibeColor *barColor;
 
-// Both platforms set this to the model that owns their player. A missing source
+// An app sets this to the model that owns its player. A missing source
 // is inactive, never a request for synthetic fallback animation.
 //
 // Weak: the source is the app's playback model and outlives every row.

@@ -11,8 +11,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NowPlayingController (Debug)
 
-// The source image of the published artwork (the track's art, its thumbnail
-// or the shell's placeholder, by identity), or nil when none is published.
+// The source image of the published artwork (the track's art, its
+// thumbnail, or the app's placeholder, by identity), or nil when none is
+// published.
 - (nullable VibeImage *)debugPublishedArtwork;
 
 @end

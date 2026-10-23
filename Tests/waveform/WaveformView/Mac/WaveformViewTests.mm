@@ -62,8 +62,9 @@ static NSColor *Opaque(NSColor *color) {
 @end
 
 @implementation WaveformViewTests {
-    // What the shell's provider maps onto a theme, as an app maps its store:
-    // the identifier, its custom pair, 3-Band's wells, and the line's color.
+    // The state a provider maps onto a theme, as an app maps its own store.
+    // It is the identifier, its custom pair, 3-Band's wells, and the line's
+    // color.
     NSString *_themeIdentifier;
     NSColor *_customPlayed;
     NSColor *_customUnplayed;
@@ -88,7 +89,7 @@ static NSColor *Opaque(NSColor *color) {
     _view.delegate = _delegate;
 }
 
-// The shell's provider over the state above, with a flat fill.
+// A provider over the state above, as an app writes one, with a flat fill.
 - (WaveformTheme *)themeIsDark:(BOOL)isDark artworkColor:(NSColor *)artworkColor {
     WaveformTheme *theme = [WaveformTheme themeForIdentifier:_themeIdentifier isDark:isDark artworkColor:artworkColor
                                                 customPlayed:_customPlayed customUnplayed:_customUnplayed];

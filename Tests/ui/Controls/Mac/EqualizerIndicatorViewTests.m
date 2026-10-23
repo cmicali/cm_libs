@@ -2,10 +2,10 @@
 //  EqualizerIndicatorViewTests.m
 //  vibe-libs
 //
-//  The view's half of the equalizer guarantee: it polls only while every gate
+//  The view's half of the renderer contract: it polls only while every gate
 //  holds, and each running poller declares exactly one balanced consumer.
 //  The window is deferred and never ordered front, so no window server is
-//  needed. The shell's count is MainPlayerControllerTests'.
+//  needed. An app tests its own count of consumers.
 //
 
 #import <XCTest/XCTest.h>
@@ -194,7 +194,7 @@
 }
 
 - (void)testAReentrantRestartInsideTheReleaseLeavesOneConsumer {
-    // A shell can answer the NO by turning audio straight back on.
+    // An app can answer the NO by turning audio straight back on.
     EqualizerIndicatorView *view = [self runningView];
     __weak EqualizerIndicatorView *weakView = view;
     _source.onWantedNo = ^{
